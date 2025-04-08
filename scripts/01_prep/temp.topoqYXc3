@@ -1,0 +1,28 @@
+;
+;   File ../../data/1bf5/T419R/gromacs_common/topol.top  was generated
+;   By user: irati (1001)
+;   On host:Usopp 
+;   At date:Mon. March  1 16:59:01 2025 
+;
+;   This is a standalone topology file
+;
+;   Created by:
+;   ParmEd:       prep_02_amb2gro.py, VERSION4.3.0 
+;   Executable:   prep_02_amb2gro.py
+;   Library dir:  /opt/gromacs/gromacs_2024/share/gromacs/top
+;   Command line:
+;     prep_02_amb2gro.py -p ../../data/1bf5/T419R/AmberTools/T419R_noconect_protonated_solvated.prmtop -c ../../data/1bf5/T419R/AmberTools/T419R_noconect_protonated_solvated.inpcrd -t ../../data/1bf5/T419R/gromacs_common/topol.top -g ../../data/1bf5/T419R/gromacs_common/gromacs.gro
+;
+
+#include "toppar/forcefield.itp"
+#include "toppar/molecule_1.itp"
+#include "toppar/molecule_2.itp"
+#include "toppar/molecule_3.itp"
+#include "toppar/molecule_4.itp"
+#include "toppar/molecule_5.itp"
+#include "toppar/molecule_6.itp"
+#include "toppar/molecule_7.itp"
+[ system ]
+Generic title
+
+[ molecules ]
