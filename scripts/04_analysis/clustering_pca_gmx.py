@@ -22,9 +22,9 @@ scatter = plt.scatter(
 )
 
 plt.gca().xaxis.set_major_locator(MaxNLocator(nbins=10)) 
-plt.colorbar(scatter, label='Cluster')
-plt.title('PCA Projection with Clusters')
+# plt.colorbar(scatter, label='Cluster')
+plt.title(f'gmx PCA Projection with {clustering_alg} Clusters')
 plt.xlabel('PC 1')
 plt.ylabel('PC 2')
-plt.savefig('pca_clusters_{clustering_alg}.png', dpi=300)
+plt.savefig(f'{outputdir}/pca_gmx_clusters_{clustering_alg}.png', dpi=300)
 plt.close()

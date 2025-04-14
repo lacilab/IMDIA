@@ -20,7 +20,12 @@ for mutation, sample in mut_sample_pairs:
 
 print(mut_sample_pairs)
 
-mut_sample_pairs = [('wt', 'rep1'),('wt', 'rep2'), ('wt', 'rep3')]
+mut_sample_pairs = [('wt', 'rep1'),('wt', 'rep2'), ('wt', 'rep3'), 
+                   ('T419R', 'rep1'), ('T419R', 'rep2'), ('T419R', 'rep3')]
+
+mut_sample_pairs = [('wt', 'rep1'),('wt', 'rep2'),
+                   ('T419R', 'rep1'),('T419R', 'rep2')]
+
 print(mut_sample_pairs)
 mutations, samples = zip(*mut_sample_pairs)
 
@@ -107,6 +112,20 @@ rule all:
         pca_sk_kmeans = expand("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/pca_sklearn_clusters_kmeans.png", mut=mutations, sample=samples, zip=True),
         pca_gmx_hclust = expand("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/pca_gmx_clusters_hclust.png", mut=mutations, sample=samples, zip=True),
         pca_gmx_kmeans = expand("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/pca_gmx_clusters_kmeans.png", mut=mutations, sample=samples, zip=True),
+        gromos_clusters_index = expand("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/gromos_clusters.ndx", mut=mutations, sample=samples, zip=True),
+        gromos_xpm = expand("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/gromos_clusters.xpm", mut=mutations, sample=samples, zip=True),
+        gromos_log = expand("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/gromos_clusters.log", mut=mutations, sample=samples, zip=True),
+        pca_gromos = expand("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/pca_gromos_clusters.png", mut=mutations, sample=samples, zip=True),
+        pca_gromos_top10 = expand("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/pca_gromos_clusters_top10.png", mut=mutations, sample=samples, zip=True),
+        gromos_clusters_freq = expand("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/gromos_clusters_freq.png", mut=mutations, sample=samples, zip=True),
+        gromos_clusters_freqcum = expand("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/gromos_clusters_freq_cum.png", mut=mutations, sample=samples, zip=True),
+    
+        # GBSA
+        gbsa_info = expand("../../data/1bf5/{mut}/{sample}/analysis/006.gbsa/_GMXMMPBSA_info", mut=mutations, sample=samples, zip=True),
+        gbsa_final_results = expand("../../data/1bf5/{mut}/{sample}/analysis/006.gbsa/FINAL_RESULTS_MMPBSA.dat", mut=mutations, sample=samples, zip=True),
+        gbsa_final_decomp = expand("../../data/1bf5/{mut}/{sample}/analysis/006.gbsa/FINAL_DECOMP_MMPBSA.dat", mut=mutations, sample=samples, zip=True),
+        gbsa_energy = expand("../../data/1bf5/{mut}/{sample}/analysis/006.gbsa/FINAL_ENERGY.csv", mut=mutations, sample=samples, zip=True),
+        gbsa_energy_decomp = expand("../../data/1bf5/{mut}/{sample}/analysis/006.gbsa/FINAL_ENERGY_DECOMP.csv", mut=mutations, sample=samples, zip=True),
     run:
         print("+-------------------------")
         #print("Number of samples:")
@@ -367,7 +386,7 @@ rule clustering_sklearn:
         umap_hclust_clusters = report("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/umap_hclust_clusters.png",
                                 category="Clustering", subcategory="Hiearchical clustering", labels={"sample": "{mut} {sample} Overlay on UMAP"}),
         umap_kmeans_clusters = report("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/umap_kmeans_clusters.png",
-                                category="Clustering", subcategory="Hiearchical clustering", labels={"sample": "{mut} {sample} Overlay on UMAP"}),
+                                category="Clustering", subcategory="Kmeans clustering", labels={"sample": "{mut} {sample} Overlay on UMAP"}),
         umap_optimization = report("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/umap_optimization.png",
                                 category="Clustering", labels={"sample": "{mut} {sample} UMAP Optimization"}),
         pca_sk_hclust = report("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/pca_sklearn_clusters_hclust.png",
@@ -391,6 +410,59 @@ rule clustering_sklearn:
             "../../data/1bf5/{wildcards.mut}/{wildcards.sample}/analysis/005.clustering" \
         """
 
+rule clustering_gromos:
+    input: 
+        proj_timescale = "../../data/1bf5/{mut}/{sample}/analysis/003.pca/2dproj_timescale.csv",
+        tpr = "../../data/1bf5/{mut}/{sample}/gromacs/md.tpr",
+        xtc = "../../data/1bf5/{mut}/{sample}/gromacs/md_noPBC_mol_com_cluster_fit.xtc"
+    output: 
+        gromos_index = "../../data/1bf5/{mut}/{sample}/analysis/005.clustering/gromos_clusters.ndx",
+        gromos_xpm = "../../data/1bf5/{mut}/{sample}/analysis/005.clustering/gromos_clusters.xpm",
+        gromos_log = "../../data/1bf5/{mut}/{sample}/analysis/005.clustering/gromos_clusters.log",
+        rmsd_dist = "../../data/1bf5/{mut}/{sample}/analysis/005.clustering/rmsd-dist.xvg",
+    shell: 
+        """
+        bash -c '
+        outdir="../../data/1bf5/{wildcards.mut}/{wildcards.sample}/analysis/005.clustering"
+
+        if [ ! -d "$outdir" ]; then
+            mkdir "$outdir"
+            echo "Creating directory: $outdir"
+        else
+            echo "Directory already exists: $outdir"
+        fi
+
+        source /opt/gromacs/gromacs_2024/bin/GMXRC.bash
+
+        gmx cluster -f {input.xtc} -s {input.tpr} -method gromos -cutoff 0.2 \
+            -o {output.gromos_xpm} -g {output.gromos_log} -clndx {output.gromos_index} -dist {output.rmsd_dist} -quiet << EOL
+        C-alpha
+        C-alpha
+        EOL
+        '
+        """
+
+rule clustering_gromos_pca:
+    input: 
+        proj_timescale = "../../data/1bf5/{mut}/{sample}/analysis/003.pca/2dproj_timescale.csv",
+        gromos_index = "../../data/1bf5/{mut}/{sample}/analysis/005.clustering/gromos_clusters.ndx",
+    output: 
+        pca_gromos = report("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/pca_gromos_clusters.png", 
+            category="Clustering", subcategory="Gromos clustering", labels={"sample": "{mut} {sample} Overlay on gmx PCA"}),
+        pca_gromos_top10 = report("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/pca_gromos_clusters_top10.png", 
+            category="Clustering", subcategory="Gromos clustering", labels={"sample": "{mut} {sample} Overlay on gmx PCA, top 10 clusters"}),
+        gromos_clusters_freq = report("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/gromos_clusters_freq.png", 
+            category="Clustering", subcategory="Gromos clustering", labels={"sample": "{mut} {sample} Cluster frequencies"}),
+        gromos_clusters_freqcum = report("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/gromos_clusters_freq_cum.png", 
+            category="Clustering", subcategory="Gromos clustering", labels={"sample": "{mut} {sample} Cluster cumulative frequencies"}),
+    shell: 
+        """
+        python clustering_gromos.py \
+            {input.proj_timescale} \
+            {input.gromos_index} \
+            "../../data/1bf5/{wildcards.mut}/{wildcards.sample}/analysis/005.clustering" \
+        """
+
 rule clustering_pca_gmx:
     input: 
         proj_timescale = "../../data/1bf5/{mut}/{sample}/analysis/003.pca/2dproj_timescale.csv",
@@ -401,7 +473,6 @@ rule clustering_pca_gmx:
                         category="Clustering", subcategory="Hiearchical clustering", labels={"sample": "{mut} {sample} Overlay on gmx PCA"}),
         pca_gmx_kmeans = report("../../data/1bf5/{mut}/{sample}/analysis/005.clustering/pca_gmx_clusters_kmeans.png",
                          category="Clustering", subcategory="Kmeans clustering", labels={"sample": "{mut} {sample} Overlay on gmx PCA"}),
-
     shell:
         """
         python clustering_pca_gmx.py \
@@ -415,4 +486,26 @@ rule clustering_pca_gmx:
             {input.kmeans} \
             "kmeans" \
             "../../data/1bf5/{wildcards.mut}/{wildcards.sample}/analysis/005.clustering" \
+        """
+
+rule gbsa:
+    input: 
+        tpr = "../../data/1bf5/{mut}/{sample}/gromacs/md.tpr",
+        xtc = "../../data/1bf5/{mut}/{sample}/gromacs/md_noPBC_mol_com_cluster_fit.xtc",
+        top = "../../data/1bf5/{mut}/gromacs_common/topol.top",
+        index = "../../data/1bf5/{mut}/{sample}/gromacs/indexmd.ndx",
+    output: 
+        gbsa_info = "../../data/1bf5/{mut}/{sample}/analysis/006.gbsa/_GMXMMPBSA_info",
+        gbsa_final_results = "../../data/1bf5/{mut}/{sample}/analysis/006.gbsa/FINAL_RESULTS_MMPBSA.dat",
+        gbsa_final_decomp = "../../data/1bf5/{mut}/{sample}/analysis/006.gbsa/FINAL_DECOMP_MMPBSA.dat",
+        gbsa_energy = "../../data/1bf5/{mut}/{sample}/analysis/006.gbsa/FINAL_ENERGY.csv",
+        gbsa_energy_decomp = "../../data/1bf5/{mut}/{sample}/analysis/006.gbsa/FINAL_ENERGY_DECOMP.csv",
+    shell: 
+        """
+        bash MMPBSA.sh \
+            "md.tpr" \
+            "md_noPBC_mol_com_cluster_fit.xtc" \
+            "topol.top" \
+            "indexmd.ndx" \
+            "../../data/1bf5/{wildcards.mut}/{wildcards.sample}/analysis/006.gbsa"
         """

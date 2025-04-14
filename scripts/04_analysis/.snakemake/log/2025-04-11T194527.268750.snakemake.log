@@ -1,0 +1,112 @@
+host: Usopp
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided cores: 12
+Rules claiming more threads will be scaled down.
+Job stats:
+job                   count
+------------------  -------
+all                       1
+clustering_pca_gmx        1
+clustering_sklearn        1
+gbsa                      2
+total                     5
+
+Select jobs to execute...
+Execute 3 jobs...
+
+[Fri Apr 11 19:45:27 2025]
+localrule gbsa:
+    input: ../../data/1bf5/T419R/rep1/gromacs/md.tpr, ../../data/1bf5/T419R/rep1/gromacs/md_noPBC_mol_com_cluster_fit.xtc, ../../data/1bf5/T419R/gromacs_common/topol.top, ../../data/1bf5/T419R/rep1/gromacs/indexmd.ndx
+    output: ../../data/1bf5/T419R/rep1/analysis/006.gbsa/_GMXMMPBSA_info, ../../data/1bf5/T419R/rep1/analysis/006.gbsa/FINAL_RESULTS_MMPBSA.dat, ../../data/1bf5/T419R/rep1/analysis/006.gbsa/FINAL_DECOMP_MMPBSA.dat, ../../data/1bf5/T419R/rep1/analysis/006.gbsa/FINAL_ENERGY.csv, ../../data/1bf5/T419R/rep1/analysis/006.gbsa/FINAL_ENERGY_DECOMP.csv
+    jobid: 42
+    reason: Missing output files: ../../data/1bf5/T419R/rep1/analysis/006.gbsa/FINAL_DECOMP_MMPBSA.dat, ../../data/1bf5/T419R/rep1/analysis/006.gbsa/FINAL_ENERGY_DECOMP.csv, ../../data/1bf5/T419R/rep1/analysis/006.gbsa/_GMXMMPBSA_info, ../../data/1bf5/T419R/rep1/analysis/006.gbsa/FINAL_RESULTS_MMPBSA.dat, ../../data/1bf5/T419R/rep1/analysis/006.gbsa/FINAL_ENERGY.csv
+    wildcards: mut=T419R, sample=rep1
+    resources: tmpdir=/tmp
+
+
+[Fri Apr 11 19:45:27 2025]
+localrule clustering_sklearn:
+    input: ../../data/1bf5/T419R/rep1/gromacs/md_sys.pdb, ../../data/1bf5/T419R/rep1/gromacs/md_noPBC_mol_com_cluster_fit.xtc
+    output: ../../data/1bf5/T419R/rep1/analysis/005.clustering/analysis_summary.txt, ../../data/1bf5/T419R/rep1/analysis/005.clustering/hclust_labels.csv, ../../data/1bf5/T419R/rep1/analysis/005.clustering/kmeans_labels.csv, ../../data/1bf5/T419R/rep1/analysis/005.clustering/hclust_cluster_timeline.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/kmeans_cluster_timeline.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/umap_3d_timeline.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/umap_hclust_clusters.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/umap_kmeans_clusters.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/umap_optimization.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/pca_sklearn_clusters_hclust.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/pca_sklearn_clusters_kmeans.png
+    jobid: 34
+    reason: Missing output files: ../../data/1bf5/T419R/rep1/analysis/005.clustering/kmeans_labels.csv, ../../data/1bf5/T419R/rep1/analysis/005.clustering/pca_sklearn_clusters_hclust.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/hclust_labels.csv, ../../data/1bf5/T419R/rep1/analysis/005.clustering/umap_kmeans_clusters.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/umap_3d_timeline.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/kmeans_cluster_timeline.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/umap_hclust_clusters.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/analysis_summary.txt, ../../data/1bf5/T419R/rep1/analysis/005.clustering/hclust_cluster_timeline.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/pca_sklearn_clusters_kmeans.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/umap_optimization.png
+    wildcards: mut=T419R, sample=rep1
+    resources: tmpdir=/tmp
+
+
+[Fri Apr 11 19:45:27 2025]
+localrule gbsa:
+    input: ../../data/1bf5/wt/rep1/gromacs/md.tpr, ../../data/1bf5/wt/rep1/gromacs/md_noPBC_mol_com_cluster_fit.xtc, ../../data/1bf5/wt/gromacs_common/topol.top, ../../data/1bf5/wt/rep1/gromacs/indexmd.ndx
+    output: ../../data/1bf5/wt/rep1/analysis/006.gbsa/_GMXMMPBSA_info, ../../data/1bf5/wt/rep1/analysis/006.gbsa/FINAL_RESULTS_MMPBSA.dat, ../../data/1bf5/wt/rep1/analysis/006.gbsa/FINAL_DECOMP_MMPBSA.dat, ../../data/1bf5/wt/rep1/analysis/006.gbsa/FINAL_ENERGY.csv, ../../data/1bf5/wt/rep1/analysis/006.gbsa/FINAL_ENERGY_DECOMP.csv
+    jobid: 41
+    reason: Missing output files: ../../data/1bf5/wt/rep1/analysis/006.gbsa/FINAL_DECOMP_MMPBSA.dat, ../../data/1bf5/wt/rep1/analysis/006.gbsa/FINAL_RESULTS_MMPBSA.dat, ../../data/1bf5/wt/rep1/analysis/006.gbsa/FINAL_ENERGY_DECOMP.csv, ../../data/1bf5/wt/rep1/analysis/006.gbsa/FINAL_ENERGY.csv, ../../data/1bf5/wt/rep1/analysis/006.gbsa/_GMXMMPBSA_info
+    wildcards: mut=wt, sample=rep1
+    resources: tmpdir=/tmp
+
+RuleException:
+CalledProcessError in file /home/irati/Thesis/main/scripts/04_analysis/Snakefile, line 504:
+Command 'set -euo pipefail;  
+        bash gbsa.sh             "md.tpr"             "md_noPBC_mol_com_cluster_fit.xtc"             "topol.top"             "indexmd.ndx"             "../../data/1bf5/T419R/rep1/analysis/006.gbsa"' returned non-zero exit status 127.
+[Fri Apr 11 19:45:27 2025]
+Error in rule gbsa:
+    jobid: 42
+    input: ../../data/1bf5/T419R/rep1/gromacs/md.tpr, ../../data/1bf5/T419R/rep1/gromacs/md_noPBC_mol_com_cluster_fit.xtc, ../../data/1bf5/T419R/gromacs_common/topol.top, ../../data/1bf5/T419R/rep1/gromacs/indexmd.ndx
+    output: ../../data/1bf5/T419R/rep1/analysis/006.gbsa/_GMXMMPBSA_info, ../../data/1bf5/T419R/rep1/analysis/006.gbsa/FINAL_RESULTS_MMPBSA.dat, ../../data/1bf5/T419R/rep1/analysis/006.gbsa/FINAL_DECOMP_MMPBSA.dat, ../../data/1bf5/T419R/rep1/analysis/006.gbsa/FINAL_ENERGY.csv, ../../data/1bf5/T419R/rep1/analysis/006.gbsa/FINAL_ENERGY_DECOMP.csv
+    shell:
+        
+        bash gbsa.sh             "md.tpr"             "md_noPBC_mol_com_cluster_fit.xtc"             "topol.top"             "indexmd.ndx"             "../../data/1bf5/T419R/rep1/analysis/006.gbsa"
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+RuleException:
+CalledProcessError in file /home/irati/Thesis/main/scripts/04_analysis/Snakefile, line 504:
+Command 'set -euo pipefail;  
+        bash gbsa.sh             "md.tpr"             "md_noPBC_mol_com_cluster_fit.xtc"             "topol.top"             "indexmd.ndx"             "../../data/1bf5/wt/rep1/analysis/006.gbsa"' returned non-zero exit status 127.
+[Fri Apr 11 19:45:27 2025]
+Error in rule gbsa:
+    jobid: 41
+    input: ../../data/1bf5/wt/rep1/gromacs/md.tpr, ../../data/1bf5/wt/rep1/gromacs/md_noPBC_mol_com_cluster_fit.xtc, ../../data/1bf5/wt/gromacs_common/topol.top, ../../data/1bf5/wt/rep1/gromacs/indexmd.ndx
+    output: ../../data/1bf5/wt/rep1/analysis/006.gbsa/_GMXMMPBSA_info, ../../data/1bf5/wt/rep1/analysis/006.gbsa/FINAL_RESULTS_MMPBSA.dat, ../../data/1bf5/wt/rep1/analysis/006.gbsa/FINAL_DECOMP_MMPBSA.dat, ../../data/1bf5/wt/rep1/analysis/006.gbsa/FINAL_ENERGY.csv, ../../data/1bf5/wt/rep1/analysis/006.gbsa/FINAL_ENERGY_DECOMP.csv
+    shell:
+        
+        bash gbsa.sh             "md.tpr"             "md_noPBC_mol_com_cluster_fit.xtc"             "topol.top"             "indexmd.ndx"             "../../data/1bf5/wt/rep1/analysis/006.gbsa"
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Terminating processes on user request, this might take some time.
+RuleException:
+CalledProcessError in file /home/irati/Thesis/main/scripts/04_analysis/Snakefile, line 397:
+Command 'set -euo pipefail;  
+        outdir="../../data/1bf5/T419R/rep1/analysis/005.clustering"
+
+        if [ ! -d "$outdir" ]; then
+            mkdir "$outdir"
+            echo "Creating directory: $outdir"
+        else
+            echo "Directory already exists: $outdir"
+        fi
+
+        python clustering_sklearn.py             ../../data/1bf5/T419R/rep1/gromacs/md_sys.pdb             ../../data/1bf5/T419R/rep1/gromacs/md_noPBC_mol_com_cluster_fit.xtc             "../../data/1bf5/T419R/rep1/analysis/005.clustering"' died with <Signals.SIGINT: 2>.
+[Fri Apr 11 19:47:15 2025]
+Error in rule clustering_sklearn:
+    jobid: 34
+    input: ../../data/1bf5/T419R/rep1/gromacs/md_sys.pdb, ../../data/1bf5/T419R/rep1/gromacs/md_noPBC_mol_com_cluster_fit.xtc
+    output: ../../data/1bf5/T419R/rep1/analysis/005.clustering/analysis_summary.txt, ../../data/1bf5/T419R/rep1/analysis/005.clustering/hclust_labels.csv, ../../data/1bf5/T419R/rep1/analysis/005.clustering/kmeans_labels.csv, ../../data/1bf5/T419R/rep1/analysis/005.clustering/hclust_cluster_timeline.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/kmeans_cluster_timeline.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/umap_3d_timeline.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/umap_hclust_clusters.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/umap_kmeans_clusters.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/umap_optimization.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/pca_sklearn_clusters_hclust.png, ../../data/1bf5/T419R/rep1/analysis/005.clustering/pca_sklearn_clusters_kmeans.png
+    shell:
+        
+        outdir="../../data/1bf5/T419R/rep1/analysis/005.clustering"
+
+        if [ ! -d "$outdir" ]; then
+            mkdir "$outdir"
+            echo "Creating directory: $outdir"
+        else
+            echo "Directory already exists: $outdir"
+        fi
+
+        python clustering_sklearn.py             ../../data/1bf5/T419R/rep1/gromacs/md_sys.pdb             ../../data/1bf5/T419R/rep1/gromacs/md_noPBC_mol_com_cluster_fit.xtc             "../../data/1bf5/T419R/rep1/analysis/005.clustering"         
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Complete log: .snakemake/log/2025-04-11T194527.268750.snakemake.log
+WorkflowError:
+At least one job did not complete successfully.

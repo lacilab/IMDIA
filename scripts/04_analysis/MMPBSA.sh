@@ -1,21 +1,32 @@
-# Script to automate gmx
+#!/bin/bash
 
-for dir in */; do
-    cd $dir
-    echo "$dir"
-    mkdir MMPBSA_results
-    for run_dir in 2_run 2_run_second 2_run_third; do
-	cd "$run_dir"
-	echo "$run_dir"
-    	cp ../../mmpbsa.in .
-    	mpirun -np 120 gmx_MMPBSA MPI -i mmpbsa.in -cs md.tpr -ci index_mmpbsa_adjusted.ndx -cg 28 29 -ct md_mmpbsa.xtc -cp topol.top -nogui &
-    	wait $!
-    	dirname=$(basename `pwd`)
-    	cp FINAL_RESULTS_MMPBSA.dat MMPBSA_$dirname.dat
-    	cp MMPBSA_*.dat ../MMPBSA_results
-    	cd ..
-    done
-    cd ..
-done
+source activate base
+conda activate gmxMMPBSA
 
-echo "The automated calculation has finished"
+if [ $# -ne 5 ]; then
+    echo "Usage: $0 tpr xtc top index outdir"
+    exit 1
+fi
+
+tpr=$1
+xtc=$2
+top=$3
+index=$4
+outdir=$5
+oridir=$(pwd)
+
+if [ ! -d "$outdir" ]; then
+    mkdir "$outdir"
+    echo "Creating directory: $outdir"
+else
+    echo "Directory already exists: $outdir"
+fi
+
+cp mmpbsa.in "$outdir"
+cd "$outdir"
+
+mpirun --use-hwthread-cpus -np 12 gmx_MMPBSA -i mmpbsa.in -cs "../../gromacs/$tpr" -ci "../../gromacs/$index" -cg DNA Protein_PTR \
+    -ct "../../gromacs/$xtc" -cp "../../../gromacs_common/$top" -nogui -eo FINAL_ENERGY.csv -deo FINAL_ENERGY_DECOMP.csv
+
+
+rm mmpbsa.in

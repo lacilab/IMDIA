@@ -1,0 +1,77 @@
+host: Usopp
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided cores: 12
+Rules claiming more threads will be scaled down.
+Job stats:
+job                  count
+-----------------  -------
+all                      1
+clustering_gromos        1
+total                    2
+
+Select jobs to execute...
+Execute 1 jobs...
+
+[Wed Apr  9 18:36:49 2025]
+localrule clustering_gromos:
+    input: ../../data/1bf5/wt/rep1/analysis/003.pca/2dproj_timescale.csv, ../../data/1bf5/wt/rep1/gromacs/md.tpr, ../../data/1bf5/wt/rep1/gromacs/md_noPBC_mol_com_cluster_fit.xtc
+    output: ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters.ndx, ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters.xpm, ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters.log, ../../data/1bf5/wt/rep1/analysis/005.clustering/pca_gromos_clusters.png, ../../data/1bf5/wt/rep1/analysis/005.clustering/pca_gromos_clusters_top10.png, ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters_freq.png, ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters_freqcum.png
+    jobid: 19
+    reason: Missing output files: ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters.ndx, ../../data/1bf5/wt/rep1/analysis/005.clustering/pca_gromos_clusters_top10.png, ../../data/1bf5/wt/rep1/analysis/005.clustering/pca_gromos_clusters.png, ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters_freq.png, ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters.log, ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters_freqcum.png, ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters.xpm
+    wildcards: mut=wt, sample=rep1
+    resources: tmpdir=/tmp
+
+Terminating processes on user request, this might take some time.
+RuleException:
+CalledProcessError in file /home/irati/Thesis/main/scripts/04_analysis/Snakefile, line 423:
+Command 'set -euo pipefail;  
+        bash -c '
+        outdir="../../data/1bf5/wt/rep1/analysis/005.clustering"
+
+        if [ ! -d "$outdir" ]; then
+            mkdir "$outdir"
+            echo "Creating directory: $outdir"
+        else
+            echo "Directory already exists: $outdir"
+        fi
+
+        source /opt/gromacs/gromacs_2024/bin/GMXRC.bash
+
+        gmx cluster -f ../../data/1bf5/wt/rep1/gromacs/md_noPBC_mol_com_cluster_fit.xtc -s ../../data/1bf5/wt/rep1/gromacs/md.tpr -method gromos             -cutoff 0.2 -o ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters.xpm -g ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters.log -clndx ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters.ndx << EOL
+        C-alpha
+        C-alpha
+        EOL
+
+        python clustering_gromos.py             ../../data/1bf5/wt/rep1/analysis/003.pca/2dproj_timescale.csv             ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters.ndx             "../../data/1bf5/wt/rep1/analysis/005.clustering"         '' died with <Signals.SIGINT: 2>.
+[Wed Apr  9 18:36:57 2025]
+Error in rule clustering_gromos:
+    jobid: 19
+    input: ../../data/1bf5/wt/rep1/analysis/003.pca/2dproj_timescale.csv, ../../data/1bf5/wt/rep1/gromacs/md.tpr, ../../data/1bf5/wt/rep1/gromacs/md_noPBC_mol_com_cluster_fit.xtc
+    output: ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters.ndx, ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters.xpm, ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters.log, ../../data/1bf5/wt/rep1/analysis/005.clustering/pca_gromos_clusters.png, ../../data/1bf5/wt/rep1/analysis/005.clustering/pca_gromos_clusters_top10.png, ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters_freq.png, ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters_freqcum.png
+    shell:
+        
+        bash -c '
+        outdir="../../data/1bf5/wt/rep1/analysis/005.clustering"
+
+        if [ ! -d "$outdir" ]; then
+            mkdir "$outdir"
+            echo "Creating directory: $outdir"
+        else
+            echo "Directory already exists: $outdir"
+        fi
+
+        source /opt/gromacs/gromacs_2024/bin/GMXRC.bash
+
+        gmx cluster -f ../../data/1bf5/wt/rep1/gromacs/md_noPBC_mol_com_cluster_fit.xtc -s ../../data/1bf5/wt/rep1/gromacs/md.tpr -method gromos             -cutoff 0.2 -o ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters.xpm -g ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters.log -clndx ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters.ndx << EOL
+        C-alpha
+        C-alpha
+        EOL
+
+        python clustering_gromos.py             ../../data/1bf5/wt/rep1/analysis/003.pca/2dproj_timescale.csv             ../../data/1bf5/wt/rep1/analysis/005.clustering/gromos_clusters.ndx             "../../data/1bf5/wt/rep1/analysis/005.clustering"         '
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Complete log: .snakemake/log/2025-04-09T183649.532514.snakemake.log
+WorkflowError:
+At least one job did not complete successfully.

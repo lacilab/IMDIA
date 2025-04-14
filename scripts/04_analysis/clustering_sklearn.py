@@ -123,7 +123,7 @@ def optimize_umap_parameters(coords: np.ndarray, config: Dict) -> Dict:
     
     progress.close()
     
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(12, 8))
     results_df = pd.DataFrame(results)
     pivot_table = results_df.pivot(index='n_neighbors', columns='min_dist', values='correlation')
     sns.heatmap(pivot_table, annot=True, cmap='viridis', fmt='.3f')
@@ -276,7 +276,7 @@ def create_visualizations(
     print("Creating visualizations...")
     os.makedirs(config['output_dir'], exist_ok=True)
     
-    plt.figure(figsize=(12, 8))
+    plt.figure(figsize=(10, 6))
     scatter = plt.scatter(
         embedded_coords[:, 0],
         embedded_coords[:, 1],
@@ -292,15 +292,15 @@ def create_visualizations(
         s=200,
         label='Centroid Frames'
     )
-    plt.title('UMAP Clustering of Binding Site Conformations (K-means, 2D Projection)')
+    plt.title('UMAP Clustering (K-means, 2D Projection)')
     plt.xlabel('UMAP 1')
     plt.ylabel('UMAP 2')
-    plt.colorbar(scatter, label='Cluster')
+    # plt.colorbar(scatter, label='Cluster')
     plt.legend()
     plt.savefig(f"{config['output_dir']}/umap_kmeans_clusters.png", dpi=300, bbox_inches='tight')
     plt.close()
 
-    plt.figure(figsize=(12, 8))
+    plt.figure(figsize=(10, 6))
     scatter_hclust = plt.scatter(
         embedded_coords[:, 0],
         embedded_coords[:, 1],
@@ -316,10 +316,10 @@ def create_visualizations(
         s=200,
         label='Centroid Frames'
     )
-    plt.title(f"UMAP Clustering of Binding Site Conformations (Hierarchical, {config['clustering_params']['hclust_linkage'].capitalize()}, 2D Projection)")
+    plt.title(f"UMAP Clustering (Hierarchical, {config['clustering_params']['hclust_linkage'].capitalize()}, 2D Projection)")
     plt.xlabel('UMAP 1')
     plt.ylabel('UMAP 2')
-    plt.colorbar(scatter_hclust, label='Cluster')
+    # plt.colorbar(scatter_hclust, label='Cluster')
     plt.legend()
     plt.savefig(f"{config['output_dir']}/umap_hclust_clusters.png", dpi=300, bbox_inches='tight')
     plt.close()
@@ -385,16 +385,16 @@ def pca(embedded_coords: np.ndarray, labels: np.ndarray, cluster_alg: str = ''):
     pca_coords = pca.fit_transform(embedded_coords) 
 
     # Plot PCA with hierarchical cluster labels
-    plt.figure(figsize=(12, 8))
+    plt.figure(figsize=(10, 6))
     scatter = plt.scatter(
         pca_coords[:, 0], pca_coords[:, 1],
         c=labels, 
         cmap='tab20', alpha=0.6
     )
-    plt.title('PCA with Hierarchical Clustering')
+    plt.title(f'sklearn PCA with {cluster_alg} Clustering')
     plt.xlabel('PCA 1')
     plt.ylabel('PCA 2')
-    plt.colorbar(scatter, label='Cluster')
+    # plt.colorbar(scatter, label='Cluster')
     plt.savefig(f"{CONFIG['output_dir']}/pca_sklearn_clusters_{cluster_alg}.png", dpi=300, bbox_inches='tight')
     plt.close()
 
