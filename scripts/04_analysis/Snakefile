@@ -23,9 +23,6 @@ print(mut_sample_pairs)
 mut_sample_pairs = [('wt', 'rep1'),('wt', 'rep2'), ('wt', 'rep3'), 
                    ('T419R', 'rep1'), ('T419R', 'rep2'), ('T419R', 'rep3')]
 
-mut_sample_pairs = [('wt', 'rep1'),('wt', 'rep2'),
-                   ('T419R', 'rep1'),('T419R', 'rep2')]
-
 print(mut_sample_pairs)
 mutations, samples = zip(*mut_sample_pairs)
 
