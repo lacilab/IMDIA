@@ -16,6 +16,7 @@ timeseries_full_png = sys.argv[3]
 timeseries_dbd_csv = sys.argv[4]
 timeseries_dbd_png = sys.argv[5]
 pairs_dbd_csv = sys.argv[6]
+pairs_full_csv = sys.argv[7]
 
 # Parameters
 cutoff = 5.0  # Distance cutoff in Å
@@ -75,32 +76,43 @@ plt.close()
 
 ##### Distance by residue pairs
 
-# List to store contact data
-contact_data = []
+def contact_pairs(sel1, sel2):
+    # List to store contact data
+    contact_data = []
 
-# Loop over trajectory
-for ts in u.trajectory[start_frame:stop_frame]:
-    frame = ts.frame
-    # Calculate distance matrix between sel1 and sel2
-    dist_matrix = distance_array(sel1_dbd.positions, sel2.positions, box=u.dimensions)
-    
-    # Find pairs within cutoff
-    close_pairs = np.where(dist_matrix <= cutoff)
-    
-    # Collect contact details
-    for i, j in zip(close_pairs[0], close_pairs[1]):
-        atom1 = sel1_dbd[i]
-        atom2 = sel2[j]
-        contact = {
-            "frame": frame,
-            "sel1_resid": f"{atom1.resid}", 
-            "sel1_resnm": f"{atom1.resname}", 
-            "sel2_resid": f"{atom2.resid}", 
-            "sel2_resnm": f"{atom2.resname}",
-            "distance": dist_matrix[i, j]
-        }
-        contact_data.append(contact)
+    # Loop over trajectory
+    for ts in u.trajectory[start_frame:stop_frame]:
+        frame = ts.frame
+        # Calculate distance matrix between sel1 and sel2
+        dist_matrix = distance_array(sel1.positions, sel2.positions, box=u.dimensions)
+        
+        # Find pairs within cutoff
+        close_pairs = np.where(dist_matrix <= cutoff)
+        
+        # Collect contact details
+        for i, j in zip(close_pairs[0], close_pairs[1]):
+            atom1 = sel1[i]
+            atom2 = sel2[j]
+            contact = {
+                "frame": frame,
+                "sele1_resid": f"{atom1.resid}", 
+                "sele1_resnm": f"{atom1.resname}", 
+                "sele1_chain": f"{atom1.segid}",
+                "sele2_resid": f"{atom2.resid}", 
+                "sele2_resnm": f"{atom2.resname}",
+                "sele2_chain": f"{atom2.segid}",
+                "distance": dist_matrix[i, j]
+            }
+            contact_data.append(contact)
+    return pd.DataFrame(contact_data)
 
+
+# Full protein
 # Create DataFrame
-contacts_df = pd.DataFrame(contact_data)
+contacts_df = contact_pairs(sel1_full, sel2)
+contacts_df.to_csv(pairs_full_csv, index=False)
+
+
+# DBD
+contacts_df = contact_pairs(sel1_dbd, sel2)
 contacts_df.to_csv(pairs_dbd_csv, index=False)
