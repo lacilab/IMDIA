@@ -96,7 +96,7 @@ if section == "QC":
         y_min, y_max = float('inf'), float('-inf')
         if not isinstance(file, tuple):
             for rep in SAMPLE_DIRS[:4]:
-                file_path = Path(BASE_DIR) / mut / rep / "analysis" / "001.qc" / file
+                file_path = Path(BASE_DIR) / mut / rep / "analysis" / "001_qc" / file
                 if file_path.exists():
                     df = pd.read_csv(file_path)
                     for col in y_col_to_plot:
@@ -106,8 +106,8 @@ if section == "QC":
         else:
             for rep in SAMPLE_DIRS[:4]:
                 rmsd_file, radius_file = file
-                rmsd_path = Path(BASE_DIR) / mut / rep / "analysis" / "001.qc" / rmsd_file
-                radius_path = Path(BASE_DIR) / mut / rep / "analysis" / "001.qc" / radius_file
+                rmsd_path = Path(BASE_DIR) / mut / rep / "analysis" / "001_qc" / rmsd_file
+                radius_path = Path(BASE_DIR) / mut / rep / "analysis" / "001_qc" / radius_file
                 if rmsd_path.exists() and radius_path.exists():
                     df_radius = pd.read_csv(radius_path)
                     y_min = min(y_min, df_radius['all'].min())
@@ -127,7 +127,7 @@ if section == "QC":
 
         # Plot for each rep
         for i, rep in enumerate(SAMPLE_DIRS[:4]):
-            data_dir = Path(BASE_DIR) / mut / rep / "analysis" / "001.qc"
+            data_dir = Path(BASE_DIR) / mut / rep / "analysis" / "001_qc"
 
             if isinstance(file, tuple):
                 rmsd_file, radius_file = file
@@ -188,7 +188,7 @@ if section == "QC":
                 col = row2_col2
             col.plotly_chart(fig, use_container_width=True)
 
-    st.write(f"Data sourced from: {BASE_DIR}/<mut>/<rep>/analysis/001.qc")
+    st.write(f"Data sourced from: {BASE_DIR}/<mut>/<rep>/analysis/001_qc")
 
 # Section: PCA
 elif section == "PCA":
@@ -217,7 +217,7 @@ elif section == "Hydrogen Bonds":
         if view_type == "Filtered Plot":
             with st.sidebar:
                 st.subheader(f"Filter Options for {mut}")
-                sample_file = Path(BASE_DIR) / mut / SAMPLE_DIRS[0] / "analysis" / "002.hbonds" / "hbonds_mda_ext.csv"
+                sample_file = Path(BASE_DIR) / mut / SAMPLE_DIRS[0] / "analysis" / "002_hbonds" / "hbonds_mda_ext.csv"
                 if sample_file.exists():
                     sample_df = pd.read_csv(sample_file)
                     donor_types = sorted(sample_df['donor_type'].unique())
@@ -231,7 +231,7 @@ elif section == "Hydrogen Bonds":
         
             st.subheader(f"Hydrogen Bonds for {mut}")
             for i, rep in enumerate(SAMPLE_DIRS[:3]):
-                data_dir = Path(BASE_DIR) / mut / rep / "analysis" / "002.hbonds"
+                data_dir = Path(BASE_DIR) / mut / rep / "analysis" / "002_hbonds"
                 file_path = data_dir / "hbonds_mda_ext.csv"
                 if file_path.exists():
                     hbonds_df = pd.read_csv(file_path)
@@ -287,7 +287,7 @@ elif section == "Hydrogen Bonds":
         else:
             st.subheader(f"{title} for {mut}")
             for i, rep in enumerate(SAMPLE_DIRS[:3]):
-                data_dir = Path(BASE_DIR) / mut / rep / "analysis" / "002.hbonds"
+                data_dir = Path(BASE_DIR) / mut / rep / "analysis" / "002_hbonds"
                 file_path = data_dir / file
                 if file_path.exists():
                     df = pd.read_csv(file_path)
@@ -303,10 +303,10 @@ elif section == "Hydrogen Bonds":
                 else:
                     st.warning(f"Data file not found for {mut} {rep}: {file_path}")
     
-    st.write(f"Data sourced from: {BASE_DIR}/<mut>/<rep>/analysis/002.hbonds")
+    st.write(f"Data sourced from: {BASE_DIR}/<mut>/<rep>/analysis/002_hbonds")
 
 elif section == "Test zone":
-    df = pd.read_csv(f'{BASE_DIR}/wt/rep0/analysis/002.hbonds/hbonds_mda_ext.csv')
+    df = pd.read_csv(f'{BASE_DIR}/wt/rep0/analysis/002_hbonds/hbonds_mda_ext.csv')
     # Display the DataFrame in an AgGrid table
     table = AgGrid(df)
     

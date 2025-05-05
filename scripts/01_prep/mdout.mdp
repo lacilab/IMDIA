@@ -2,7 +2,7 @@
 ;	File 'mdout.mdp' was generated
 ;	By user: irati (1001)
 ;	On host: Usopp
-;	At date: Mon Mar 24 17:03:47 2025
+;	At date: Mon May  5 15:35:59 2025
 ;
 ;	Created by:
 ;	                     :-) GROMACS - gmx grompp, 2024.3 (-:
@@ -11,7 +11,7 @@
 ;	Data prefix:  /opt/gromacs/gromacs_2024
 ;	Working dir:  /home/irati/Thesis/main/scripts/01_prep
 ;	Command line:
-;	  gmx grompp -f ../../data/1bf5/T419R/gromacs_common/ions.mdp -c ../../data/1bf5/T419R/gromacs_common/updated_gromacs.gro -p ../../data/1bf5/T419R/gromacs_common/topol.top -o ../../data/1bf5/T419R/gromacs_common/ions.tpr -quiet -maxwarn 1
+;	  gmx grompp -f /home/irati/Thesis/main/data/1bf5/S466R/gromacs_common/ions.mdp -c /home/irati/Thesis/main/data/1bf5/S466R/gromacs_common/updated_gromacs.gro -p /home/irati/Thesis/main/data/1bf5/S466R/gromacs_common/topol.top -o /home/irati/Thesis/main/data/1bf5/S466R/gromacs_common/ions.tpr -quiet -maxwarn 1
 
 ; VARIOUS PREPROCESSING OPTIONS
 ; Preprocessor information: use cpp syntax.
@@ -175,7 +175,7 @@ annealing-temp           =
 ; GENERATE VELOCITIES FOR STARTUP RUN
 gen-vel                  = no
 gen-temp                 = 300
-gen-seed                 = -67436545
+gen-seed                 = -2023101569
 
 ; OPTIONS FOR BONDS    
 constraints              = none

@@ -17,14 +17,14 @@ file=$2
 # Remove lines starting with CONECT 
 sed '/^CONECT/d' "$datadir/${file}.pdb" > "$datadir/${file}_noconect.pdb"
 
-mkdir -p "$datadir/AmberTools"
-mv "$datadir/${file}_noconect.pdb" "$datadir/AmberTools/"
+mkdir -p "$datadir/amber"
+mv "$datadir/${file}_noconect.pdb" "$datadir/amber/"
 
 ########## PREPARATION ##########
 
 # AmberTools preparation
-cp prep_01_amber.py "$datadir/AmberTools/"
-cd "$datadir/AmberTools/"
+cp prep_01_amber.py "$datadir/amber/"
+cd "$datadir/amber/"
 python prep_01_amber.py "${file}_noconect"
 rm prep_01_amber.py
 cd $oridir
@@ -32,8 +32,8 @@ cd $oridir
 # Convert to Gromacs format with parmed
 mkdir "$datadir/gromacs_common"
 gmxdir="$datadir/gromacs_common"
-python prep_02_amb2gro.py -p "${datadir}/AmberTools/${file}_noconect_protonated_solvated.prmtop" \
-    -c "$datadir/AmberTools/${file}_noconect_protonated_solvated.inpcrd" \
+python prep_02_amb2gro.py -p "${datadir}/amber/${file}_noconect_protonated_solvated.prmtop" \
+    -c "$datadir/amber/${file}_noconect_protonated_solvated.inpcrd" \
     -t "$gmxdir/topol.top" \
     -g "$gmxdir/gromacs.gro" \
 #     -b "$gmxdir/gromacs.pdb"
