@@ -1,4 +1,5 @@
 data/*
+.vscode/*
 
 scripts/04_analysis/.snakemake/*
 
