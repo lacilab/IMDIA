@@ -1,1 +1,12 @@
 data/*
+
+motif_analysis/1h/model_agnostic/DEGs_refIFNg/*
+motif_analysis/1h/model_agnostic/plotsV/*
+motif_analysis/1h/model_agnostic/up_IFNg_vs_WT_IFNg/*
+
+motif_analysis/1h/model_group/up_IFNg/*
+motif_analysis/1h/model_group/Upregulated_/*
+motif_analysis/1h/model_group/Volcano_/*
+
+motif_analysis/4h/*/
+
