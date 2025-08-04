@@ -7,7 +7,7 @@ sample=$2
 gmxdir="../../data/1bf5/$mut/$sample/gromacs"
 cd "$gmxdir"
 
-outdir="../analysis/002.hbonds"
+outdir="../analysis/002_hbonds"
 
 if [ ! -d "$outdir" ]; then
     mkdir "$outdir"
@@ -16,12 +16,6 @@ else
     echo "Directory already exists: $outdir"
 fi
 
-
-# Create group Protein_PTR
-gmx make_ndx -f md.gro -n index.ndx -o indexmd.ndx -quiet << EOL
-1 | 13
-quit
-EOL
 
 
 # Select 22-Protein_PTR and 19-DNA

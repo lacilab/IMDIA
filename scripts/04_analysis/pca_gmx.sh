@@ -47,17 +47,20 @@ vim 2dproj_1_2.xvg << EOL
 EOL
 
 #STEP 5: merge timescale into 2dproj_1_2.xvg
-paste 2dproj_1_2.xvg timescale.csv  > 2dproj_timescale.csv
+# paste 2dproj_1_2.xvg timescale.csv  > 2dproj_timescale.csv
+awk 'NR==FNR {t[NR]=$1; next} {printf "%.5f,%.5f,%.5f\n", $1*10, $2*10, t[FNR]/1000}' timescale.csv 2dproj_1_2.xvg > 2dproj_timescale.csv
+
 
 #STEP 6: plot PCA 2D projection
 gnuplot << EOL
 set terminal png size 600, 400
 set output '2D_projection_1_2.png'
-set title '2D-projection' 
-set ylabel 'projection on eigenvector 2 (nm)'
-set xlabel 'projection on eigenvector 1 (nm)' 
+set title 'PCA 2D-projection' 
+set ylabel 'PC2 (Å)'
+set xlabel 'PC1 (Å)' 
 set grid
 unset key
+set datafile separator ","
 set palette defined ( 0 "#000090",\
         1 "#000fff",\
         2 "#0090ff",\
@@ -67,6 +70,7 @@ set palette defined ( 0 "#000090",\
         6 "#ff7000",\
         7 "#ee0000",\
         8 "#7f0000")
+set cblabel 'Time (ns)'
 plot '2dproj_timescale.csv' u 1:2:3 with points palette
 quit
 EOL

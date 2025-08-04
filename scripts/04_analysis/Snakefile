@@ -1,29 +1,29 @@
-MUT = ['wt', 'T419R']
+#MUT = ['wt', 'T419R']
 METHODS_HBONDS = ['gmx', 'mda']
 # METHODS_HBONDS = ['gmx']
 
 # List to store mutation-sample pairs as tuples
-mut_sample_pairs = []
+#mut_sample_pairs = []
 
 # Get first-level directories starting with rep for each mutation in MUT
-for mutation in MUT:
-    sample_names = [d for d in os.listdir(f"../../data/1bf5/{mutation}/") 
-                   if os.path.isdir(os.path.join(f"../../data/1bf5/{mutation}/", d)) 
-                   and d.startswith("rep")]
-    # Create pairs for this mutation
-    for sample in sample_names:
-        mut_sample_pairs.append((mutation, sample))
+#for mutation in MUT:
+#    sample_names = [d for d in os.listdir(f"../../data/1bf5/{mutation}/") 
+#                   if os.path.isdir(os.path.join(f"../../data/1bf5/{mutation}/", d)) 
+#                   and d.startswith("rep")]
+#    # Create pairs for this mutation
+#    for sample in sample_names:
+#        mut_sample_pairs.append((mutation, sample))
 
 # Print the pairs
-for mutation, sample in mut_sample_pairs:
-    print(f"Mutation: {mutation}, Sample: {sample}")
+#for mutation, sample in mut_sample_pairs:
+#    print(f"Mutation: {mutation}, Sample: {sample}")
+#
+#print(mut_sample_pairs)
 
-print(mut_sample_pairs)
+mut_sample_pairs = [('T419R', 'rep3')]
 
-mut_sample_pairs = [('wt', 'rep1'),('wt', 'rep2'), ('wt', 'rep3'), 
-                   ('T419R', 'rep1'), ('T419R', 'rep2'), ('T419R', 'rep3')]
 
-print(mut_sample_pairs)
+# print(mut_sample_pairs)
 mutations, samples = zip(*mut_sample_pairs)
 
 # METHODS_HBONDS = ["gmx"]
@@ -77,6 +77,7 @@ rule all:
 
         hbonds_pymol = expand("../../data/1bf5/{mut}/{sample}/analysis/002_hbonds/hbonds_{method}_pymol.txt", mut=mutations, sample=samples, zip=True, method=METHODS_HBONDS),
 
+        # WATER BRIDGES
         water_bridges = expand("../../data/1bf5/{mut}/{sample}/analysis/002_hbonds/waterbridges.csv", mut=mutations, sample=samples, zip=True),
 
         # CONTACTS
@@ -97,33 +98,33 @@ rule all:
         porcupine = expand("../../data/1bf5/{mut}/{sample}/analysis/003_pca/porcupine.png", mut=mutations, sample=samples, zip=True),
 
         # CLUSTERING
-        # summary = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/analysis_summary.txt", mut=mutations, sample=samples, zip=True),
-        # hclust = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/hclust_labels.csv", mut=mutations, sample=samples, zip=True),
-        # kmeans = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/kmeans_labels.csv", mut=mutations, sample=samples, zip=True),
-        # hclust_timeline = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/hclust_cluster_timeline.png", mut=mutations, sample=samples, zip=True),
-        # kmeans_timeline = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/kmeans_cluster_timeline.png", mut=mutations, sample=samples, zip=True),
-        # umap_timeline = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/umap_3d_timeline.png", mut=mutations, sample=samples, zip=True),
-        # umap_hclust_clusters = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/umap_hclust_clusters.png", mut=mutations, sample=samples, zip=True),
-        # umap_kmeans_clusters = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/umap_kmeans_clusters.png", mut=mutations, sample=samples, zip=True),
-        # umap_optimization = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/umap_optimization.png", mut=mutations, sample=samples, zip=True),
-        # pca_sk_hclust = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/pca_sklearn_clusters_hclust.png", mut=mutations, sample=samples, zip=True),
-        # pca_sk_kmeans = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/pca_sklearn_clusters_kmeans.png", mut=mutations, sample=samples, zip=True),
-        # pca_gmx_hclust = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/pca_gmx_clusters_hclust.png", mut=mutations, sample=samples, zip=True),
-        # pca_gmx_kmeans = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/pca_gmx_clusters_kmeans.png", mut=mutations, sample=samples, zip=True),
-        # gromos_clusters_index = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/gromos_clusters.ndx", mut=mutations, sample=samples, zip=True),
-        # gromos_xpm = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/gromos_clusters.xpm", mut=mutations, sample=samples, zip=True),
-        # gromos_log = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/gromos_clusters.log", mut=mutations, sample=samples, zip=True),
-        # pca_gromos = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/pca_gromos_clusters.png", mut=mutations, sample=samples, zip=True),
-        # pca_gromos_top10 = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/pca_gromos_clusters_top10.png", mut=mutations, sample=samples, zip=True),
-        # gromos_clusters_freq = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/gromos_clusters_freq.png", mut=mutations, sample=samples, zip=True),
-        # gromos_clusters_freqcum = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/gromos_clusters_freq_cum.png", mut=mutations, sample=samples, zip=True),
+        summary = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/analysis_summary.txt", mut=mutations, sample=samples, zip=True),
+        hclust = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/hclust_labels.csv", mut=mutations, sample=samples, zip=True),
+        kmeans = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/kmeans_labels.csv", mut=mutations, sample=samples, zip=True),
+        hclust_timeline = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/hclust_cluster_timeline.png", mut=mutations, sample=samples, zip=True),
+        kmeans_timeline = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/kmeans_cluster_timeline.png", mut=mutations, sample=samples, zip=True),
+        umap_timeline = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/umap_3d_timeline.png", mut=mutations, sample=samples, zip=True),
+        umap_hclust_clusters = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/umap_hclust_clusters.png", mut=mutations, sample=samples, zip=True),
+        umap_kmeans_clusters = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/umap_kmeans_clusters.png", mut=mutations, sample=samples, zip=True),
+        umap_optimization = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/umap_optimization.png", mut=mutations, sample=samples, zip=True),
+        pca_sk_hclust = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/pca_sklearn_clusters_hclust.png", mut=mutations, sample=samples, zip=True),
+        pca_sk_kmeans = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/pca_sklearn_clusters_kmeans.png", mut=mutations, sample=samples, zip=True),
+        pca_gmx_hclust = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/pca_gmx_clusters_hclust.jpg", mut=mutations, sample=samples, zip=True),
+        pca_gmx_kmeans = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/pca_gmx_clusters_kmeans.jpg", mut=mutations, sample=samples, zip=True),
+        gromos_clusters_index = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/gromos_clusters.ndx", mut=mutations, sample=samples, zip=True),
+        gromos_xpm = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/gromos_clusters.xpm", mut=mutations, sample=samples, zip=True),
+        gromos_log = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/gromos_clusters.log", mut=mutations, sample=samples, zip=True),
+        pca_gromos = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/pca_gromos_clusters.png", mut=mutations, sample=samples, zip=True),
+        pca_gromos_top10 = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/pca_gromos_clusters_top10.png", mut=mutations, sample=samples, zip=True),
+        gromos_clusters_freq = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/gromos_clusters_freq.png", mut=mutations, sample=samples, zip=True),
+        gromos_clusters_freqcum = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/gromos_clusters_freq_cum.png", mut=mutations, sample=samples, zip=True),
      
-        # # GBSA
-        # gbsa_info = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/_GMXMMPBSA_info", mut=mutations, sample=samples, zip=True),
-        # gbsa_final_results = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/FINAL_RESULTS_MMPBSA.dat", mut=mutations, sample=samples, zip=True),
-        # gbsa_final_decomp = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/FINAL_DECOMP_MMPBSA.dat", mut=mutations, sample=samples, zip=True),
-        # gbsa_energy = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/FINAL_ENERGY.csv", mut=mutations, sample=samples, zip=True),
-        # gbsa_energy_decomp = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/FINAL_ENERGY_DECOMP.csv", mut=mutations, sample=samples, zip=True),
+        # GBSA
+        gbsa_info = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/_GMXMMPBSA_info", mut=mutations, sample=samples, zip=True),
+        gbsa_final_results = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/FINAL_RESULTS_MMPBSA.dat", mut=mutations, sample=samples, zip=True),
+        gbsa_final_decomp = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/FINAL_DECOMP_MMPBSA.dat", mut=mutations, sample=samples, zip=True),
+        gbsa_energy = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/FINAL_ENERGY.csv", mut=mutations, sample=samples, zip=True),
+        gbsa_energy_decomp = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/FINAL_ENERGY_DECOMP.csv", mut=mutations, sample=samples, zip=True),
     run:
         print("+-------------------------")
         #print("Number of samples:")
@@ -469,9 +470,9 @@ rule clustering_pca_gmx:
         hclust = "../../data/1bf5/{mut}/{sample}/analysis/005_clustering/hclust_labels.csv",
         kmeans = "../../data/1bf5/{mut}/{sample}/analysis/005_clustering/kmeans_labels.csv",
     output: 
-        pca_gmx_hclust = report("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/pca_gmx_clusters_hclust.png", 
+        pca_gmx_hclust = report("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/pca_gmx_clusters_hclust.jpg", 
                         category="Clustering", subcategory="Hiearchical clustering", labels={"sample": "{mut} {sample} Overlay on gmx PCA"}),
-        pca_gmx_kmeans = report("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/pca_gmx_clusters_kmeans.png",
+        pca_gmx_kmeans = report("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/pca_gmx_clusters_kmeans.jpg",
                          category="Clustering", subcategory="Kmeans clustering", labels={"sample": "{mut} {sample} Overlay on gmx PCA"}),
     shell:
         """
@@ -495,11 +496,11 @@ rule gbsa:
         top = "../../data/1bf5/{mut}/gromacs_common/topol.top",
         index = "../../data/1bf5/{mut}/{sample}/gromacs/indexmd.ndx",
     output: 
-        gbsa_info = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/_GMXMMPBSA_info",
-        gbsa_final_results = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/FINAL_RESULTS_MMPBSA.dat",
-        gbsa_final_decomp = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/FINAL_DECOMP_MMPBSA.dat",
-        gbsa_energy = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/FINAL_ENERGY.csv",
-        gbsa_energy_decomp = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/FINAL_ENERGY_DECOMP.csv",
+        gbsa_info = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/_GMXMMPBSA_info",
+        gbsa_final_results = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/FINAL_RESULTS_MMPBSA.dat",
+        gbsa_final_decomp = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/FINAL_DECOMP_MMPBSA.dat",
+        gbsa_energy = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/FINAL_ENERGY.csv",
+        gbsa_energy_decomp = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/FINAL_ENERGY_DECOMP.csv",
     shell: 
         """
         bash MMPBSA.sh \
@@ -507,5 +508,5 @@ rule gbsa:
             "md_noPBC_mol_com_cluster_fit.xtc" \
             "topol.top" \
             "indexmd.ndx" \
-            "../../data/1bf5/{wildcards.mut}/{wildcards.sample}/analysis/006_gbsa"
+            "../../data/1bf5/{wildcards.mut}/{wildcards.sample}/analysis/006_gbsa_8A"
         """

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source activate base
+source "$(dirname $(dirname $(which conda)))/etc/profile.d/conda.sh"
 conda activate gmxMMPBSA
 
 if [ $# -ne 5 ]; then

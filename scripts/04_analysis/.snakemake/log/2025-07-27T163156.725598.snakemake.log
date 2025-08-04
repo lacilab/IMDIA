@@ -1,0 +1,48 @@
+host: Usopp
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided cores: 8
+Rules claiming more threads will be scaled down.
+Job stats:
+job      count
+-----  -------
+all          1
+gbsa         3
+total        4
+
+Select jobs to execute...
+Execute 3 jobs...
+
+[Sun Jul 27 16:31:56 2025]
+localrule gbsa:
+    input: ../../data/1bf5/wt/rep2/gromacs/md.tpr, ../../data/1bf5/wt/rep2/gromacs/md_noPBC_mol_com_cluster_fit.xtc, ../../data/1bf5/wt/gromacs_common/topol.top, ../../data/1bf5/wt/rep2/gromacs/indexmd.ndx
+    output: ../../data/1bf5/wt/rep2/analysis/006_gbsa_8A/_GMXMMPBSA_info, ../../data/1bf5/wt/rep2/analysis/006_gbsa_8A/FINAL_RESULTS_MMPBSA.dat, ../../data/1bf5/wt/rep2/analysis/006_gbsa_8A/FINAL_DECOMP_MMPBSA.dat, ../../data/1bf5/wt/rep2/analysis/006_gbsa_8A/FINAL_ENERGY.csv, ../../data/1bf5/wt/rep2/analysis/006_gbsa_8A/FINAL_ENERGY_DECOMP.csv
+    jobid: 62
+    reason: Missing output files: ../../data/1bf5/wt/rep2/analysis/006_gbsa_8A/FINAL_ENERGY_DECOMP.csv, ../../data/1bf5/wt/rep2/analysis/006_gbsa_8A/FINAL_RESULTS_MMPBSA.dat, ../../data/1bf5/wt/rep2/analysis/006_gbsa_8A/FINAL_DECOMP_MMPBSA.dat, ../../data/1bf5/wt/rep2/analysis/006_gbsa_8A/_GMXMMPBSA_info, ../../data/1bf5/wt/rep2/analysis/006_gbsa_8A/FINAL_ENERGY.csv
+    wildcards: mut=wt, sample=rep2
+    resources: tmpdir=/tmp
+
+
+[Sun Jul 27 16:31:56 2025]
+localrule gbsa:
+    input: ../../data/1bf5/wt/rep1/gromacs/md.tpr, ../../data/1bf5/wt/rep1/gromacs/md_noPBC_mol_com_cluster_fit.xtc, ../../data/1bf5/wt/gromacs_common/topol.top, ../../data/1bf5/wt/rep1/gromacs/indexmd.ndx
+    output: ../../data/1bf5/wt/rep1/analysis/006_gbsa_8A/_GMXMMPBSA_info, ../../data/1bf5/wt/rep1/analysis/006_gbsa_8A/FINAL_RESULTS_MMPBSA.dat, ../../data/1bf5/wt/rep1/analysis/006_gbsa_8A/FINAL_DECOMP_MMPBSA.dat, ../../data/1bf5/wt/rep1/analysis/006_gbsa_8A/FINAL_ENERGY.csv, ../../data/1bf5/wt/rep1/analysis/006_gbsa_8A/FINAL_ENERGY_DECOMP.csv
+    jobid: 61
+    reason: Missing output files: ../../data/1bf5/wt/rep1/analysis/006_gbsa_8A/FINAL_ENERGY.csv, ../../data/1bf5/wt/rep1/analysis/006_gbsa_8A/FINAL_ENERGY_DECOMP.csv, ../../data/1bf5/wt/rep1/analysis/006_gbsa_8A/_GMXMMPBSA_info, ../../data/1bf5/wt/rep1/analysis/006_gbsa_8A/FINAL_DECOMP_MMPBSA.dat, ../../data/1bf5/wt/rep1/analysis/006_gbsa_8A/FINAL_RESULTS_MMPBSA.dat
+    wildcards: mut=wt, sample=rep1
+    resources: tmpdir=/tmp
+
+
+[Sun Jul 27 16:31:56 2025]
+localrule gbsa:
+    input: ../../data/1bf5/wt/rep3/gromacs/md.tpr, ../../data/1bf5/wt/rep3/gromacs/md_noPBC_mol_com_cluster_fit.xtc, ../../data/1bf5/wt/gromacs_common/topol.top, ../../data/1bf5/wt/rep3/gromacs/indexmd.ndx
+    output: ../../data/1bf5/wt/rep3/analysis/006_gbsa_8A/_GMXMMPBSA_info, ../../data/1bf5/wt/rep3/analysis/006_gbsa_8A/FINAL_RESULTS_MMPBSA.dat, ../../data/1bf5/wt/rep3/analysis/006_gbsa_8A/FINAL_DECOMP_MMPBSA.dat, ../../data/1bf5/wt/rep3/analysis/006_gbsa_8A/FINAL_ENERGY.csv, ../../data/1bf5/wt/rep3/analysis/006_gbsa_8A/FINAL_ENERGY_DECOMP.csv
+    jobid: 63
+    reason: Missing output files: ../../data/1bf5/wt/rep3/analysis/006_gbsa_8A/FINAL_DECOMP_MMPBSA.dat, ../../data/1bf5/wt/rep3/analysis/006_gbsa_8A/_GMXMMPBSA_info, ../../data/1bf5/wt/rep3/analysis/006_gbsa_8A/FINAL_ENERGY.csv, ../../data/1bf5/wt/rep3/analysis/006_gbsa_8A/FINAL_RESULTS_MMPBSA.dat, ../../data/1bf5/wt/rep3/analysis/006_gbsa_8A/FINAL_ENERGY_DECOMP.csv
+    wildcards: mut=wt, sample=rep3
+    resources: tmpdir=/tmp
+
+Terminating processes on user request, this might take some time.
+Complete log: .snakemake/log/2025-07-27T163156.725598.snakemake.log
+WorkflowError:
+At least one job did not complete successfully.

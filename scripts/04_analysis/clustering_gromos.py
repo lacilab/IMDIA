@@ -9,7 +9,7 @@ pca_data_file = sys.argv[1]
 clusters_index_file = sys.argv[2]
 outputdir = sys.argv[3]
 
-pca_data = pd.read_csv(pca_data_file, sep=r"\s+", header=None, skipfooter=1, names=['PC1', 'PC2', 'Time'])
+pca_data = pd.read_csv(pca_data_file, sep=",", header=None, skipfooter=1, names=['PC1', 'PC2', 'Time'])
 
 # Parse clusters.ndx and count cluster sizes
 frame_to_cluster = {}

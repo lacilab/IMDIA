@@ -157,8 +157,8 @@ rmsf_prot = pd.DataFrame({
 rmsf_prot.to_csv(rmsf_prot_csv, index=False)
 
 # Plot
-plt.plot(monoA_ca.resids + 135, RA.results.rmsf, label='RMSF monomer A')
-plt.plot(monoB_ca.resids + 135, RB.results.rmsf, label='RMSF monomer B')
+plt.plot(monoA_ca.resids + 135, RA.results.rmsf, label='RMSF Chain A')
+plt.plot(monoB_ca.resids + 135, RB.results.rmsf, label='RMSF Chain B')
 plt.axvspan(137, 317, zorder=0, alpha=0.2, color='blue', label='CCD')
 plt.axvspan(318, 488, zorder=0, alpha=0.2, color='red', label='DBD')
 plt.axvspan(489, 576, zorder=0, alpha=0.2, color='green', label='LD')

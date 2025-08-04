@@ -1,0 +1,42 @@
+host: Usopp
+Building DAG of jobs...
+IncompleteFilesException:
+The files below seem to be incomplete. If you are sure that certain files are not incomplete, mark them as complete with
+
+    snakemake --cleanup-metadata <filenames>
+
+To re-generate the files rerun your command with the --rerun-incomplete flag.
+Incomplete files:
+../../data/1bf5/wt/rep1/analysis/001_qc/rmsd.png
+../../data/1bf5/wt/rep1/analysis/001_qc/rmsd_cats.png
+../../data/1bf5/wt/rep1/analysis/001_qc/rmsd_bb.png
+../../data/1bf5/wt/rep1/analysis/001_qc/radius_axis.png
+../../data/1bf5/wt/rep1/analysis/001_qc/radius_rmsd.png
+../../data/1bf5/wt/rep1/analysis/001_qc/rmsf_prot_domains.png
+../../data/1bf5/wt/rep1/analysis/001_qc/rmsf_dna_res.png
+../../data/1bf5/wt/rep1/analysis/001_qc/rmsd.csv
+../../data/1bf5/wt/rep1/analysis/001_qc/radius_axis.csv
+../../data/1bf5/wt/rep1/analysis/001_qc/rmsf_prot.csv
+../../data/1bf5/wt/rep1/analysis/001_qc/rmsf_dna.csv
+../../data/1bf5/wt/rep1/analysis/002_hbonds/hbonds_mda_parsed.csv
+../../data/1bf5/wt/rep2/analysis/002_hbonds/hbonds_mda_parsed.csv
+../../data/1bf5/wt/rep3/analysis/002_hbonds/hbonds_mda_parsed.csv
+../../data/1bf5/T419R/rep1/analysis/002_hbonds/hbonds_mda_parsed.csv
+../../data/1bf5/wt/rep1/analysis/003_pca/2dproj_timescale.csv
+../../data/1bf5/wt/rep1/analysis/003_pca/eigenvec.trr
+../../data/1bf5/wt/rep1/analysis/003_pca/2D_projection_1_2.png
+../../data/1bf5/wt/rep2/analysis/003_pca/2dproj_timescale.csv
+../../data/1bf5/wt/rep2/analysis/003_pca/eigenvec.trr
+../../data/1bf5/wt/rep2/analysis/003_pca/2D_projection_1_2.png
+../../data/1bf5/wt/rep3/analysis/003_pca/2dproj_timescale.csv
+../../data/1bf5/wt/rep3/analysis/003_pca/eigenvec.trr
+../../data/1bf5/wt/rep3/analysis/003_pca/2D_projection_1_2.png
+../../data/1bf5/T419R/rep1/analysis/003_pca/2dproj_timescale.csv
+../../data/1bf5/T419R/rep1/analysis/003_pca/eigenvec.trr
+../../data/1bf5/T419R/rep1/analysis/003_pca/2D_projection_1_2.png
+../../data/1bf5/T419R/rep2/analysis/003_pca/2dproj_timescale.csv
+../../data/1bf5/T419R/rep2/analysis/003_pca/eigenvec.trr
+../../data/1bf5/T419R/rep2/analysis/003_pca/2D_projection_1_2.png
+../../data/1bf5/T419R/rep3/analysis/003_pca/2dproj_timescale.csv
+../../data/1bf5/T419R/rep3/analysis/003_pca/eigenvec.trr
+../../data/1bf5/T419R/rep3/analysis/003_pca/2D_projection_1_2.png
