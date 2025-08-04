@@ -34,6 +34,8 @@ name 19 DNA
 name 20 Protein_DNA_PTR
 14 | 15 | 16
 name 21 Water_and_ions 
+1 | 13
+name 22 Protein_PTR
 quit
 EOL
 
@@ -47,5 +49,7 @@ gmx mdrun -v -deffnm npt -quiet -nb gpu
 
 # MD
 gmx grompp -f md.mdp -c npt.gro -r npt.gro -t npt.cpt -p "$gmxdir/topol.top" -o md.tpr -n index.ndx -quiet -maxwarn 1
-gmx mdrun -ntmpi 16 -ntomp 8 -nb gpu -pme gpu -npme 1 -gputasks 0000000000111111 -v -deffnm md -quiet > output1.log 2>&1 &
+# run process in the background (check with htop)
+nohup gmx mdrun -ntmpi 16 -ntomp 8 -nb gpu -pme gpu -npme 1 -gputasks 0000000000111111 -v -deffnm md -quiet > output1.log 2>&1 &
+# for restarting from a checkpoint
 # gmx mdrun -ntmpi 16 -ntomp 8 -cpi md.cpt -append -nb gpu -pme gpu -npme 1 -gputasks 0000000000111111 -v -deffnm md -quiet > output2.log 2>&1 &
