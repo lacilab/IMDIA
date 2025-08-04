@@ -1,0 +1,990 @@
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_10_0.pdb	CD	AB	39.5275	348.847	-3.53563	17.7863	604.002
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_10_1.pdb	CD	AB	39.5275	348.847	-3.53563	17.7863	603.938
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_10_2.pdb	CD	AB	39.5275	348.843	-3.53563	17.7863	604.061
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_10_3.pdb	CD	AB	39.5275	348.86	-3.53563	17.7863	604.037
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_10_4.pdb	CD	AB	39.5275	348.84	-3.53563	17.7863	604.072
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_1_0.pdb	CD	AB	39.5275	348.85	-3.53563	17.7863	603.527
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_11_0.pdb	CD	AB	39.5275	348.966	-3.53563	17.7863	608.261
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_11_1.pdb	CD	AB	39.5275	348.726	-3.53563	17.7863	608.272
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_11_2.pdb	CD	AB	39.5275	348.39	-3.53563	17.7863	608.507
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_11_3.pdb	CD	AB	39.5275	348.531	-3.53563	17.7863	608.768
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_11_4.pdb	CD	AB	39.5275	348.522	-3.53563	17.7863	608.737
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_1_1.pdb	CD	AB	39.5275	348.851	-3.53563	17.7863	603.505
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_12_0.pdb	CD	AB	39.5275	348.974	-3.53563	17.7863	602.958
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_12_1.pdb	CD	AB	39.5275	348.922	-3.53563	17.7863	603
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_12_2.pdb	CD	AB	39.5275	348.96	-3.53563	17.7863	603.114
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_12_3.pdb	CD	AB	39.5275	347.962	-3.53563	17.7863	603.14
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_12_4.pdb	CD	AB	39.5275	348.984	-3.53563	17.7863	603.173
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_1_2.pdb	CD	AB	39.5275	348.852	-3.53563	17.7863	603.489
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_13_0.pdb	CD	AB	39.5275	348.753	-3.53563	17.7863	604.559
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_13_1.pdb	CD	AB	39.5275	348.709	-3.53563	17.7863	604.656
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_13_2.pdb	CD	AB	39.5275	348.69	-3.53563	17.7863	604.533
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_13_3.pdb	CD	AB	39.5275	348.737	-3.53563	17.7863	604.465
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_13_4.pdb	CD	AB	39.5275	348.728	-3.53563	17.7863	604.489
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_1_3.pdb	CD	AB	39.5275	348.854	-3.53563	17.7863	603.49
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_14_0.pdb	CD	AB	39.5275	348.025	-3.53563	17.7863	601.368
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_14_1.pdb	CD	AB	39.5275	349.318	-3.53563	17.7863	602.024
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_14_2.pdb	CD	AB	39.5275	349.322	-3.53563	17.7863	601.618
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_14_3.pdb	CD	AB	39.5275	349.345	-3.53563	17.7863	601.827
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_14_4.pdb	CD	AB	39.5275	349.59	-3.53563	17.7863	601.755
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_1_4.pdb	CD	AB	39.5275	348.852	-3.53563	17.7863	603.493
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_15_0.pdb	CD	AB	39.5275	348.857	-3.53563	17.7863	602.458
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_15_1.pdb	CD	AB	39.5275	348.841	-3.53563	17.7863	602.59
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_15_2.pdb	CD	AB	39.5275	348.827	-3.53563	17.7863	602.6
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_15_3.pdb	CD	AB	39.5275	348.914	-3.53563	17.7863	602.45
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_15_4.pdb	CD	AB	39.5275	348.963	-3.53563	17.7863	602.402
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_16_0.pdb	CD	AB	39.5275	347.323	-3.53563	17.7863	604.858
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_16_1.pdb	CD	AB	39.5275	347.435	-3.53563	17.7863	604.866
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_16_2.pdb	CD	AB	39.5275	347.32	-3.53563	17.7863	604.779
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_16_3.pdb	CD	AB	39.5275	347.305	-3.53563	17.7863	604.783
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_16_4.pdb	CD	AB	39.5275	347.494	-3.53563	17.7863	605.01
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_17_0.pdb	CD	AB	39.5275	348.058	-3.53563	17.7863	606.107
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_17_1.pdb	CD	AB	39.5275	348.034	-3.53563	17.7863	606.308
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_17_2.pdb	CD	AB	39.5275	348.156	-3.53563	17.7863	606.341
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_17_3.pdb	CD	AB	39.5275	347.961	-3.53563	17.7863	606.238
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_17_4.pdb	CD	AB	39.5275	348.037	-3.53563	17.7863	606.101
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_18_0.pdb	CD	AB	39.5275	346.77	-3.53563	17.7863	605.326
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_18_1.pdb	CD	AB	39.5275	346.675	-3.53563	17.7863	605.319
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_18_2.pdb	CD	AB	39.5275	346.701	-3.53563	17.7863	605.318
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_18_3.pdb	CD	AB	39.5275	346.671	-3.53563	17.7863	605.283
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_18_4.pdb	CD	AB	39.5275	346.705	-3.53563	17.7863	605.317
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_19_0.pdb	CD	AB	39.5275	350.505	-3.53563	17.7863	610.505
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_19_1.pdb	CD	AB	39.5275	350.845	-3.53563	17.7863	611.095
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_19_2.pdb	CD	AB	39.5275	358.939	-3.53563	17.7863	616.891
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_19_3.pdb	CD	AB	39.5275	351.159	-3.53563	17.7863	611.942
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_19_4.pdb	CD	AB	39.5275	350.625	-3.53563	17.7863	610.184
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_20_0.pdb	CD	AB	39.5275	352.392	-3.53563	17.7863	605.528
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_20_1.pdb	CD	AB	39.5275	351.784	-3.53563	17.7863	604.537
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_20_2.pdb	CD	AB	39.5275	352.789	-3.53563	17.7863	605.733
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_20_3.pdb	CD	AB	39.5275	351.611	-3.53563	17.7863	604.995
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_20_4.pdb	CD	AB	39.5275	350.585	-3.53563	17.7863	604.197
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_2_0.pdb	CD	AB	39.5275	344.799	-3.53563	17.7863	603.582
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_21_0.pdb	CD	AB	39.5275	347.945	-3.53563	17.7863	616.058
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_21_1.pdb	CD	AB	39.5275	347.904	-3.53563	17.7863	616.146
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_21_2.pdb	CD	AB	39.5275	347.789	-3.53563	17.7863	615.974
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_21_3.pdb	CD	AB	39.5275	347.857	-3.53563	17.7863	616.454
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_21_4.pdb	CD	AB	39.5275	347.923	-3.53563	17.7863	616.177
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_2_1.pdb	CD	AB	39.5275	344.733	-3.53563	17.7863	603.549
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_22_0.pdb	CD	AB	39.5275	355.841	-3.53563	17.7863	615.837
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_22_1.pdb	CD	AB	39.5275	356.422	-3.53563	17.7863	616.068
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_22_2.pdb	CD	AB	39.5275	356.149	-3.53563	17.7863	615.786
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_22_3.pdb	CD	AB	39.5275	355.877	-3.53563	17.7863	615.18
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_22_4.pdb	CD	AB	39.5275	355.151	-3.53563	17.7863	615.03
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_2_2.pdb	CD	AB	39.5275	345.118	-3.53563	17.7863	603.109
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_23_0.pdb	CD	AB	39.5275	348.273	-3.53563	17.7863	609.366
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_23_1.pdb	CD	AB	39.5275	348.514	-3.53563	17.7863	609.696
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_23_2.pdb	CD	AB	39.5275	348.386	-3.53563	17.7863	609.34
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_23_3.pdb	CD	AB	39.5275	348.348	-3.53563	17.7863	609.68
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_23_4.pdb	CD	AB	39.5275	348.272	-3.53563	17.7863	609.621
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_2_3.pdb	CD	AB	39.5275	344.766	-3.53563	17.7863	603.583
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_24_0.pdb	CD	AB	39.5275	348.677	-3.53563	17.7863	603.831
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_24_1.pdb	CD	AB	39.5275	348.682	-3.53563	17.7863	603.715
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_24_2.pdb	CD	AB	39.5275	348.7	-3.53563	17.7863	603.851
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_24_3.pdb	CD	AB	39.5275	348.709	-3.53563	17.7863	603.789
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_24_4.pdb	CD	AB	39.5275	348.67	-3.53563	17.7863	603.761
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_2_4.pdb	CD	AB	39.5275	344.721	-3.53563	17.7863	603.507
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_25_0.pdb	CD	AB	39.5275	356.565	-3.53563	17.7863	607.429
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_25_1.pdb	CD	AB	39.5275	356.166	-3.53563	17.7863	606.87
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_25_2.pdb	CD	AB	39.5275	356.548	-3.53563	17.7863	607.428
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_25_3.pdb	CD	AB	39.5275	356.115	-3.53563	17.7863	606.891
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_25_4.pdb	CD	AB	39.5275	356.146	-3.53563	17.7863	606.959
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_26_0.pdb	CD	AB	39.5275	356.783	-3.53563	17.7863	609.956
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_26_1.pdb	CD	AB	39.5275	356.847	-3.53563	17.7863	610.027
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_26_2.pdb	CD	AB	39.5275	357.19	-3.53563	17.7863	609.811
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_26_3.pdb	CD	AB	39.5275	356.985	-3.53563	17.7863	609.999
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_26_4.pdb	CD	AB	39.5275	356.766	-3.53563	17.7863	609.969
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_27_0.pdb	CD	AB	39.5275	346.511	-3.53563	17.7863	604.762
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_27_1.pdb	CD	AB	39.5275	346.65	-3.53563	17.7863	605.34
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_27_2.pdb	CD	AB	39.5275	347.469	-3.53563	17.7863	605.61
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_27_3.pdb	CD	AB	39.5275	347.443	-3.53563	17.7863	605.656
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_27_4.pdb	CD	AB	39.5275	346.524	-3.53563	17.7863	604.676
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_28_0.pdb	CD	AB	39.5275	346.662	-3.53563	17.7863	604.532
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_28_1.pdb	CD	AB	39.5275	346.534	-3.53563	17.7863	604.36
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_28_2.pdb	CD	AB	39.5275	348.514	-3.53563	17.7863	604.703
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_28_3.pdb	CD	AB	39.5275	348.963	-3.53563	17.7863	603.713
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_28_4.pdb	CD	AB	39.5275	346.625	-3.53563	17.7863	604.461
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_29_0.pdb	CD	AB	39.5275	349.52	-3.53563	17.7863	599.462
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_29_1.pdb	CD	AB	39.5275	348.371	-3.53563	17.7863	598.783
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_29_2.pdb	CD	AB	39.5275	350.939	-3.53563	17.7863	599.977
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_29_3.pdb	CD	AB	39.5275	348.287	-3.53563	17.7863	598.213
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_29_4.pdb	CD	AB	39.5275	352.245	-3.53563	17.7863	600.712
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_30_0.pdb	CD	AB	39.5275	348.865	-3.53563	17.7863	605.068
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_30_1.pdb	CD	AB	39.5275	348.809	-3.53563	17.7863	605.114
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_30_2.pdb	CD	AB	39.5275	348.872	-3.53563	17.7863	605.093
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_30_3.pdb	CD	AB	39.5275	348.876	-3.53563	17.7863	605.154
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_30_4.pdb	CD	AB	39.5275	348.846	-3.53563	17.7863	605.216
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_3_0.pdb	CD	AB	39.5275	361.563	-3.53563	17.7863	612.629
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_31_0.pdb	CD	AB	39.5275	352.38	-3.53563	17.7863	604.486
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_31_1.pdb	CD	AB	39.5275	354.4	-3.53563	17.7863	606.9
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_31_2.pdb	CD	AB	39.5275	350.063	-3.53563	17.7863	602.205
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_31_3.pdb	CD	AB	39.5275	355.721	-3.53563	17.7863	607.7
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_31_4.pdb	CD	AB	39.5275	349.354	-3.53563	17.7863	601.547
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_3_1.pdb	CD	AB	39.5275	362.73	-3.53563	17.7863	614.316
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_32_0.pdb	CD	AB	39.5275	348.706	-3.53563	17.7863	601.378
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_32_1.pdb	CD	AB	39.5275	348.92	-3.53563	17.7863	602.176
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_32_2.pdb	CD	AB	39.5275	349.338	-3.53563	17.7863	601.319
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_32_3.pdb	CD	AB	39.5275	349.95	-3.53563	17.7863	601.072
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_32_4.pdb	CD	AB	39.5275	348.867	-3.53563	17.7863	602.024
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_3_2.pdb	CD	AB	39.5275	362.296	-3.53563	17.7863	613.143
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_33_0.pdb	CD	AB	39.5275	348.369	-3.53563	17.7863	606.552
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_33_1.pdb	CD	AB	39.5275	349.23	-3.53563	17.7863	607.384
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_33_2.pdb	CD	AB	39.5275	349.479	-3.53563	17.7863	606.822
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_33_3.pdb	CD	AB	39.5275	348.856	-3.53563	17.7863	608.492
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_33_4.pdb	CD	AB	39.5275	348.852	-3.53563	17.7863	608.43
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_3_3.pdb	CD	AB	39.5275	361.661	-3.53563	17.7863	612.919
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_34_0.pdb	CD	AB	39.5275	349.958	-3.53563	17.7863	599.108
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_34_1.pdb	CD	AB	39.5275	346.953	-3.53563	17.7863	597.737
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_34_2.pdb	CD	AB	39.5275	348.376	-3.53563	17.7863	598.506
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_34_3.pdb	CD	AB	39.5275	349.136	-3.53563	17.7863	599.972
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_34_4.pdb	CD	AB	39.5275	348.568	-3.53563	17.7863	597.276
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_3_4.pdb	CD	AB	39.5275	361.527	-3.53563	17.7863	612.878
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_35_0.pdb	CD	AB	39.5275	348.915	-3.53563	17.7863	604.054
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_35_1.pdb	CD	AB	39.5275	348.872	-3.53563	17.7863	604.044
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_35_2.pdb	CD	AB	39.5275	348.843	-3.53563	17.7863	604.09
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_35_3.pdb	CD	AB	39.5275	348.907	-3.53563	17.7863	603.99
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_35_4.pdb	CD	AB	39.5275	348.905	-3.53563	17.7863	604.031
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_36_0.pdb	CD	AB	39.5275	349.018	-3.53563	17.7863	603.86
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_36_1.pdb	CD	AB	39.5275	349.017	-3.53563	17.7863	604.009
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_36_2.pdb	CD	AB	39.5275	348.975	-3.53563	17.7863	603.924
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_36_3.pdb	CD	AB	39.5275	348.973	-3.53563	17.7863	603.923
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_36_4.pdb	CD	AB	39.5275	348.994	-3.53563	17.7863	603.917
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_37_0.pdb	CD	AB	39.5275	348.87	-3.53563	17.7863	605.463
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_37_1.pdb	CD	AB	39.5275	348.904	-3.53563	17.7863	605.471
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_37_2.pdb	CD	AB	39.5275	348.882	-3.53563	17.7863	605.519
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_37_3.pdb	CD	AB	39.5275	348.885	-3.53563	17.7863	605.468
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_37_4.pdb	CD	AB	39.5275	348.88	-3.53563	17.7863	605.45
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_38_0.pdb	CD	AB	39.5275	346.923	-3.53563	17.7863	608.546
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_38_1.pdb	CD	AB	39.5275	347.902	-3.53563	17.7863	609.189
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_38_2.pdb	CD	AB	39.5275	347.943	-3.53563	17.7863	609.193
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_38_3.pdb	CD	AB	39.5275	347.332	-3.53563	17.7863	608.544
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_38_4.pdb	CD	AB	39.5275	347.941	-3.53563	17.7863	609.187
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_39_0.pdb	CD	AB	39.5275	347.595	-3.53563	17.7863	605.549
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_39_1.pdb	CD	AB	39.5275	348.231	-3.53563	17.7863	606.44
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_39_2.pdb	CD	AB	39.5275	347.988	-3.53563	17.7863	605.78
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_39_3.pdb	CD	AB	39.5275	348.164	-3.53563	17.7863	605.807
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_39_4.pdb	CD	AB	39.5275	347.921	-3.53563	17.7863	606.3
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_40_0.pdb	CD	AB	39.5275	347.014	-3.53563	17.7863	603.083
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_40_1.pdb	CD	AB	39.5275	346.805	-3.53563	17.7863	602.538
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_40_2.pdb	CD	AB	39.5275	347.367	-3.53563	17.7863	601.626
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_40_3.pdb	CD	AB	39.5275	346.646	-3.53563	17.7863	602.544
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_40_4.pdb	CD	AB	39.5275	346.827	-3.53563	17.7863	602.466
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_4_0.pdb	CD	AB	39.5275	352.794	-3.53563	17.7863	614.98
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_41_0.pdb	CD	AB	39.5275	349.09	-3.53563	17.7863	602.532
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_41_1.pdb	CD	AB	39.5275	349.367	-3.53563	17.7863	602.601
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_41_2.pdb	CD	AB	39.5275	349.471	-3.53563	17.7863	602.784
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_41_3.pdb	CD	AB	39.5275	349.478	-3.53563	17.7863	602.339
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_41_4.pdb	CD	AB	39.5275	349.111	-3.53563	17.7863	602.57
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_4_1.pdb	CD	AB	39.5275	352.362	-3.53563	17.7863	615.638
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_42_0.pdb	CD	AB	39.5275	347.233	-3.53563	17.7863	600.307
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_42_1.pdb	CD	AB	39.5275	346.635	-3.53563	17.7863	600.796
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_42_2.pdb	CD	AB	39.5275	346.563	-3.53563	17.7863	600.853
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_42_3.pdb	CD	AB	39.5275	347.103	-3.53563	17.7863	600.128
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_42_4.pdb	CD	AB	39.5275	347.117	-3.53563	17.7863	600.281
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_4_2.pdb	CD	AB	39.5275	353.796	-3.53563	17.7863	615.559
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_43_0.pdb	CD	AB	39.5275	348.059	-3.53563	17.7863	611.311
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_43_1.pdb	CD	AB	39.5275	348.054	-3.53563	17.7863	611.111
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_43_2.pdb	CD	AB	39.5275	348.14	-3.53563	17.7863	611.293
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_43_3.pdb	CD	AB	39.5275	348.053	-3.53563	17.7863	611.247
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_43_4.pdb	CD	AB	39.5275	348.076	-3.53563	17.7863	611.499
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_4_3.pdb	CD	AB	39.5275	352.891	-3.53563	17.7863	614.308
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_44_0.pdb	CD	AB	39.5275	347.948	-3.53563	17.7863	609.879
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_44_1.pdb	CD	AB	39.5275	348.4	-3.53563	17.7863	610.001
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_44_2.pdb	CD	AB	39.5275	348.572	-3.53563	17.7863	610.029
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_44_3.pdb	CD	AB	39.5275	348.382	-3.53563	17.7863	610.859
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_44_4.pdb	CD	AB	39.5275	347.925	-3.53563	17.7863	609.804
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_4_4.pdb	CD	AB	39.5275	353.136	-3.53563	17.7863	614.195
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_45_0.pdb	CD	AB	39.5275	356.081	-3.53563	17.7863	616.545
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_45_1.pdb	CD	AB	39.5275	360.588	-3.53563	17.7863	621.72
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_45_2.pdb	CD	AB	39.5275	359.254	-3.53563	17.7863	616.364
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_45_3.pdb	CD	AB	39.5275	357.35	-3.53563	17.7863	617.812
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_45_4.pdb	CD	AB	39.5275	358.04	-3.53563	17.7863	618.027
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_46_0.pdb	CD	AB	39.5275	351.026	-3.53563	17.7863	611.258
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_46_1.pdb	CD	AB	39.5275	351.288	-3.53563	17.7863	611.564
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_46_2.pdb	CD	AB	39.5275	350.884	-3.53563	17.7863	610.526
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_46_3.pdb	CD	AB	39.5275	353.514	-3.53563	17.7863	609.098
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_46_4.pdb	CD	AB	39.5275	351.444	-3.53563	17.7863	611.777
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_47_0.pdb	CD	AB	39.5275	350.699	-3.53563	17.7863	611.604
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_47_1.pdb	CD	AB	39.5275	349.724	-3.53563	17.7863	611.342
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_47_2.pdb	CD	AB	39.5275	350.72	-3.53563	17.7863	611.32
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_47_3.pdb	CD	AB	39.5275	349.336	-3.53563	17.7863	611.184
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_47_4.pdb	CD	AB	39.5275	349.512	-3.53563	17.7863	611.296
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_48_0.pdb	CD	AB	39.5275	349.052	-3.53563	17.7863	614.036
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_48_1.pdb	CD	AB	39.5275	349.038	-3.53563	17.7863	614.054
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_48_2.pdb	CD	AB	39.5275	349.023	-3.53563	17.7863	614.013
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_48_3.pdb	CD	AB	39.5275	349.024	-3.53563	17.7863	614.036
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_48_4.pdb	CD	AB	39.5275	349.022	-3.53563	17.7863	614.035
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_49_0.pdb	CD	AB	39.5275	349.084	-3.53563	17.7863	610.647
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_49_1.pdb	CD	AB	39.5275	349.083	-3.53563	17.7863	610.642
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_49_2.pdb	CD	AB	39.5275	349.083	-3.53563	17.7863	610.644
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_49_3.pdb	CD	AB	39.5275	349.086	-3.53563	17.7863	610.692
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_49_4.pdb	CD	AB	39.5275	349.085	-3.53563	17.7863	610.671
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_50_0.pdb	CD	AB	39.5275	350.129	-3.53563	17.7863	608.121
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_50_1.pdb	CD	AB	39.5275	350.065	-3.53563	17.7863	608.149
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_50_2.pdb	CD	AB	39.5275	350.124	-3.53563	17.7863	608.117
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_50_3.pdb	CD	AB	39.5275	350.116	-3.53563	17.7863	608.111
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_50_4.pdb	CD	AB	39.5275	350.165	-3.53563	17.7863	608.15
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_5_0.pdb	CD	AB	39.5275	348.82	-3.53563	17.7863	602.217
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_51_0.pdb	CD	AB	39.5275	348.601	-3.53563	17.7863	605.706
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_51_1.pdb	CD	AB	39.5275	348.609	-3.53563	17.7863	605.722
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_51_2.pdb	CD	AB	39.5275	347.97	-3.53563	17.7863	605.342
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_51_3.pdb	CD	AB	39.5275	348.603	-3.53563	17.7863	605.704
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_51_4.pdb	CD	AB	39.5275	348.556	-3.53563	17.7863	605.222
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_5_1.pdb	CD	AB	39.5275	348.894	-3.53563	17.7863	601.895
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_52_0.pdb	CD	AB	39.5275	348.619	-3.53563	17.7863	610.646
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_52_1.pdb	CD	AB	39.5275	348.619	-3.53563	17.7863	610.646
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_52_2.pdb	CD	AB	39.5275	348.619	-3.53563	17.7863	610.646
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_52_3.pdb	CD	AB	39.5275	348.619	-3.53563	17.7863	610.646
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_52_4.pdb	CD	AB	39.5275	348.619	-3.53563	17.7863	610.646
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_5_2.pdb	CD	AB	39.5275	348.826	-3.53563	17.7863	602.266
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_53_0.pdb	CD	AB	39.5275	347.372	-3.53563	17.7863	613.005
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_53_1.pdb	CD	AB	39.5275	348.306	-3.53563	17.7863	613.414
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_53_2.pdb	CD	AB	39.5275	347.551	-3.53563	17.7863	612.883
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_53_3.pdb	CD	AB	39.5275	347.792	-3.53563	17.7863	613.13
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_53_4.pdb	CD	AB	39.5275	347.472	-3.53563	17.7863	613.307
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_5_3.pdb	CD	AB	39.5275	348.782	-3.53563	17.7863	602.236
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_54_0.pdb	CD	AB	39.5275	348.536	-3.53563	17.7863	611.332
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_54_1.pdb	CD	AB	39.5275	348.549	-3.53563	17.7863	611.294
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_54_2.pdb	CD	AB	39.5275	348.424	-3.53563	17.7863	611.393
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_54_3.pdb	CD	AB	39.5275	348.42	-3.53563	17.7863	611.291
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_54_4.pdb	CD	AB	39.5275	347.932	-3.53563	17.7863	611.259
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_5_4.pdb	CD	AB	39.5275	348.819	-3.53563	17.7863	602.225
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_55_0.pdb	CD	AB	39.5275	356.89	-3.51016	17.7863	614.674
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_55_1.pdb	CD	AB	39.5275	356.566	-3.5107	17.7863	614.639
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_55_2.pdb	CD	AB	39.5275	356.421	-3.51098	17.7863	614.888
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_55_3.pdb	CD	AB	39.5275	357.059	-3.51073	17.7863	614.629
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_55_4.pdb	CD	AB	39.5275	357.009	-3.51083	17.7863	614.58
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_56_0.pdb	CD	AB	39.5275	349.414	-3.53194	17.7863	611.744
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_56_1.pdb	CD	AB	39.5275	349.323	-3.39582	17.7863	611.787
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_56_2.pdb	CD	AB	39.5275	349.347	-3.39567	17.7863	611.791
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_56_3.pdb	CD	AB	39.5275	349.281	-3.39479	17.7863	611.767
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_56_4.pdb	CD	AB	39.5275	349.962	-3.53191	17.7863	611.468
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_57_0.pdb	CD	AB	39.5275	350.061	-2.82269	17.7863	617.565
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_57_1.pdb	CD	AB	39.5275	349.716	-2.98833	17.7863	618.01
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_57_2.pdb	CD	AB	39.5275	348.83	-3.06395	17.7863	618.824
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_57_3.pdb	CD	AB	39.5275	349.676	-2.33332	17.7863	617.176
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_57_4.pdb	CD	AB	39.5275	350.137	-3.31343	17.7863	618.955
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_58_0.pdb	CD	AB	39.5275	349.856	-1.35876	17.7863	610.998
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_58_1.pdb	CD	AB	39.5275	349.841	-1.48965	17.7863	610.975
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_58_2.pdb	CD	AB	39.5275	349.997	-1.29855	17.7863	611.096
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_58_3.pdb	CD	AB	39.5275	349.246	-1.00888	17.7863	610.911
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_58_4.pdb	CD	AB	39.5275	350.379	-2.0711	17.7863	611.244
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_59_0.pdb	CD	AB	39.5275	348.544	-3.5432	17.7863	613.727
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_59_1.pdb	CD	AB	39.5275	348.49	-3.5432	17.7863	613.672
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_59_2.pdb	CD	AB	39.5275	348.489	-3.5432	17.7863	613.673
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_59_3.pdb	CD	AB	39.5275	348.517	-3.54318	17.7863	613.741
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_59_4.pdb	CD	AB	39.5275	348.538	-3.5432	17.7863	613.705
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_60_0.pdb	CD	AB	39.5275	348.57	-3.36827	17.7863	609.569
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_60_1.pdb	CD	AB	39.5275	348.616	-3.36693	17.7863	609.665
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_60_2.pdb	CD	AB	39.5275	348.664	-3.36474	17.7863	609.572
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_60_3.pdb	CD	AB	39.5275	348.607	-3.36693	17.7863	609.69
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_60_4.pdb	CD	AB	39.5275	348.621	-3.36693	17.7863	609.673
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_6_0.pdb	CD	AB	39.5275	348.832	-3.53563	17.7863	603.867
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_61_0.pdb	CD	AB	39.5275	347.955	-3.53563	17.7863	616.548
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_61_1.pdb	CD	AB	39.5275	348.524	-3.53563	17.7863	616.787
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_61_2.pdb	CD	AB	39.5275	349.533	-3.53563	17.7863	616.665
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_61_3.pdb	CD	AB	39.5275	347.903	-3.53563	17.7863	616.497
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_61_4.pdb	CD	AB	39.5275	347.757	-3.53563	17.7863	616.359
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_6_1.pdb	CD	AB	39.5275	348.832	-3.53563	17.7863	603.873
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_62_0.pdb	CD	AB	39.5275	347.777	-3.53563	17.7863	610.125
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_62_1.pdb	CD	AB	39.5275	347.665	-3.53563	17.7863	610.084
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_62_2.pdb	CD	AB	39.5275	347.914	-3.53563	17.7863	610.051
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_62_3.pdb	CD	AB	39.5275	347.669	-3.53563	17.7863	610.178
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_62_4.pdb	CD	AB	39.5275	347.287	-3.53563	17.7863	610.05
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_6_2.pdb	CD	AB	39.5275	348.832	-3.53563	17.7863	603.872
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_63_0.pdb	CD	AB	39.5275	348.674	-3.53563	17.7863	611.407
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_63_1.pdb	CD	AB	39.5275	348.593	-3.53563	17.7863	611.481
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_63_2.pdb	CD	AB	39.5275	348.743	-3.53563	17.7863	611.266
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_63_3.pdb	CD	AB	39.5275	348.751	-3.53563	17.7863	611.244
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_63_4.pdb	CD	AB	39.5275	348.661	-3.53563	17.7863	611.364
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_6_3.pdb	CD	AB	39.5275	348.832	-3.53563	17.7863	603.9
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_64_0.pdb	CD	AB	39.5275	348.563	-3.53563	17.7863	610.171
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_64_1.pdb	CD	AB	39.5275	348.526	-3.53563	17.7863	610.092
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_64_2.pdb	CD	AB	39.5275	348.548	-3.53563	17.7863	610.205
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_64_3.pdb	CD	AB	39.5275	348.579	-3.53563	17.7863	610.269
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_64_4.pdb	CD	AB	39.5275	348.592	-3.53563	17.7863	610.275
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_6_4.pdb	CD	AB	39.5275	348.85	-3.53563	17.7863	603.86
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_65_0.pdb	CD	AB	39.5275	350.223	-3.53563	17.7863	616.069
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_65_1.pdb	CD	AB	39.5275	350.179	-3.53563	17.7863	616.1
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_65_2.pdb	CD	AB	39.5275	350.179	-3.53563	17.7863	615.782
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_65_3.pdb	CD	AB	39.5275	350.215	-3.53563	17.7863	616.107
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_65_4.pdb	CD	AB	39.5275	351.219	-3.53563	17.7863	616.294
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_66_0.pdb	CD	AB	39.5275	348.644	-3.53563	17.7863	612.456
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_66_1.pdb	CD	AB	39.5275	348.612	-3.53563	17.7863	612.431
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_66_2.pdb	CD	AB	39.5275	349.189	-3.53563	17.7863	612.092
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_66_3.pdb	CD	AB	39.5275	349.197	-3.53563	17.7863	612.081
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_66_4.pdb	CD	AB	39.5275	349.181	-3.53563	17.7863	612.089
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_67_0.pdb	CD	AB	39.5275	348.407	-3.53563	17.7863	611.142
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_67_1.pdb	CD	AB	39.5275	348.388	-3.53563	17.7863	610.827
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_67_2.pdb	CD	AB	39.5275	348.403	-3.53563	17.7863	610.979
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_67_3.pdb	CD	AB	39.5275	348.473	-3.53563	17.7863	610.831
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_67_4.pdb	CD	AB	39.5275	348.497	-3.53563	17.7863	610.985
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_68_0.pdb	CD	AB	39.5275	359.369	-3.53563	17.7863	619.383
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_68_1.pdb	CD	AB	39.5275	357.602	-3.53563	17.7863	617.525
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_68_2.pdb	CD	AB	39.5275	358.995	-3.53563	17.7863	619.264
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_68_3.pdb	CD	AB	39.5275	358.239	-3.53563	17.7863	618.587
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_68_4.pdb	CD	AB	39.5275	359.77	-3.53563	17.7863	620.043
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_69_0.pdb	CD	AB	39.5275	372.25	-3.53563	17.7863	631.967
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_69_1.pdb	CD	AB	39.5275	368.167	-3.53563	17.7863	628.228
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_69_2.pdb	CD	AB	39.5275	366.044	-3.53563	17.7863	626.126
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_69_3.pdb	CD	AB	39.5275	372.46	-3.53563	17.7863	632.163
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_69_4.pdb	CD	AB	39.5275	371.699	-3.53563	17.7863	631.871
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_70_0.pdb	CD	AB	39.5275	348.77	-3.54038	17.7863	611.197
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_70_1.pdb	CD	AB	39.5275	348.985	-3.5404	17.7863	611.669
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_70_2.pdb	CD	AB	39.5275	348.68	-3.54023	17.7863	611.493
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_70_3.pdb	CD	AB	39.5275	348.678	-3.54018	17.7863	611.544
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_70_4.pdb	CD	AB	39.5275	348.682	-3.54006	17.7863	611.516
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_7_0.pdb	CD	AB	39.5275	349.078	-3.53563	17.7863	603.918
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_71_0.pdb	CD	AB	39.5275	361.178	-3.54772	17.7863	622.553
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_71_1.pdb	CD	AB	39.5275	361.284	-3.5392	17.7863	622.526
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_71_2.pdb	CD	AB	39.5275	361.273	-3.53538	17.7863	622.649
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_71_3.pdb	CD	AB	39.5275	361.345	-3.52592	17.7863	622.622
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_71_4.pdb	CD	AB	39.5275	361.289	-3.54559	17.7863	622.541
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_7_1.pdb	CD	AB	39.5275	349.12	-3.53563	17.7863	604.02
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_72_0.pdb	CD	AB	39.5275	365.52	-3.55598	17.7863	628.856
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_72_1.pdb	CD	AB	39.5275	365.446	-3.51491	17.7863	627.189
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_72_2.pdb	CD	AB	39.5275	365.318	-3.5245	17.7863	628.914
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_72_3.pdb	CD	AB	39.5275	365.153	-3.5578	17.7863	628.702
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_72_4.pdb	CD	AB	39.5275	365.434	-3.53951	17.7863	629.021
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_7_2.pdb	CD	AB	39.5275	349.29	-3.53563	17.7863	603.781
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_73_0.pdb	CD	AB	39.5275	347.637	-3.53577	17.7863	609.996
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_73_1.pdb	CD	AB	39.5275	347.732	-3.53577	17.7863	609.097
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_73_2.pdb	CD	AB	39.5275	347.553	-3.53573	17.7863	609.025
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_73_3.pdb	CD	AB	39.5275	347.617	-3.53576	17.7863	609.334
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_73_4.pdb	CD	AB	39.5275	347.651	-3.53571	17.7863	609.163
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_7_3.pdb	CD	AB	39.5275	348.917	-3.53563	17.7863	603.971
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_74_0.pdb	CD	AB	39.5275	347.602	-3.53563	17.7863	610.389
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_74_1.pdb	CD	AB	39.5275	347.477	-3.50735	17.7863	610.13
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_74_2.pdb	CD	AB	39.5275	348.531	-3.55347	17.7863	609.98
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_74_3.pdb	CD	AB	39.5275	347.933	-3.53816	17.7863	610.048
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_74_4.pdb	CD	AB	39.5275	347.832	-3.54818	17.7863	610.251
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_7_4.pdb	CD	AB	39.5275	348.989	-3.53563	17.7863	604.007
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_75_0.pdb	CD	AB	39.5275	346.465	-3.53563	17.7863	608.854
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_75_1.pdb	CD	AB	39.5275	346.467	-3.53563	17.7863	608.823
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_75_2.pdb	CD	AB	39.5275	346.573	-3.53563	17.7863	608.66
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_75_3.pdb	CD	AB	39.5275	346.412	-3.53563	17.7863	608.653
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_75_4.pdb	CD	AB	39.5275	346.429	-3.53563	17.7863	608.706
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_76_0.pdb	CD	AB	39.5275	347.409	-3.53563	17.7863	613.51
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_76_1.pdb	CD	AB	39.5275	348.479	-3.53563	17.7863	614.06
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_76_2.pdb	CD	AB	39.5275	348.539	-3.53563	17.7863	614.1
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_76_3.pdb	CD	AB	39.5275	348.536	-3.53563	17.7863	614.082
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_76_4.pdb	CD	AB	39.5275	348.542	-3.53563	17.7863	614.15
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_77_0.pdb	CD	AB	39.5275	346.351	-3.53563	17.7863	609.73
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_77_1.pdb	CD	AB	39.5275	347.403	-3.53563	17.7863	610.288
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_77_2.pdb	CD	AB	39.5275	347.378	-3.53563	17.7863	610.372
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_77_3.pdb	CD	AB	39.5275	348.49	-3.53563	17.7863	611.067
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_77_4.pdb	CD	AB	39.5275	347.395	-3.53563	17.7863	610.455
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_78_0.pdb	CD	AB	39.5275	347.704	-3.53563	17.7863	608.468
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_78_1.pdb	CD	AB	39.5275	348.822	-3.53563	17.7863	609.342
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_78_2.pdb	CD	AB	39.5275	347.484	-3.53563	17.7863	608.591
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_78_3.pdb	CD	AB	39.5275	348.998	-3.53563	17.7863	609.373
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_78_4.pdb	CD	AB	39.5275	347.375	-3.53563	17.7863	608.537
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_79_0.pdb	CD	AB	39.5275	358.507	-3.53563	17.7863	621.448
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_79_1.pdb	CD	AB	39.5275	354.283	-3.53563	17.7863	616.951
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_79_2.pdb	CD	AB	39.5275	354.396	-3.53563	17.7863	617.121
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_79_3.pdb	CD	AB	39.5275	354.454	-3.53563	17.7863	617.008
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_79_4.pdb	CD	AB	39.5275	353.998	-3.53563	17.7863	616.315
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_80_0.pdb	CD	AB	39.5275	350.01	-3.53563	17.7863	618.802
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_80_1.pdb	CD	AB	39.5275	350.011	-3.53563	17.7863	618.802
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_80_2.pdb	CD	AB	39.5275	350.017	-3.53563	17.7863	618.809
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_80_3.pdb	CD	AB	39.5275	350.003	-3.53563	17.7863	618.831
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_80_4.pdb	CD	AB	39.5275	350.034	-3.53563	17.7863	618.827
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_8_0.pdb	CD	AB	39.5275	348.869	-3.53563	17.7863	605.286
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_81_0.pdb	CD	AB	39.5275	348.374	-3.53563	17.7863	612.378
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_81_1.pdb	CD	AB	39.5275	348.335	-3.53563	17.7863	613.211
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_81_2.pdb	CD	AB	39.5275	348.331	-3.53563	17.7863	612.194
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_81_3.pdb	CD	AB	39.5275	348.428	-3.53563	17.7863	612.24
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_81_4.pdb	CD	AB	39.5275	348.48	-3.53563	17.7863	612.398
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_8_1.pdb	CD	AB	39.5275	348.831	-3.53563	17.7863	605.262
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_82_0.pdb	CD	AB	39.5275	347.689	-3.53563	17.7863	608.813
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_82_1.pdb	CD	AB	39.5275	347.167	-3.53563	17.7863	609.269
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_82_2.pdb	CD	AB	39.5275	347.612	-3.53563	17.7863	610.408
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_82_3.pdb	CD	AB	39.5275	347.696	-3.53563	17.7863	609.624
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_82_4.pdb	CD	AB	39.5275	347.861	-3.53563	17.7863	608.817
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_8_2.pdb	CD	AB	39.5275	348.872	-3.53563	17.7863	605.245
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_83_0.pdb	CD	AB	39.5275	348.592	-3.53563	17.7863	615.399
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_83_1.pdb	CD	AB	39.5275	348.599	-3.53563	17.7863	615.487
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_83_2.pdb	CD	AB	39.5275	348.639	-3.53563	17.7863	615.543
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_83_3.pdb	CD	AB	39.5275	348.529	-3.53563	17.7863	615.582
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_83_4.pdb	CD	AB	39.5275	348.409	-3.53563	17.7863	615.375
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_8_3.pdb	CD	AB	39.5275	348.893	-3.53563	17.7863	605.154
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_84_0.pdb	CD	AB	39.5275	348.299	-3.53563	17.7863	613.902
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_84_1.pdb	CD	AB	39.5275	349.943	-3.53563	17.7863	615.636
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_84_2.pdb	CD	AB	39.5275	350.33	-3.53563	17.7863	615.375
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_84_3.pdb	CD	AB	39.5275	349.859	-3.53563	17.7863	615.266
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_84_4.pdb	CD	AB	39.5275	350.078	-3.53563	17.7863	615.48
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_8_4.pdb	CD	AB	39.5275	348.875	-3.53563	17.7863	605.112
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_85_0.pdb	CD	AB	39.5275	349.468	-3.53563	17.7863	612.68
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_85_1.pdb	CD	AB	39.5275	349.489	-3.53563	17.7863	612.344
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_85_2.pdb	CD	AB	39.5275	349.372	-3.53563	17.7863	612.596
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_85_3.pdb	CD	AB	39.5275	349.472	-3.53563	17.7863	612.638
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_85_4.pdb	CD	AB	39.5275	349.362	-3.53563	17.7863	612.62
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_86_0.pdb	CD	AB	39.5275	348.202	-4.8364	17.7863	608.604
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_86_1.pdb	CD	AB	39.5275	348.386	-5.54152	17.7863	608.625
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_86_2.pdb	CD	AB	39.5275	348.192	-5.63575	17.7863	608.87
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_86_3.pdb	CD	AB	39.5275	348.223	-3.81366	17.7863	608.668
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_86_4.pdb	CD	AB	39.5362	348.455	-6.10738	17.8115	608.803
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_87_0.pdb	CD	AB	39.5275	359.723	-3.53563	17.7863	617.596
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_87_1.pdb	CD	AB	39.5275	360.767	-3.53563	17.7863	618.406
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_87_2.pdb	CD	AB	39.5275	359.909	-3.53563	17.7863	617.545
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_87_3.pdb	CD	AB	39.5275	359.691	-3.53563	17.7863	617.587
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_87_4.pdb	CD	AB	39.5275	359.706	-3.53563	17.7863	617.602
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_88_0.pdb	CD	AB	39.5275	354.813	-3.53563	17.7863	616.022
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_88_1.pdb	CD	AB	39.5275	354.778	-3.53563	17.7863	617.53
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_88_2.pdb	CD	AB	39.5275	354.9	-3.53563	17.7863	616.107
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_88_3.pdb	CD	AB	39.5275	354.83	-3.53563	17.7863	616.054
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_88_4.pdb	CD	AB	39.5275	354.867	-3.53563	17.7863	616.061
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_89_0.pdb	CD	AB	39.5275	348.661	-4.59078	17.7863	609.51
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_89_1.pdb	CD	AB	39.5275	348.661	-4.51165	17.7863	609.296
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_89_2.pdb	CD	AB	39.5275	348.638	-4.84547	17.7863	608.352
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_89_3.pdb	CD	AB	39.5275	348.673	-4.3452	17.7863	609.759
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_89_4.pdb	CD	AB	39.5275	348.663	-5.01147	17.7863	610.243
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_90_0.pdb	CD	AB	39.5275	344.48	-3.53563	17.7863	608.349
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_90_1.pdb	CD	AB	39.5275	344.5	-3.53563	17.7863	608.252
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_90_2.pdb	CD	AB	39.5275	344.528	-3.53563	17.7863	608.308
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_90_3.pdb	CD	AB	39.5275	344.755	-3.53563	17.7863	608.401
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_90_4.pdb	CD	AB	39.5275	344.526	-3.53563	17.7863	608.418
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_9_0.pdb	CD	AB	39.5275	361.029	-3.53563	17.7863	614.7
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_91_0.pdb	CD	AB	39.5275	352.632	-3.65961	17.7863	610.687
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_91_1.pdb	CD	AB	39.5275	353.039	-3.62288	17.7863	612.126
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_91_2.pdb	CD	AB	39.5275	351.01	-3.58418	17.7863	610.806
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_91_3.pdb	CD	AB	39.5275	352.268	-3.59614	17.7863	611.317
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_91_4.pdb	CD	AB	39.5275	352.351	-3.58278	17.7863	609.989
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_9_1.pdb	CD	AB	39.5275	361.278	-3.53563	17.7863	614.353
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_92_0.pdb	CD	AB	39.5275	348.517	-3.53563	17.7863	611.555
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_92_1.pdb	CD	AB	39.5275	348.543	-3.53563	17.7863	611.574
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_92_2.pdb	CD	AB	39.5275	348.511	-3.53563	17.7863	611.559
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_92_3.pdb	CD	AB	39.5275	348.515	-3.53563	17.7863	611.571
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_92_4.pdb	CD	AB	39.5275	348.522	-3.53563	17.7863	611.601
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_9_2.pdb	CD	AB	39.5275	360.67	-3.53563	17.7863	614.382
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_93_0.pdb	CD	AB	39.5275	351.268	-3.53563	17.7863	613.876
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_93_1.pdb	CD	AB	39.5275	351.905	-3.53563	17.7863	614.444
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_93_2.pdb	CD	AB	39.5275	353.577	-3.53563	17.7863	615.789
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_93_3.pdb	CD	AB	39.5275	353.362	-3.53563	17.7863	615.982
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_93_4.pdb	CD	AB	39.5275	353.141	-3.53563	17.7863	615.665
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_9_3.pdb	CD	AB	39.5275	360.08	-3.53563	17.7863	613.727
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_94_0.pdb	CD	AB	39.5275	349.441	-3.53563	17.7863	607.126
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_94_1.pdb	CD	AB	39.5275	349.467	-3.53563	17.7863	607
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_94_2.pdb	CD	AB	39.5275	349.053	-3.53563	17.7863	607.01
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_94_3.pdb	CD	AB	39.5275	349.359	-3.53563	17.7863	606.996
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_94_4.pdb	CD	AB	39.5275	349.364	-3.53563	17.7863	607.05
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_9_4.pdb	CD	AB	39.5275	360.992	-3.53563	17.7863	614.707
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_95_0.pdb	CD	AB	39.5275	348.662	-3.53563	17.7863	607.752
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_95_1.pdb	CD	AB	39.5275	348.663	-3.53563	17.7863	607.751
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_95_2.pdb	CD	AB	39.5275	348.698	-3.53563	17.7863	607.73
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_95_3.pdb	CD	AB	39.5275	348.636	-3.53563	17.7863	607.735
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_95_4.pdb	CD	AB	39.5275	348.66	-3.53563	17.7863	607.7
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_96_0.pdb	CD	AB	39.5275	357.188	-3.53563	17.7863	619.66
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_96_1.pdb	CD	AB	39.5275	353.339	-3.53563	17.7863	615.45
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_96_2.pdb	CD	AB	39.5275	356.655	-3.53563	17.7863	618.641
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_96_3.pdb	CD	AB	39.5275	359.348	-3.53563	17.7863	621.943
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_96_4.pdb	CD	AB	39.5275	353.2	-3.53563	17.7863	615.41
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_97_0.pdb	CD	AB	39.5275	348.207	-3.53563	17.7863	609.616
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_97_1.pdb	CD	AB	39.5275	348.189	-3.53563	17.7863	609.667
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_97_2.pdb	CD	AB	39.5275	348.281	-3.53563	17.7863	609.639
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_97_3.pdb	CD	AB	39.5275	348.31	-3.53563	17.7863	609.651
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_97_4.pdb	CD	AB	39.5275	348.558	-3.53563	17.7863	609.822
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_98_0.pdb	CD	AB	39.5275	351.234	-3.53563	17.7863	611.523
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_98_1.pdb	CD	AB	39.5275	351.345	-3.53563	17.7863	611.819
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_98_2.pdb	CD	AB	39.5275	351.331	-3.53563	17.7863	611.521
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_98_3.pdb	CD	AB	39.5275	351.399	-3.53563	17.7863	611.712
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_98_4.pdb	CD	AB	39.5275	351.153	-3.53563	17.7863	611.747
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_99_0.pdb	CD	AB	39.5275	358.052	-3.5326	17.7863	610.86
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_99_1.pdb	CD	AB	39.5275	359.553	-3.53265	17.7863	612.04
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_99_2.pdb	CD	AB	39.5275	357.424	-3.53563	17.7863	610.597
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_99_3.pdb	CD	AB	39.5275	359.159	-3.53231	17.7863	611.608
+Pdb	Group1	Group2	IntraclashesGroup1	IntraclashesGroup2	Interaction Energy	StabilityGroup1	StabilityGroup2
+./1BF5_Dimer_Repair_99_4.pdb	CD	AB	39.5275	356.64	-3.5491	17.7863	608.6
