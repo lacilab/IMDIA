@@ -2,6 +2,9 @@ data/*
 .vscode/*
 
 scripts/04_analysis/.snakemake/*
+scripts/04_analysis/report.html
+
+motif_analysis/1h/model_group/gene_count.xls
 
 motif_analysis/1h/model_agnostic/DEGs_refIFNg/*
 motif_analysis/1h/model_agnostic/plotsV/*
