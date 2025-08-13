@@ -1,48 +1,30 @@
-#MUT = ['wt', 'T419R']
 METHODS_HBONDS = ['gmx', 'mda']
-# METHODS_HBONDS = ['gmx']
+# Mutation to analyze
+MUT = ['wt', 'T419R', 'S466R'] 
 
 # List to store mutation-sample pairs as tuples
-#mut_sample_pairs = []
+mut_sample_pairs = []
 
 # Get first-level directories starting with rep for each mutation in MUT
-#for mutation in MUT:
-#    sample_names = [d for d in os.listdir(f"../../data/1bf5/{mutation}/") 
-#                   if os.path.isdir(os.path.join(f"../../data/1bf5/{mutation}/", d)) 
-#                   and d.startswith("rep")]
-#    # Create pairs for this mutation
-#    for sample in sample_names:
-#        mut_sample_pairs.append((mutation, sample))
+for mutation in MUT:
+    sample_names = [d for d in os.listdir(f"../../data/1bf5/{mutation}/") 
+                   if os.path.isdir(os.path.join(f"../../data/1bf5/{mutation}/", d)) 
+                   and d.startswith("rep")]
+    # Create pairs for this mutation
+    for sample in sample_names:
+        mut_sample_pairs.append((mutation, sample))
 
 # Print the pairs
-#for mutation, sample in mut_sample_pairs:
-#    print(f"Mutation: {mutation}, Sample: {sample}")
-#
-#print(mut_sample_pairs)
-
-mut_sample_pairs = [('T419R', 'rep3')]
+for mutation, sample in mut_sample_pairs:
+    print(f"Mutation: {mutation}, Sample: {sample}")
 
 
-# print(mut_sample_pairs)
+# Alternatively, manually define mutation-replicate pairs to be analyzed
+# mut_sample_pairs = [('T419R', 'rep3')]
+
+print(mut_sample_pairs)
+
 mutations, samples = zip(*mut_sample_pairs)
-
-# METHODS_HBONDS = ["gmx"]
-# DEFAULT_MUT= "wt"
-
-# Get sample from environment variable or command-line config, fallback to default
-# MUT = config.get("mut", os.environ.get("MUT", DEFAULT_MUT))
-
-# Get first-level directories starting with rep
-# SAMPLE_NAMES = [d for d in os.listdir(f"../../data/1bf5/{MUT}/") 
-#                 if os.path.isdir(os.path.join(f"../../data/1bf5/{MUT}/", d)) 
-#                 and d.startswith("rep")]
-
-# Alt manually set the replicates to work with
-# SAMPLE_NAMES = ['rep0', 'rep1', 'rep2', 'rep3']
-
-# print(f"Running for mutation: {MUT}, reps: {SAMPLE_NAMES}")
-
-
 
 rule all:
     input:
@@ -120,11 +102,11 @@ rule all:
         gromos_clusters_freqcum = expand("../../data/1bf5/{mut}/{sample}/analysis/005_clustering/gromos_clusters_freq_cum.png", mut=mutations, sample=samples, zip=True),
      
         # GBSA
-        gbsa_info = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/_GMXMMPBSA_info", mut=mutations, sample=samples, zip=True),
-        gbsa_final_results = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/FINAL_RESULTS_MMPBSA.dat", mut=mutations, sample=samples, zip=True),
-        gbsa_final_decomp = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/FINAL_DECOMP_MMPBSA.dat", mut=mutations, sample=samples, zip=True),
-        gbsa_energy = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/FINAL_ENERGY.csv", mut=mutations, sample=samples, zip=True),
-        gbsa_energy_decomp = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/FINAL_ENERGY_DECOMP.csv", mut=mutations, sample=samples, zip=True),
+        gbsa_info = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/_GMXMMPBSA_info", mut=mutations, sample=samples, zip=True),
+        gbsa_final_results = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/FINAL_RESULTS_MMPBSA.dat", mut=mutations, sample=samples, zip=True),
+        gbsa_final_decomp = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/FINAL_DECOMP_MMPBSA.dat", mut=mutations, sample=samples, zip=True),
+        gbsa_energy = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/FINAL_ENERGY.csv", mut=mutations, sample=samples, zip=True),
+        gbsa_energy_decomp = expand("../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/FINAL_ENERGY_DECOMP.csv", mut=mutations, sample=samples, zip=True),
     run:
         print("+-------------------------")
         #print("Number of samples:")
@@ -496,11 +478,11 @@ rule gbsa:
         top = "../../data/1bf5/{mut}/gromacs_common/topol.top",
         index = "../../data/1bf5/{mut}/{sample}/gromacs/indexmd.ndx",
     output: 
-        gbsa_info = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/_GMXMMPBSA_info",
-        gbsa_final_results = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/FINAL_RESULTS_MMPBSA.dat",
-        gbsa_final_decomp = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/FINAL_DECOMP_MMPBSA.dat",
-        gbsa_energy = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/FINAL_ENERGY.csv",
-        gbsa_energy_decomp = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa_8A/FINAL_ENERGY_DECOMP.csv",
+        gbsa_info = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/_GMXMMPBSA_info",
+        gbsa_final_results = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/FINAL_RESULTS_MMPBSA.dat",
+        gbsa_final_decomp = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/FINAL_DECOMP_MMPBSA.dat",
+        gbsa_energy = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/FINAL_ENERGY.csv",
+        gbsa_energy_decomp = "../../data/1bf5/{mut}/{sample}/analysis/006_gbsa/FINAL_ENERGY_DECOMP.csv",
     shell: 
         """
         bash MMPBSA.sh \
@@ -508,5 +490,5 @@ rule gbsa:
             "md_noPBC_mol_com_cluster_fit.xtc" \
             "topol.top" \
             "indexmd.ndx" \
-            "../../data/1bf5/{wildcards.mut}/{wildcards.sample}/analysis/006_gbsa_8A"
+            "../../data/1bf5/{wildcards.mut}/{wildcards.sample}/analysis/006_gbsa"
         """
