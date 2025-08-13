@@ -3,7 +3,6 @@ data/*
 discard/*
 
 scripts/04_analysis/.snakemake/*
-scripts/04_analysis/report.html
 
 motif_analysis/1h/model_group/gene_count.xls
 motif_analysis/1h/model_group/up_IFNg/*/
