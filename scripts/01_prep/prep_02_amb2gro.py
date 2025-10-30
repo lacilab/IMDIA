@@ -14,8 +14,7 @@ parser.add_option("-t", dest="top", type='string',
                   help="GROMACS top file")
 parser.add_option("-g", dest="gro", type='string',
                   help="GROMACS gro file")
-parser.add_option("-b", dest="pdb", type='string',
-                  help="A PDB file to generate")
+
 (options, args) = parser.parse_args()
 
 amber = pmd.load_file(options.prmtop,options.inpcrd)
@@ -53,4 +52,3 @@ for cmap in amber.cmaps:  # loop through all cmap terms
 # output 
 amber.save(options.top, overwrite=True, format='gromacs')
 amber.save(options.gro, overwrite=True, format='gro')
-# amber.save(options.pdb, overwrite=True, format='pdb')

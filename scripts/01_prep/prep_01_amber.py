@@ -2,6 +2,7 @@ import os
 import subprocess
 import time
 import sys
+import argparse
 
 def remove_hydrogens(file):
     cmd = f'''
@@ -23,6 +24,7 @@ pdb4amber -i {file}_noH.pdb -o {file}_reduced.pdb --reduce --no-conect
 def add_hydrogens(file):
 	"""Add hydrogen atoms to a PDB file using tleap."""
 	protonated_file = file.replace('_reduced.pdb', '_protonated.pdb')
+	# TODO custom choice of tlead ff
 	tleap_input = f"""
 source leaprc.phosaa19SB
 source leaprc.protein.ff19SB
@@ -74,45 +76,49 @@ def gen_chains(complex_file, *chains):
 	return tuple(files)
 
 
-def solvate_gen_parm(complex_file, mono_a_file, mono_b_file, dna_a_file, dna_b_file):
+def solvate_gen_parm(complex_file, *chains):
 	"""Protonate and solvate the complex and chains using LEaP."""
 	complex_name = os.path.splitext(complex_file)[0]
 	complex_solvated_file = complex_name + '_solvated.pdb'
 
-	mono_a_filebase = mono_a_file[:-4]
-	mono_b_filebase = mono_b_file[:-4]
-	dna_a_filebase = dna_a_file[:-4]
-	dna_b_filebase = dna_b_file[:-4]
+	filebases = []
+	for chain in chains:
+		filebases.append(chain[:-4])
 
+
+	# TODO custom choice of tlead ff
 	cmd = f'''
-source leaprc.phosaa19SB
-source leaprc.protein.ff19SB
-source leaprc.DNA.bsc1
-source leaprc.water.opc
-loadamberparams frcmod.ionslm_1264_opc
+	source leaprc.phosaa19SB
+	source leaprc.protein.ff19SB
+	source leaprc.DNA.bsc1
+	source leaprc.water.opc
+	loadamberparams frcmod.ionslm_1264_opc
 
-complex = loadPdb {complex_file}
-mono_a = loadPdb {mono_a_file}
-mono_b = loadPdb {mono_b_file}
-dna_a = loadPdb {dna_a_file}
-dna_b = loadPdb {dna_b_file}
+	complex = loadPdb {complex_file}
+	'''
 
-set default PBRadii mbondi2
+	# Dynamically add loadPdb commands
+	for chain in filebases:
+		cmd += f'{chain} = loadPdb {chain}\n'
 
-saveAmberParm complex {complex_name}.prmtop {complex_name}.inpcrd
-saveAmberParm mono_a {mono_a_filebase}.prmtop {mono_a_filebase}.inpcrd
-saveAmberParm mono_b {mono_b_filebase}.prmtop {mono_b_filebase}.inpcrd
-saveAmberParm dna_a {dna_a_filebase}.prmtop {dna_a_filebase}.inpcrd
-saveAmberParm dna_b {dna_b_filebase}.prmtop {dna_b_filebase}.inpcrd
+	cmd += '\nset default PBRadii mbondi2\n\n'
 
-solvateOct complex OPCBOX 10.0
-# Add ions
-addIons2 complex Na+ 1  Cl- 1
-saveAmberParm complex {complex_name}_solvated.prmtop {complex_name}_solvated.inpcrd
-savePdb complex {complex_solvated_file}
+	# Save Amber prmtop/inpcrd for complex
+	cmd += f'saveAmberParm complex {complex_name}.prmtop {complex_name}.inpcrd\n'
 
-quit
-'''
+	# Dynamically save Amber prmtop/inpcrd for all mono_ and dna_ files
+	for chain in filebases:
+		cmd += f'saveAmberParm {chain} {chain}.prmtop {chain}.inpcrd\n'
+
+	# Solvate and add ions
+	cmd += f'''
+	solvateOct complex OPCBOX 10.0
+	addIons2 complex Na+ 1  Cl- 1
+	saveAmberParm complex {complex_name}_solvated.prmtop {complex_name}_solvated.inpcrd
+	savePdb complex {complex_solvated_file}
+
+	quit
+	'''
 	# Encode the command string into bytes
 	cmd_bytes = cmd.encode('utf-8')
 
@@ -126,19 +132,28 @@ quit
 
 start_time = time.time()
 
-# struct_dir = sys.argv[1]
-# complex_file = f'{struct_dir}'
-# path_complex = os.path.join(struct_dir, complex_file)
+parser = argparse.ArgumentParser()
+parser.add_argument('path_pdb')
+parser.add_argument('--with-dna', action='store_true')
 
-path_complex = sys.argv[1]
+args = parser.parse_args()
+
+if args.with_dna:
+    print("Structure contains DNA.")
+
 
 # Prepare the complex (make sure the hydrogens naming matches amber)
-noH_complex = remove_hydrogens(path_complex)
+noH_complex = remove_hydrogens(args.path_pdb)
 protonated_complex = add_hydrogens(noH_complex)
 
 # Generate the receptor & ligand (also match the hydrogens to amber specifics)
-mono_a_file, mono_b_file, dna_a_file, dna_b_file = gen_chains(noH_complex, 'A', 'B', 'C', 'D')
-solvate_gen_parm(protonated_complex, mono_a_file, mono_b_file, dna_a_file, dna_b_file)
+if args.incl_dna:
+	mono_a_file, mono_b_file, dna_a_file, dna_b_file = gen_chains(noH_complex, 'A', 'B', 'C', 'D')
+	solvate_gen_parm(protonated_complex, mono_a_file, mono_b_file, dna_a_file, dna_b_file)
+else:
+	mono_a_file, mono_b_file = gen_chains(noH_complex, 'A', 'B')	
+	solvate_gen_parm(protonated_complex, mono_a_file, mono_b_file)
+
 solvated_complex_prmtop = protonated_complex.replace('.pdb', '_solvated.prmtop')
 solvated_complex_pdb = protonated_complex.replace('.pdb', '_solvated.pdb')
 
