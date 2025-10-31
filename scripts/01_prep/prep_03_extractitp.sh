@@ -1,16 +1,10 @@
 #!/bin/bash
 
-# Check if the top file is provided
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 gromacs_directory"
-    exit 1
-fi
 
-# Generate  usage message
 # Print usage/help
 print_usage() {
     cat <<'USAGE'
-Usage: prep_00_all_positional.sh topology
+Usage: prep_03_extractitp.sh topology
 Generate .itp files from topology file.
 
 Positional arguments:
@@ -21,6 +15,19 @@ Options:
   -h, --help          Show this help message and exit
 USAGE
 }
+
+# Check for help argument
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    print_usage
+    exit 0
+fi
+
+# Check if the top file is provided
+if [ "$#" -ne 1 ]; then
+    echo "ERROR: topology argument is required."
+    print_usage
+    exit 1
+fi
 
 # Input gromacs topology
 top="$1"
