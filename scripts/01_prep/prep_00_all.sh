@@ -183,6 +183,8 @@ python prep_02_amb2gro.py -p "${datadir}/amber/${file}_noconect_protonated_solva
     -t "${gmxdir}/topol.top" \
     -g "${gmxdir}/gromacs.gro" \
 
+
+# TODO Move to prep_03_extractitp.sh?
 # Check that gmxdir/toppar does not exist. If it exists, show a message and backup the old one (change the name)
 if [ -d "$gmxdir/toppar" ]; then
     echo "WARNING: $gmxdir/toppar already exists. Backing up old directory."

@@ -1,26 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import parmed as pmd
-from optparse import OptionParser
+import argparse
 import os
+import sys
 
-parser = OptionParser("Usage: prep_02_amb2gro.py -p prmtop -c inpcrd -t top\n"
-                      "                          -g gro -b pdb")
-parser.add_option("-p", dest="prmtop", type='string',
-                  help="Prmtop file")
-parser.add_option("-c", dest="inpcrd", type='string',
-                  help="Inpcrd file")
-parser.add_option("-t", dest="top", type='string',
-                  help="GROMACS top file")
-parser.add_option("-g", dest="gro", type='string',
-                  help="GROMACS gro file")
+parser = argparse.ArgumentParser(description="Convert Amber files to GROMACS format.")
+parser.add_argument("-p", "--prmtop", dest="prmtop", type=str, required=True,
+                    help="Prmtop file")
+parser.add_argument("-c", "--inpcrd", dest="inpcrd", type=str, required=True,
+                    help="Inpcrd file")
+parser.add_argument("-t", "--top", dest="top", type=str, required=True,
+                    help="GROMACS top file")
+parser.add_argument("-g", "--gro", dest="gro", type=str, required=True,
+                    help="GROMACS gro file")
+
+# print help if no arguments are provided
+if len(sys.argv)==1:
+    parser.print_help()
+    sys.exit(0)
 
 (options, args) = parser.parse_args()
 
 amber = pmd.load_file(options.prmtop,options.inpcrd)
 
 
-# Cmap correction
+# Cmap correction, including PTR
 CX_dir = { 'ALA' : 'XC0', 'ARG' : 'XC1', 'ASH' : 'XC2', 'ASN' : 'XC3', 'ASP' : 'XC4', 'CYM' : 'XC5', 'CYS' : 'XC6', 
            'CYX' : 'XC5', 'GLH' : 'XC7', 'GLN' : 'XC8', 'GLU' : 'XC9', 'GLY' : 'XC10', 'HID' : 'XC5', 'HIE' : 'XC5',
            'HIP' : 'XC5', 'HYP' : 'XC5', 'ILE' : 'XC11', 'LEU' : 'XC5', 'LYN' : 'XC12', 'LYS' : 'XC12', 'MET' : 'XC5',
@@ -52,3 +57,24 @@ for cmap in amber.cmaps:  # loop through all cmap terms
 # output 
 amber.save(options.top, overwrite=True, format='gromacs')
 amber.save(options.gro, overwrite=True, format='gro')
+
+print("\nChecking generated files.")
+
+expected_files = [
+	f"{options.top}",
+	f"{options.gro}"
+]
+
+missing = [p for p in expected_files if not os.path.isfile(p)]
+for file in expected_files:
+	if file not in missing:
+		print(f"OK: generated {file}")
+	else:
+		print(f"ERROR: {file} not generated")
+
+if not missing:
+	print("OK: AmberTools preparation completed successfully.")
+	sys.exit(0)
+else:
+	print("ERROR: AmberTools preparation failed. There are missing files.")
+	sys.exit(1)

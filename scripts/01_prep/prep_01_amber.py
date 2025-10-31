@@ -132,11 +132,11 @@ def solvate_gen_parm(complex_file, ffs=['protein.ff19SB', 'water.opc'], *chains)
 
 start_time = time.time()
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--path-pdb', default='.', help='Input pdb file path')
-parser.add_argument('--with-dna', action='store_true', help='Use if the system contains DNA. Adds DNA.bsc1 force field.')
-parser.add_argument('--with-phosphate', action='store_true', help='Use if the system contains phosphorylated residues. Adds phosaa19SB force field.')
-parser.add_argument('--ffs', nargs='*', help='List of force fields to use from the list available in LEaP. Avoid using clashing force fields. Default: protein.ff19SB, water.opc')
+parser = argparse.ArgumentParser(description="Prepare system using AmberTools. Add solvent and ions, generate prmtop and inpcrd files based on force fields.")
+parser.add_argument('--path-pdb', dest='path_pdb', default='.', help='Input pdb file path')
+parser.add_argument('--with-dna', dest='with_dna', action='store_true', help='Use if the system contains DNA. Adds DNA.bsc1 force field.')
+parser.add_argument('--with-phosphate', dest='with_phosphate', action='store_true', help='Use if the system contains phosphorylated residues. Adds phosaa19SB force field.')
+parser.add_argument('--ffs', dest='ffs', nargs='*', help='List of force fields to use from the list available in LEaP. Avoid using clashing force fields. Default: protein.ff19SB, water.opc')
 
 # print help if no arguments are provided
 if len(sys.argv)==1:
