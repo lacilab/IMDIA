@@ -3,7 +3,7 @@
 # Print usage/help
 print_usage() {
     cat <<'USAGE'
-Usage: prep_00_all_positional.sh datadir filename
+Usage: prep_00_all.sh datadir filename
 Prepare a system for MD.
 
 Positional arguments:
@@ -184,22 +184,8 @@ python prep_02_amb2gro.py -p "${datadir}/amber/${file}_noconect_protonated_solva
     -g "${gmxdir}/gromacs.gro" \
 
 
-# TODO Move to prep_03_extractitp.sh?
-# Check that gmxdir/toppar does not exist. If it exists, show a message and backup the old one (change the name)
-if [ -d "$gmxdir/toppar" ]; then
-    echo "WARNING: $gmxdir/toppar already exists. Backing up old directory."
-    mv "$gmxdir/toppar" "$gmxdir/toppar_backup_$(date +%Y%m%d_%H%M%S)"
-fi
-mkdir "$gmxdir/toppar"
-if [ -d "$gmxdir/toppar" ]; then
-    echo "OK: $gmxdir/toppar directory created at $gmxdir."
-else
-    echo "ERROR: $gmxdir/toppar directory could not be created at $gmxdir."
-    exit 1
-fi
-
-# Extract itps
-bash prep_03_extractitp.sh "$gmxdir"
+# Extract .itps from .top file
+bash prep_03_extractitp.sh "$gmxdir/topol.top" $dna_flag
 
 # Remove the 2 ions added with AmberTools from .gro files
 bash prep_04_removeamberions.sh "$gmxdir"

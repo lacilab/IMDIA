@@ -6,9 +6,38 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 
+# Generate  usage message
+# Print usage/help
+print_usage() {
+    cat <<'USAGE'
+Usage: prep_00_all_positional.sh topology
+Generate .itp files from topology file.
+
+Positional arguments:
+  topology    Path to the GROMACS topology file (e.g. 'topol.top')
+
+Options:
+  --with-dna          Complex includes DNA
+  -h, --help          Show this help message and exit
+USAGE
+}
+
 # Input gromacs topology
-gmxdir=$1
-top="$gmxdir/topol.top"
+top="$1"
+$gmxdir=$(dirname "$top")
+
+# Check that gmxdir/toppar does not exist. If it exists, show a message and backup the old one (change the name)
+if [ -d "$gmxdir/toppar" ]; then
+    echo "WARNING: $gmxdir/toppar already exists. Backing up old directory."
+    mv "$gmxdir/toppar" "$gmxdir/toppar_backup_$(date +%Y%m%d_%H%M%S)"
+fi
+mkdir "$gmxdir/toppar"
+if [ -d "$gmxdir/toppar" ]; then
+    echo "OK: $gmxdir/toppar directory created at $gmxdir."
+else
+    echo "ERROR: $gmxdir/toppar directory could not be created at $gmxdir."
+    exit 1
+fi
 
 # Extract molecule itps
 n=$( awk '/\[ moleculetype \]/' $top | wc -l)
@@ -36,4 +65,12 @@ awk '
     1
     ' "$top" > temp_file && mv temp_file "$top"
 
-echo "$n molecules have been extracted into separate .itp files. from $top"
+echo "The following .itp files have been created in $gmxdir/toppar/ and included in $top:"
+$(echo $gmxdir/toppar/*.itp)
+
+# Check that the expected number of .itp files have been created
+((with_dna ? expected_itps=8 : expected_itps=6))
+created_itps=$(find "$gmxdir/toppar" -maxdepth 1 -name "*.itp" | wc -l)
+if [ "$created_itps" -ne "$expected_itps" ]; then
+    echo "WARNING: Expected $expected_itps .itp files, but found $created_itps."
+fi
