@@ -1,27 +1,5 @@
 #!/bin/bash
 
-# Check GROMACS is ready and print version
-if ! command -v gmx >/dev/null 2>&1; then
-    echo "GROMACS (gmx) not found. Please install GROMACS and ensure it is in your PATH."
-    exit 1
-fi
-gmx --version
-
-# Check AmberTools is ready and print version
-if ! command -v ambpdb >/dev/null 2>&1; then
-    echo "AmberTools (ambpdb) not found. Please install AmberTools and ensure it is in your PATH."
-    exit 1
-fi
-ambpdb -V
-
-# Check ParmEd is ready and print version
-if ! command -v parmed >/dev/null 2>&1; then
-    echo "ParmEd (parmed) not found. Please install ParmEd and ensure it is in your PATH."
-    exit 1
-fi
-parmed --version
-
-
 # Print usage/help
 print_usage() {
     cat <<'USAGE'
@@ -33,35 +11,12 @@ Positional arguments:
   filename   Name of the PDB file (with or without .pdb)
 
 Options:
-  --with-dna    Complex includes DNA
-  -h, --help    Show this help message and exit
+  --with-dna          Complex includes DNA
+  --with-phosphate    Complex includes phosphorylated residues
+  --ffs <list>        Specify force fields (space-separated list) to use in LEaP. Avoid using clashing force fields. Default: protein.ff19SB, water.opc.
+  -h, --help          Show this help message and exit
 USAGE
 }
-
-# Default params
-with_dna=false
-
-# Parse flags before positional arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --with-dna)
-      with_dna=true
-      shift
-      ;;
-    -h|--help)
-      print_usage
-      exit 0
-      ;;
-    -*)
-      echo "Unknown option: $1"
-      print_usage
-      exit 1
-      ;;
-    *)
-      break
-      ;;
-  esac
-done
 
 # Check for help argument
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
@@ -75,6 +30,8 @@ if [ "$#" -ne 2 ]; then
     print_usage
     exit 1
 fi
+
+########## POSITIONAL ARGUMENTS ##########
 
 datadir="$1"
 file="$2"
@@ -96,8 +53,73 @@ if [ ! -f "$datadir/${file}.pdb" ]; then
     exit 1
 fi
 
+########### Check key software dependencies
+# Check GROMACS is ready and print version
+if ! command -v gmx >/dev/null 2>&1; then
+    echo "GROMACS (gmx) not found. Please install GROMACS and ensure it is in your PATH."
+    exit 1
+fi
+gmx --version
+
+# Check AmberTools is ready and print version
+if ! command -v ambpdb >/dev/null 2>&1; then
+    echo "AmberTools (ambpdb) not found. Please install AmberTools and ensure it is in your PATH."
+    exit 1
+fi
+ambpdb -V
+
+# Check ParmEd is ready and print version
+if ! command -v parmed >/dev/null 2>&1; then
+    echo "ParmEd (parmed) not found. Please install ParmEd and ensure it is in your PATH."
+    exit 1
+fi
+parmed --version
+
 # Confirmation
 echo "OK: Preparing: datadir='$datadir' file='${file}.pdb'"
+
+########## OPTIONAL ARGUMENTS ##########
+# Default params
+with_dna=false
+with_phosphate=false
+ffs=()
+
+# Parse flags before positional arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --with-dna)
+      with_dna=true
+      echo "Including --with-dna flag for preparation. System should include DNA."
+      shift
+      ;;
+    --with-phosphate)
+      with_phosphate=true
+      echo "Including --with-phosphate flag for preparation. System should include phosphorylated residues."
+      shift
+      ;;
+    --ffs)
+      shift
+      # Collect all following arguments that are not options
+      while [[ $# -gt 0 && ! $1 =~ ^- ]]; do
+        ffs+=("$1")
+        shift
+      done
+      echo "Custom force fields specified: ${ffs[*]}."
+      ;;
+    -h|--help)
+      print_usage
+      exit 0
+      ;;
+    -*)
+      echo "Unknown option: $1"
+      print_usage
+      exit 1
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
 
 # Remove lines starting with CONECT, which are added by MOE and cause issues in AmberTools 
 echo "Removing CONECT lines from ${file}.pdb. These lines can cause issues in AmberTools."
@@ -128,62 +150,16 @@ fi
 
 ########## PREPARATION ##########
 
-# AmberTools preparation
-cp prep_01_amber.py "$datadir/amber/"
-cd "$datadir/amber/"
-# Check prep_01_amber.py is in datadir/amber
-if [ -f "$datadir/amber/prep_01_amber.py" ]; then
-    echo "OK: prep_01_amber.py copied to $datadir/amber."
-else
-    echo "ERROR: prep_01_amber.py could not be copied to $datadir/amber."
-    exit 1
-fi
+##### AmberTools preparation
+# add --with-dna if $with_dna is true
+((with_dna ? dna_flag="--with-dna" : dna_flag="")) 
+# add --with-phosphate if $with_phosphate is true
+((with_phosphate ? phosphate_flag="--with-phosphate" : phosphate_flag=""))
 
-# Run AmberTools preparation script
-python prep_01_amber.py "${file}_noconect"
-rm prep_01_amber.py
-
-# Check prep_01_amber.py is not in datadir/amber
-if [ ! -f "$datadir/amber/prep_01_amber.py" ]; then
-    echo "OK: prep_01_amber.py removed from $datadir/amber."
-else
-    echo "ERROR: prep_01_amber.py could not be removed from $datadir/amber."
-    exit 1
-fi
-
-cd $oridir
-
-# TODO move check to prep_01_amber.py
-# Check that the expected output files are created during the AmberTools preparation
-expected_out=(
-    "$datadir/amber/${file}_noconect_protonated_solvated.inpcrd"
-    "$datadir/amber/${file}_noconect_protonated_solvated.prmtop"
-    "$gmxdir/topol.top"
-    "$gmxdir/gromacs.gro"
-)
-
-# Track missing files
-missing_out=()
-
-# Check each file
-for f in "${expected_out[@]}"; do
-    if [ ! -f "$f" ]; then
-        missing_out+=("$f")
-    fi
-done
-
-# Report results
-if [ "${#missing_out[@]}" -eq 0 ]; then
-    echo "OK: AmberTools preparation completed successfully."
-else
-    echo "ERROR: AmberTools preparation failed. Missing files:"
-    for f in "${missing[@]}"; do
-        echo "  - $f"
-    done
-    exit 1
-fi
-
-# TODO some scripts require copying the script to the target file, others don't. Homogenize this?
+python prep_01_amber.py --path-pdb "${datadir}/amber/${file}_noconect.pdb"  \
+    --ffs "${ffs[@]}" \
+    $dna_flag \
+    $phosphate_flag
 
 # Check that datadir/gromacs_common does not exist. If it exists, show a message and backup the old one (change the name)
 if [ -d "$datadir/gromacs_common" ]; then
@@ -201,7 +177,7 @@ else
     exit 1
 fi
 
-# Convert to Gromacs format with parmed
+#### Convert to Gromacs format with parmed
 python prep_02_amb2gro.py -p "${datadir}/amber/${file}_noconect_protonated_solvated.prmtop" \
     -c "${datadir}/amber/${file}_noconect_protonated_solvated.inpcrd" \
     -t "${gmxdir}/topol.top" \
