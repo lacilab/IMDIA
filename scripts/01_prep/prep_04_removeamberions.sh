@@ -35,30 +35,38 @@ fi
 
 gmxdir=$1
 
-# check that gmxdir exists and it contains gromacs.gro and topol.top and toppar/ with itp files
-# TODO Less redundant
-if [ ! -d "$gmxdir" ]; then
-    echo "ERROR: gmxdir '$gmxdir' does not exist or is not a directory."
-    exit 1
+# check valid directory and files
+check() {
+    local msg="${@: -1}"
+    local cmd=( "${@:1:$#-1}" )
+    if ! "${cmd[@]}"; then
+        echo "ERROR: $msg"
+        exit 1
+    fi
+}
+
+check [ -d "$gmxdir" ] "gmxdir '$gmxdir' does not exist or is not a directory."
+check [ -f "$gmxdir/gromacs.gro" ] "gromacs.gro file not found in '$gmxdir'."
+check [ -f "$gmxdir/topol.top" ] "topol.top file not found in '$gmxdir'."
+check [ -d "$gmxdir/toppar" ] "toppar directory not found in '$gmxdir'."
+check [ "$(find "$gmxdir/toppar" -maxdepth 1 -name '*.itp' | wc -l)" -gt 0 ] "No .itp files found in '$gmxdir/toppar'."
+
+
+# count lines with Na and Cl in gromacs.gro (before removal)
+num_Na=$(grep -c 'Na' "${gmxdir}/gromacs.gro")
+num_Cl=$(grep -c 'Cl' "${gmxdir}/gromacs.gro")
+echo "Number of Na ions in gromacs.gro: $num_Na" 
+echo "Number of Cl ions in gromacs.gro: $num_Cl"
+
+# Warnings if num_Na or num_Cl is more than 1
+if [ "$num_Na" -gt 1 ] ; then
+    echo "WARNING: Number of Na ions is expected to be one, but was $num_Na. Later addition of ions with GROMACS may not work as expected."
 fi
-if [ ! -f "$gmxdir/gromacs.gro" ]; then
-    echo "ERROR: gromacs.gro file not found in '$gmxdir'."
-    exit 1
-fi
-if [ ! -f "$gmxdir/topol.top" ]; then
-    echo "ERROR: topol.top file not found in '$gmxdir'."
-    exit 1
-fi
-if [ ! -d "$gmxdir/toppar" ]; then
-    echo "ERROR: toppar directory not found in '$gmxdir'."
-    exit 1
-fi
-if [ $(find "$gmxdir/toppar" -maxdepth 1 -name "*.itp" | wc -l) -eq 0 ]; then
-    echo "ERROR: No .itp files found in '$gmxdir/toppar'."
-    exit 1
+if [ "$num_Cl" -gt 1 ] ; then
+    echo "WARNING: Number of Cl ions is expected to be one, but was $num_Cl.  Later addition of ions with GROMACS may not work as expected."
 fi
 
-# First lines containing "Na" and "Cl"
+# Find first lines containing "Na" and "Cl"
 line1=$(grep -n 'Na' "${gmxdir}/gromacs.gro" | head -n 1 | cut -d: -f1)
 line2=$(grep -n 'Cl' "${gmxdir}/gromacs.gro" | head -n 1 | cut -d: -f1)
 
@@ -68,6 +76,8 @@ last_line=$(wc -l < "${gmxdir}/gromacs.gro")
 if [ -z "$line1" ] || [ -z "$line2" ]; then
     echo "ERROR: Could not find both Na and Cl lines" >&2
     exit 1
+else
+    echo "Found Na at line $line1 and Cl at line $line2 in gromacs.gro"
 fi
 
 gawk -v last_line="$last_line" -v line1="$line1" -v line2="$line2" '
