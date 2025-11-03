@@ -42,12 +42,22 @@ if [[ "$file" == *.pdb ]]; then
     file="${file%.pdb}"
 fi
 
-# Check that datadir and file exist 
+# check datadir exists
 if [ ! -d "$datadir" ]; then
     echo "ERROR: datadir '$datadir' does not exist or is not a directory."
     exit 1
 fi
 
+#### LOG
+
+LOGFILE="${datadir}/prep_${file}_$(date +%Y%m%d_%H%M%S).log"
+
+# Redirect all stdout and stderr to tee
+# This will print to screen AND save to the logfile
+exec > >(tee -a "$LOGFILE") 2>&1
+echo "Logging to: $LOGFILE"
+
+# Check the input PDB exists
 if [ ! -f "$datadir/${file}.pdb" ]; then
     echo "ERROR: file '$datadir/${file}.pdb' not found."
     exit 1
