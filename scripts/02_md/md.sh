@@ -23,6 +23,10 @@ Options:
   --ntomp N           Number of OpenMP threads per rank (default: auto-detected) 
   --ngpu N            Number of GPUs to use (default: auto-detected)
   --gpulist N         Sequence of GPU IDs to use i.e. 0011 (default: auto-detected)
+  --em FILE           Energy minimization parameter file (default: minim.mdp)
+  --nvt FILE          NVT equilibration parameter file (default: nvt.mdp)
+  --npt FILE          NPT equilibration parameter file (default: npt.mdp)
+  --md FILE           Production MD parameter file (default: md.mdp)
   -h, --help          Show this help message and exit
 USAGE
 }
@@ -98,6 +102,22 @@ while [[ $# -gt 0 ]]; do
       GPULIST="$2"
       shift 2
       ;;
+    --em)
+      EM_FILE="$2"
+      shift 2
+      ;;
+    --nvt)
+      NVT_FILE="$2"
+      shift 2
+      ;;
+    --npt)
+      NPT_FILE="$2"
+      shift 2
+      ;;
+    --md)
+      MD_FILE="$2"
+      shift 2
+      ;;
     -h|--help)
       print_usage
       exit 0
@@ -149,6 +169,32 @@ if [ ! -d "$outdir" ] || [ ! -f "minim.mdp" ] || [ ! -f "nvt.mdp" ] || [ ! -f "n
     exit 1
 fi
 
+# if -em, --nvt, --npt, --md options are provided, copy those files instead of the default ones to $outdir. Else, copy the default files
+# helper to set parameter files. args: <custom_path_var> <filename>
+param_mdp() {
+    custom="$1"
+    filename="$2"
+    # prefer custom if provided and exists, otherwise use default from scriptdir
+    if [ -n "$custom" ]; then
+        if [ -f "$custom" ]; then
+            echo "Using custom $filename: $custom"
+            cp -- "$custom" "$outdir/$filename"
+        else
+            error "Custom '$custom' not found. Using default $filename."
+            cp -- "$scriptdir/$filename" "$outdir/$filename"
+        fi
+    else
+        cp -- "$scriptdir/$filename" "$outdir/$filename"
+    fi
+}
+
+# parameter files
+param_mdp "$EM_FILE"  "minim.mdp"
+param_mdp "$NVT_FILE" "nvt.mdp"
+param_mdp "$NPT_FILE" "npt.mdp"
+param_mdp "$MD_FILE"  "md.mdp"
+
+
 # Energy minimization
 gmx grompp -f minim.mdp -c "$gmxdir/ions.gro" -r "$gmxdir/ions.gro" -p "$gmxdir/topol.top" -o em.tpr -quiet -maxwarn 1
 gmx mdrun -v -deffnm em -quiet $flag_nb_gpu
@@ -176,15 +222,15 @@ fi
 
 # NVT
 gmx grompp -f nvt.mdp -c em.gro -r em.gro -p "$gmxdir/topol.top" -o nvt.tpr -n index.ndx -quiet -maxwarn 1
-gmx mdrun -v -deffnm nvt -quiet $flag_nb_gpu
+gmx_mpi mdrun -v -deffnm nvt -quiet $flag_nb_gpu
 
 # NPT
 gmx grompp -f npt.mdp -c nvt.gro -r nvt.gro -t nvt.cpt -p "$gmxdir/topol.top" -o npt.tpr -n index.ndx -quiet -maxwarn 1 
-gmx mdrun -v -deffnm npt -quiet $flag_nb_gpu
+gmx_mpi mdrun -v -deffnm npt -quiet $flag_nb_gpu
 
 # MD
 gmx grompp -f md.mdp -c npt.gro -r npt.gro -t npt.cpt -p "$gmxdir/topol.top" -o md.tpr -n index.ndx -quiet -maxwarn 1
-gmx mdrun -ntmpi $NTMPI -ntomp $NTOMP $flag_nb_gpu $flag_pme_gpu $flag_gpu_tasks -v -deffnm md -quiet > mdtrack.log 2>&1
+gmx_mpi mdrun -ntmpi $NTMPI -ntomp $NTOMP $flag_nb_gpu $flag_pme_gpu $flag_gpu_tasks -v -deffnm md -quiet > mdtrack.log 2>&1
 
 # for restarting from a checkpoint
 # gmx mdrun -ntmpi 16 -ntomp 8 -cpi md.cpt -append -nb gpu -pme gpu -npme 1 -gputasks 0000000000111111 -v -deffnm md -quiet > output2.log 2>&1 &
