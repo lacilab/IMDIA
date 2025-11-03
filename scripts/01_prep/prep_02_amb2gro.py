@@ -4,6 +4,8 @@ import parmed as pmd
 import argparse
 import os
 import sys
+from utils.colors import ok, warn, error
+
 
 parser = argparse.ArgumentParser(description="Convert Amber files to GROMACS format.")
 parser.add_argument("-p", "--prmtop", dest="prmtop", type=str, required=True,
@@ -68,13 +70,13 @@ expected_files = [
 missing = [p for p in expected_files if not os.path.isfile(p)]
 for file in expected_files:
 	if file not in missing:
-		print(f"OK: generated {file}")
+		ok(f"generated {file}")
 	else:
-		print(f"ERROR: {file} not generated")
+		error(f"{file} not generated")
 
 if not missing:
-	print("OK: AmberTools preparation completed successfully.")
+	ok("AmberTools preparation completed successfully.")
 	sys.exit(0)
 else:
-	print("ERROR: AmberTools preparation failed. There are missing files.")
+	error("AmberTools preparation failed. There are missing files.")
 	sys.exit(1)

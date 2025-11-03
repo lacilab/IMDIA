@@ -23,7 +23,7 @@ fi
 
 # Check if the top file is provided
 if [ "$#" -ne 1 ]; then
-    echo "ERROR: gmxdir argument is required."
+    error "gmxdir argument is required."
     print_usage
     exit 1
 fi
@@ -36,16 +36,16 @@ if [ "$#" -eq 2 ]; then
     ions_mdp="$2"
     # check if the provided ions.mdp exists and is an .mdp file
     if [ ! -f "$ions_mdp" ] || [[ "$ions_mdp" != *.mdp ]]; then
-        echo "ERROR: Provided parameter file '$ions_mdp' does not exist or is not an .mdp file."
+        error "Provided parameter file '$ions_mdp' does not exist or is not an .mdp file."
         exit 1
 fi
 
 cp "$ions_mdp" "$gmxdir"
 # Check the ions.mdp is in the target folder
 if [ -f "$gmxdir/ions.mdp" ]; then
-    echo "OK: ions.mdp copied to $gmxdir."
+    ok "ions.mdp copied to $gmxdir."
 else
-    echo "ERROR: ions.mdp could not be copied to $gmxdir."
+    error "ions.mdp could not be copied to $gmxdir."
     exit 1
 fi
  
@@ -66,13 +66,13 @@ grep -E "^(Na|Cl)\s+[0-9]+" "$gmxdir/topol.top"
 num_Na=$(grep -E "^(Na)\s+[0-9]+" "$gmxdir/topol.top" | awk '{print $2}')
 num_Cl=$(grep -E "^(Cl)\s+[0-9]+" "$gmxdir/topol.top" | awk '{print $2}')
 if ! [[ "$num_Na" =~ ^[0-9]+$ ]] || (( num_Na <= 1 )); then
-    echo "WARNING: The number of Na ions added to the system is smaller or equal to 1. The system is likely not neutralized."
+    warn "The number of Na ions added to the system is smaller or equal to 1. The system is likely not neutralized."
 else
-    echo "OK: Ions added successfully. Na: $num_Na"
+    ok "Ions added successfully. Na: $num_Na"
 fi
 
 if ! [[ "$num_Cl" =~ ^[0-9]+$ ]] || (( num_Cl <= 1 )); then
-    echo "WARNING: The number of Cl ions added to the system is smaller or equal to 1. The system is likely not neutralized."
+    warn "The number of Cl ions added to the system is smaller or equal to 1. The system is likely not neutralized."
 else
-    echo "OK: Ions added successfully. Cl: $num_Cl"
+    ok "Ions added successfully. Cl: $num_Cl"
 fi

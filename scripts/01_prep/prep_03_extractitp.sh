@@ -24,7 +24,7 @@ fi
 
 # Check if the top file is provided
 if [ "$#" -ne 1 ]; then
-    echo "ERROR: topology argument is required."
+    error "topology argument is required."
     print_usage
     exit 1
 fi
@@ -35,14 +35,14 @@ $gmxdir=$(dirname "$top")
 
 # Check that gmxdir/toppar does not exist. If it exists, show a message and backup the old one (change the name)
 if [ -d "$gmxdir/toppar" ]; then
-    echo "WARNING: $gmxdir/toppar already exists. Backing up old directory."
+    warn "$gmxdir/toppar already exists. Backing up old directory."
     mv "$gmxdir/toppar" "$gmxdir/toppar_backup_$(date +%Y%m%d_%H%M%S)"
 fi
 mkdir "$gmxdir/toppar"
 if [ -d "$gmxdir/toppar" ]; then
-    echo "OK: $gmxdir/toppar directory created at $gmxdir."
+    ok "$gmxdir/toppar directory created at $gmxdir."
 else
-    echo "ERROR: $gmxdir/toppar directory could not be created at $gmxdir."
+    error "$gmxdir/toppar directory could not be created at $gmxdir."
     exit 1
 fi
 
@@ -79,5 +79,5 @@ $(echo $gmxdir/toppar/*.itp)
 ((with_dna ? expected_itps=8 : expected_itps=6))
 created_itps=$(find "$gmxdir/toppar" -maxdepth 1 -name "*.itp" | wc -l)
 if [ "$created_itps" -ne "$expected_itps" ]; then
-    echo "WARNING: Expected $expected_itps .itp files, but found $created_itps."
+    warn "Expected $expected_itps .itp files, but found $created_itps."
 fi

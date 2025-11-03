@@ -72,37 +72,37 @@ fi
 
 # Validate gmxdir
 if [ ! -d "$gmxdir" ]; then	
-	echo "ERROR: gmxdir '$gmxdir' is not a valid directory."
+	error "gmxdir '$gmxdir' is not a valid directory."
 	print_usage
 	exit 1
 fi
 
 # check topol file exists
 if [ ! -f "$topol" ]; then
-    echo "ERROR: topology file '$topol' does not exist."
+    error "topology file '$topol' does not exist."
     exit 1
 fi
 
 # Validate .itp files
 if [ ! -f "$dna_a" ]; then
-    echo "ERROR: DNA chain A topology file '$dna_a' not found."
+    error "DNA chain A topology file '$dna_a' not found."
     print_usage
     exit 1
 fi
 if [ ! -f "$dna_b" ]; then
-    echo "ERROR: DNA chain B topology file '$dna_b' not found."
+    error "DNA chain B topology file '$dna_b' not found."
     print_usage
     exit 1
 fi
 
 # Validate integer parameters
 if ! is_int "$type"; then
-    echo "ERROR: type must be an integer. Got: '$type'"
+    error "type must be an integer. Got: '$type'"
     print_usage
     exit 1
 fi
 if ! is_int "$type2"; then
-    echo "ERROR: type2 must be an integer. Got: '$type2'"
+    error "type2 must be an integer. Got: '$type2'"
     print_usage
     exit 1
 fi
@@ -111,7 +111,7 @@ fi
 for vname in low up1 up2 fac; do
     val=${!vname}
     if ! is_num "$val"; then
-        echo "ERROR: $vname must be a number. Got: '$val'"
+        error "$vname must be a number. Got: '$val'"
         print_usage
         exit 1
     fi
@@ -119,19 +119,19 @@ done
 
 # Check order low < up1 < up2
 if ! float_lt "$low" "$up1"; then
-    echo "ERROR: expected low < up1. Got low=$low up1=$up1"
+    error "expected low < up1. Got low=$low up1=$up1"
     print_usage
     exit 1
 fi
 if ! float_lt "$up1" "$up2"; then
-    echo "ERROR: expected up1 < up2. Got up1=$up1 up2=$up2"
+    error "expected up1 < up2. Got up1=$up1 up2=$up2"
     print_usage
     exit 1
 fi
 
 # fac should be positive
 if ! awk -v f="$fac" 'BEGIN{ if(f<=0) exit 1; exit 0 }'; then
-    echo "ERROR: fac must be > 0. Got: $fac"
+    error "fac must be > 0. Got: $fac"
     print_usage
     exit 1
 fi
@@ -158,19 +158,19 @@ echo "Sequence B: ${seq_b[@]}"
 # Check equal lengths
 l=${#seq_a[@]}
 if [[ ${#seq_a[@]} == ${#seq_b[@]} ]]; then
-	echo "OK: DNA sequences have the same length $l."
+	ok "DNA sequences have the same length $l."
 else 
-	echo "ERROR: DNA sequences must have the same length."
+	error "DNA sequences must have the same length."
 	exit 1
 fi
 
 # Check valid DNA seq
 if [[ "$seq_a" =~ [^ACGT] && "$seq_b" =~ [^ACGT] ]]; then
-    echo "ERROR: Invalid DNA sequence. Only A, C, G, T are allowed."
+    error "Invalid DNA sequence. Only A, C, G, T are allowed."
     exit 1
 fi
 
-echo "OK: DNA sequences are valid."
+ok "DNA sequences are valid."
 
 # Check complementary seqs
 valid_pairs=("AT" "TA" "CG" "GC")
@@ -178,12 +178,12 @@ for i in ${!seq_a[@]}; do
 	a=${seq_a[$i]}
 	b=${seq_b[-($i+1)]} 
 	if [[ ! ${valid_pairs[@]} =~ $a$b ]]; then
-		echo "ERROR: Invalid base pair. DNA sequences are not complementary."
+		error "Invalid base pair. DNA sequences are not complementary."
 		exit 1
 	fi
 done
 
-echo "OK: DNA sequences are complementary."
+ok "DNA sequences are complementary."
 
 # Add headers of the restrain section to topol file
 echo "
@@ -240,7 +240,7 @@ for i in ${!seq_a[@]}; do
 			comp="DC"
 		;;
 	    *)
-		echo "ERROR: Error building pairs. Invalid base."
+		error "Error building pairs. Invalid base."
 		exit 1
 		;;
 	esac
@@ -257,4 +257,4 @@ for i in ${!seq_a[@]}; do
 done
 rm dna_a_atoms.txt dna_b_atoms.txt dna_retraints_pairs.txt
 
-echo "OK: DNA distance restraints added to $topol."
+ok "DNA distance restraints added to $topol."

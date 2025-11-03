@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source "../utils/colors.sh"
+
 # Print usage/help
 print_usage() {
     cat <<'USAGE'
@@ -26,7 +28,7 @@ fi
 
 # Require exactly 2 positional arguments
 if [ "$#" -ne 2 ]; then
-    echo "ERROR: datadir and filename are required."
+    error "datadir and filename are required."
     print_usage
     exit 1
 fi
@@ -44,7 +46,7 @@ fi
 
 # check datadir exists
 if [ ! -d "$datadir" ]; then
-    echo "ERROR: datadir '$datadir' does not exist or is not a directory."
+    error "datadir '$datadir' does not exist or is not a directory."
     exit 1
 fi
 
@@ -53,13 +55,13 @@ fi
 LOGFILE="${datadir}/prep_${file}_$(date +%Y%m%d_%H%M%S).log"
 
 # Redirect all stdout and stderr to tee
-# This will print to screen AND save to the logfile
-exec > >(tee -a "$LOGFILE") 2>&1
+# This will print to screen AND save to the logfile, removing color tags
+exec > >(tee >(sed -r "s/\x1B\[[0-9;]*[mK]//g" >> "$LOGFILE")) 2>&1
 echo "Logging to: $LOGFILE"
 
 # Check the input PDB exists
 if [ ! -f "$datadir/${file}.pdb" ]; then
-    echo "ERROR: file '$datadir/${file}.pdb' not found."
+    error "file '$datadir/${file}.pdb' not found."
     exit 1
 fi
 
@@ -86,7 +88,7 @@ fi
 parmed --version
 
 # Confirmation
-echo "OK: Preparing: datadir='$datadir' file='${file}.pdb'"
+ok "Preparing: datadir='$datadir' file='${file}.pdb'"
 
 ########## OPTIONAL ARGUMENTS ##########
 # Default params
@@ -138,23 +140,23 @@ remaining=$(grep -c '^CONECT' "$datadir/${file}_noconect.pdb")
 echo "CONECT lines before: $(grep -c '^CONECT' "$datadir/${file}.pdb")"
 echo "CONECT lines after:  $remaining"
 if [ "$remaining" -gt 0 ]; then
-    echo "WARNING: $remaining CONECT lines remain in ${file}_noconect.pdb"
+    warn "$remaining CONECT lines remain in ${file}_noconect.pdb"
 fi
 
 
 # Check that datadir/amber does not exist. If it exists, show a message and backup the old one (change the name)
 if [ -d "$datadir/amber" ]; then
-    echo "WARNING: $datadir/amber already exists. Backing up old directory."
+    warn "$datadir/amber already exists. Backing up old directory."
     mv "$datadir/amber" "$datadir/amber_backup_$(date +%Y%m%d_%H%M%S)"
 fi
 mkdir -p "$datadir/amber"
 mv "$datadir/${file}_noconect.pdb" "$datadir/amber/"
 # Check that datadir/amber exists and contains the structure
 if [ -d "$datadir/amber" ] && [ -f "$datadir/amber/${file}_noconect.pdb" ]; then
-    echo "OK: $datadir/amber directory is ready. "
-    echo "OK: ${file}_noconect.pdb moved to $datadir/amber/ ."
+    ok "$datadir/amber directory is ready. "
+    ok "${file}_noconect.pdb moved to $datadir/amber/ ."
 else
-    echo "ERROR: $datadir/amber directory is missing or incomplete."
+    error "$datadir/amber directory is missing or incomplete."
     exit 1
 fi
 
@@ -173,7 +175,7 @@ python prep_01_amber.py --path-pdb "${datadir}/amber/${file}_noconect.pdb"  \
 
 # Check that datadir/gromacs_common does not exist. If it exists, show a message and backup the old one (change the name)
 if [ -d "$datadir/gromacs_common" ]; then
-    echo "WARNING: $datadir/gromacs_common already exists. Backing up old directory."
+    warn "$datadir/gromacs_common already exists. Backing up old directory."
     mv "$datadir/gromacs_common" "$datadir/gromacs_common_backup_$(date +%Y%m%d_%H%M%S)"
 fi
 # Create gromacs directory
@@ -181,9 +183,9 @@ mkdir "$datadir/gromacs_common"
 gmxdir="$datadir/gromacs_common"
 # check gmxdir exists
 if [ -d "$gmxdir" ]; then
-    echo "OK: Gromacs directory created at $gmxdir."
+    ok "Gromacs directory created at $gmxdir."
 else
-    echo "ERROR: Gromacs directory could not be created at $gmxdir."
+    error "Gromacs directory could not be created at $gmxdir."
     exit 1
 fi
 
@@ -216,7 +218,7 @@ if [[ $with_dna == true ]]; then
     done
     # if dna_files does not contain 2 files, print message and exit
     if [ ${#dna_files[@]} -ne 2 ]; then
-        echo "ERROR: --with-dna flag provided but found ${#dna_files[@]} files containing DNA residues. Expected 2 files."
+        error "--with-dna flag provided but found ${#dna_files[@]} files containing DNA residues. Expected 2 files."
         exit 1
     fi
     echo "The complex includes DNA. Adding DNA H-bond restraints."
@@ -228,4 +230,4 @@ else
     echo "The complex does not include DNA. Skipping DNA H-bond restraints. If this is incorrect, rerun with the --with-dna flag."
 fi
 
-echo "OK: Preparation completed successfully."
+ok "Preparation completed successfully."

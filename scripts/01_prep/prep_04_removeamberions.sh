@@ -22,7 +22,7 @@ fi
 
 # Check if the top file is provided
 if [ "$#" -ne 1 ]; then
-    echo "ERROR: gmxdir argument is required."
+    error "gmxdir argument is required."
     print_usage
     exit 1
 fi
@@ -34,7 +34,7 @@ check() {
     local msg="${@: -1}"
     local cmd=( "${@:1:$#-1}" )
     if ! "${cmd[@]}"; then
-        echo "ERROR: $msg"
+        error "$msg"
         exit 1
     fi
 }
@@ -54,10 +54,10 @@ echo "Number of Cl ions in gromacs.gro: $num_Cl"
 
 # Warnings if num_Na or num_Cl is more than 1
 if [ "$num_Na" -gt 1 ] ; then
-    echo "WARNING: Number of Na ions is expected to be one, but was $num_Na. Later addition of ions with GROMACS may not work as expected."
+    warn "Number of Na ions is expected to be one, but was $num_Na. Later addition of ions with GROMACS may not work as expected."
 fi
 if [ "$num_Cl" -gt 1 ] ; then
-    echo "WARNING: Number of Cl ions is expected to be one, but was $num_Cl.  Later addition of ions with GROMACS may not work as expected."
+    warn "Number of Cl ions is expected to be one, but was $num_Cl. Later addition of ions with GROMACS may not work as expected."
 fi
 
 # Find first lines containing "Na" and "Cl"
@@ -68,10 +68,10 @@ last_line=$(wc -l < "${gmxdir}/gromacs.gro")
 
 # Check if both Na and Cl lines were found
 if [ -z "$line1" ] || [ -z "$line2" ]; then
-    echo "ERROR: Could not find both Na and Cl lines" >&2
+    error "Could not find both Na and Cl lines" >&2
     exit 1
 else
-    echo "Found Na at line $line1 and Cl at line $line2 in gromacs.gro"
+    ok "Found Na at line $line1 and Cl at line $line2 in gromacs.gro"
 fi
 
 gawk -v last_line="$last_line" -v line1="$line1" -v line2="$line2" '
@@ -114,6 +114,23 @@ NR >= line2 && NR <= last_line - 1 {            # Process lines after remove_lin
 NR == last_line {print}                               # Print the last line without changes
 ' "$gmxdir/gromacs.gro" > "$gmxdir/updated_gromacs.gro"
 
+# check updated_gromacs.gro was created
+if [ -f "$gmxdir/updated_gromacs.gro" ]; then   
+    ok "Updated file saved as updated_gromacs.gro."
+else
+    error "updated_gromacs.gro could not be created."
+    exit 1
+fi
+
+# check there are no Na or Cl updated_gromacs.gro
+num_Na_updated=$(grep -c 'Na' "${gmxdir}/updated_gromacs.gro")
+num_Cl_updated=$(grep -c 'Cl' "${gmxdir}/updated_gromacs.gro")
+if [ "$num_Na_updated" -eq 0 ] && [ "$num_Cl_updated" -eq 0 ] ; then
+    ok "Successfully removed Amber ions from gromacs.gro. No Na or Cl lines found in updated_gromacs.gro."
+else
+    warn "Found $num_Na_updated Na and $num_Cl_updated Cl lines in updated_gromacs.gro, but expected 0."
+fi
+
 
 # update topology file
 echo "Updating topology file to avoid nomenclature clashes in the conversion to GROMACS format."
@@ -125,10 +142,10 @@ remaining_Na=$(grep -c '/Na/d' "$gmxdir/topol.top")
 remaining_Cl=$(grep -c '/Cl/d' "$gmxdir/topol.top")
 echo "After: Na $remaining_Na and Cl $remaining_Cl in $gmxdir/topol.top"
 if [ "$remaining_Na" -gt 0 ]; then
-    echo "WARNING: Na remain in topology file $gmxdir/topol.top after removal. This could result in clashing nomenclature later."
+    warn "Na remain in topology file $gmxdir/topol.top after removal. This could result in clashing nomenclature later."
 fi
 if [ "$remaining_Cl" -gt 0 ]; then
-    echo "WARNING: Cl remain in topology file $gmxdir/topol.top after removal. This could result in clashing nomenclature later."
+    warn "Cl remain in topology file $gmxdir/topol.top after removal. This could result in clashing nomenclature later."
 fi
 
 # Change ion names to gromacs standards on all .itp files in $gmxdir/toppar
@@ -147,10 +164,10 @@ for itpfile in "$gmxdir/toppar/"*.itp; do
     remaining_WAT=$(grep -c '/WAT/d' "$itpfile")
     echo "After: Na+ $remaining_Na, Cl- $remaining_Cl"
     if [ "$remaining_Na" -gt 0 ]; then
-        echo "WARNING: Na+ remain in topology file $itpfile after removal. This could result in clashing nomenclature later."
+        warn "Na+ remain in topology file $itpfile after removal. This could result in clashing nomenclature later."
     fi
     if [ "$remaining_Cl" -gt 0 ]; then
-        echo "WARNING: Cl- remain in topology file $itpfile after removal. This could result in clashing nomenclature later."
+        warn "Cl- remain in topology file $itpfile after removal. This could result in clashing nomenclature later."
     fi
 done
 

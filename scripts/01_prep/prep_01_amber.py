@@ -3,6 +3,7 @@ import subprocess
 import time
 import sys
 import argparse
+from utils.colors import ok, warn, error
 
 def remove_hydrogens(dir, filename):
     cmd = f'''
@@ -13,7 +14,7 @@ pdb4amber -i {dir}/{filename}_noH.pdb -o {dir}/{filename}_reduced.pdb --reduce -
     process = subprocess.run(cmd, shell=True, text=True, capture_output=True)
 
     if process.returncode != 0:
-        print("Error:", process.stderr)
+        error(process.stderr)
         return None  
     else:
         print(f"Hydrogen processing complete. {process.stdout}")
@@ -38,9 +39,9 @@ def add_hydrogens(file, ffs=['protein.ff19SB', 'water.opc']):
 	process = subprocess.run(['tleap', '-f', '-'], input=tleap_input, text=True, capture_output=True)
 	
 	if process.returncode != 0:
-		print(f"tleap error: {process.stderr}")
+		error(f"tleap error: {process.stderr}")
 	else:
-		print(f"tleap output: {process.stdout}")
+		ok(f"tleap output: {process.stdout}")
 
 	return protonated_file
 
@@ -64,7 +65,7 @@ def gen_chains(complex_file, *chains):
 
 		# Check for errors
 		if process_chain.returncode != 0:
-			print(f"Error occurred while generating receptor file: {stderr_chain}")
+			error(f"Error occurred while generating receptor file: {stderr_chain}")
 			return None
 
 		# Write receptor data to file
@@ -153,7 +154,7 @@ ff_default = ['water.opc']
 
 # Check if input file is a PDB file
 if not pdb.lower().endswith('.pdb'):
-	print("Error: Input file must be a PDB file with .pdb extension.")
+	error("Input file must be a PDB file with .pdb extension.")
 	sys.exit(1)
 
 if args.with_dna:
@@ -206,13 +207,13 @@ print("\nChecking generated files.")
 missing = [p for p in expected_files if not os.path.isfile(p)]
 for file in expected_files:
 	if file not in missing:
-		print(f"OK: generated {file}")
+		ok(f"generated {file}")
 	else:
-		print(f"ERROR: {file} not generated")
+		error(f"{file} not generated")
 
 if not missing:
-	print("OK: AmberTools preparation completed successfully.")
+	ok("AmberTools preparation completed successfully.")
 	sys.exit(0)
 else:
-	print("ERROR: AmberTools preparation failed. There are missing files.")
+	error("AmberTools preparation failed. There are missing files.")
 	sys.exit(1)
