@@ -190,47 +190,8 @@ bash prep_03_extractitp.sh "$gmxdir/topol.top" $dna_flag
 # Remove the 2 ions added with AmberTools from .gro files
 bash prep_04_removeamberions.sh "$gmxdir"
 
-# TODO Separate script to add ions (neutralize and target concentration)
-# Check the ions.mdp exists
-if [ ! -f ../02_md/ions.mdp ]; then
-    echo "ERROR: ../02_md/ions.mdp file not found."
-    exit 1
-fi
-cp ../02_md/ions.mdp $gmxdir
-# Check the ions.mdp is in the target folder
-if [ -f "$gmxdir/ions.mdp" ]; then
-    echo "OK: ions.mdp copied to $gmxdir."
-else
-    echo "ERROR: ions.mdp could not be copied to $gmxdir."
-    exit 1
-fi
- 
-# Add ions with GROMACS to neutralize and reach target concentration
-echo "Adding ions to neutralize the system and reach the target concentration."
-gmx grompp -f "$gmxdir/ions.mdp" -c "$gmxdir/updated_gromacs.gro" -p "$gmxdir/topol.top" -o "$gmxdir/ions.tpr" -quiet -maxwarn 1
-# There will be a warning because the system is not neutralized.
-gmx genion -s "$gmxdir/ions.tpr" -o "$gmxdir/ions.gro" -p "$gmxdir/topol.top" -pname Na+ -nname Cl- -neutral -conc 0.15 -quiet > $gmxdir/genion.log 2>&1 << EOL
-Water
-quit
-EOL
-# Print last 3 lines of genion log
-tail -n 3 $gmxdir/genion.log
-echo "Ions in topology file after genion:"
-grep -E "^(Na|Cl)\s+[0-9]+" "$gmxdir/topol.top"
-// check if topol.top contains Na and the number after Na is bigger than 1
-num_Na=$(grep -E "^(Na)\s+[0-9]+" "$gmxdir/topol.top" | awk '{print $2}')
-num_Cl=$(grep -E "^(Cl)\s+[0-9]+" "$gmxdir/topol.top" | awk '{print $2}')
-if ! [[ "$num_Na" =~ ^[0-9]+$ ]] || (( num_Na <= 1 )); then
-    echo "WARNING: The number of Na ions added to the system is smaller or equal to 1. The system is likely not neutralized."
-else
-    echo "OK: Ions added successfully. Na: $num_Na"
-fi
-
-if ! [[ "$num_Cl" =~ ^[0-9]+$ ]] || (( num_Cl <= 1 )); then
-    echo "WARNING: The number of Cl ions added to the system is smaller or equal to 1. The system is likely not neutralized."
-else
-    echo "OK: Ions added successfully. Cl: $num_Cl"
-fi
+# Add ions with GROMACS (neutralize and reach target concentration)
+bash prep_06_addgmxions.sh "$gmxdir"
 
 # Add DNA H-bonds restraints 
 if [[ $with_dna == true ]]; then
@@ -257,10 +218,4 @@ else
     echo "The complex does not include DNA. Skipping DNA H-bond restraints. If this is incorrect, rerun with the --with-dna flag."
 fi
 
-
-# Change ion names to gromacs standards
-# TODO include these earlier? Are some redundant?
-sed -i "s/Cl-/Cl/g" topol.top
-sed -i "s/Na+/Na/g" topol.top
-sed -i "s/Water/WAT/g" toppar/molecule_7.itp toppar/forcefield.itp topol.top
-# TODO Number of Cl-, N+, Water changed. Check these are the correct files and the only ones. 
+echo "OK: Preparation completed successfully."

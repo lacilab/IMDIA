@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# Check if datadir argument is provided
-if [ $# -ne 1 ]; then
-    echo "Usage: $0 gromacs_directory"
-    exit 1
-fi
-
 # Print usage/help
 print_usage() {
     cat <<'USAGE'
@@ -159,3 +153,8 @@ for itpfile in "$gmxdir/toppar/"*.itp; do
         echo "WARNING: Cl- remain in topology file $itpfile after removal. This could result in clashing nomenclature later."
     fi
 done
+
+# TODO these were in the initial script, are they necessary?
+# sed -i "s/Cl-/Cl/g" "$gmxdir/topol.top"
+# sed -i "s/Na+/Na/g" "$gmxdir/topol.top"
+# sed -i "s/Water/WAT/g" "$gmxdir/toppar/molecule_7.itp" "$gmxdir/toppar/forcefield.itp" "$gmxdir/topol.top"
