@@ -93,7 +93,18 @@ fi
 # create output dir
 parent_dir="$(dirname "$gmxdir")"
 outdir="$parent_dir/rep${n}/gromacs"
-mkdir -p "$outdir"
+# check if outdir exists, if not create it
+if [ ! -d "$outdir" ]; then
+    echo "Creating output directory: $outdir"
+    mkdir -p "$outdir"
+fi  
+
+# Check for checkpoint files
+if [ -f "${outdir}/check_02_md_*.done" ]; then
+    warn "Checkpoint file found. Skipping MD steps: minimization, NVT, NPT and production MD."
+    echo "To rerun these steps, please remove the checkpoint file(s): ${outdir}/check_02_md_*.done"
+    exit 0
+fi
 
 #### LOG
 LOGFILE="${outdir}/mdsteps_$rep{n}_$(date +%Y%m%d_%H%M%S).log"
@@ -101,6 +112,7 @@ LOGFILE="${outdir}/mdsteps_$rep{n}_$(date +%Y%m%d_%H%M%S).log"
 # This will print to screen AND save to the logfile, removing color tags
 exec > >(tee >(sed -r "s/\x1B\[[0-9;]*[mK]//g" >> "$LOGFILE")) 2>&1
 echo "Logging to: $LOGFILE"
+
 
 # Default options
 with_dna=false
@@ -122,7 +134,7 @@ else
     NTMPI=1
 fi
 
-# Parse flags before positional arguments
+# Parse flags 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --with-dna)
@@ -296,4 +308,5 @@ fi
 
 check_step "md" "Production MD"
 
-
+# Create checkpoint file
+touch "${outdir}/check_02_md_$(date +%Y%m%d_%H%M%S).done"

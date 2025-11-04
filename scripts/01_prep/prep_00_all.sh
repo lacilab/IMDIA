@@ -242,4 +242,4 @@ fi
 ok "Preparation completed successfully."
 
 # Create checkpoint file
-touch "$datadir/check_00_all_$(date +%Y%m%d_%H%M%S).done"
+touch "$datadir/check_01_prep_all_$(date +%Y%m%d_%H%M%S).done"
