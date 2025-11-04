@@ -134,27 +134,38 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Remove lines starting with CONECT, which are added by MOE and cause issues in AmberTools 
-echo "Removing CONECT lines from ${file}.pdb. These lines can cause issues in AmberTools."
-sed '/^CONECT/d' "$datadir/${file}.pdb" > "$datadir/${file}_noconect.pdb"
-remaining=$(grep -c '^CONECT' "$datadir/${file}_noconect.pdb")
-echo "CONECT lines before: $(grep -c '^CONECT' "$datadir/${file}.pdb")"
-echo "CONECT lines after:  $remaining"
-if [ "$remaining" -gt 0 ]; then
-    warn "$remaining CONECT lines remain in ${file}_noconect.pdb"
+# check if $datadir/${file}_noconect.pdb already exists
+if [ -f "$datadir/${file}_noconect.pdb" ]; then
+    warn "$datadir/${file}_noconect.pdb already exists. Skipping CONECT removal."
+else
+    echo "Removing CONECT lines from ${file}.pdb. These lines can cause issues in AmberTools."
+    sed '/^CONECT/d' "$datadir/${file}.pdb" > "$datadir/${file}_noconect.pdb"
+    remaining=$(grep -c '^CONECT' "$datadir/${file}_noconect.pdb")
+    echo "CONECT lines before: $(grep -c '^CONECT' "$datadir/${file}.pdb")"
+    echo "CONECT lines after:  $remaining"
+    if [ "$remaining" -gt 0 ]; then
+        warn "$remaining CONECT lines remain in ${file}_noconect.pdb"
+    fi
 fi
 
 
-# Check that datadir/amber does not exist. If it exists, show a message and backup the old one (change the name)
+# Check if datadir/amber already exists.
 if [ -d "$datadir/amber" ]; then
-    warn "$datadir/amber already exists. Backing up old directory."
-    mv "$datadir/amber" "$datadir/amber_backup_$(date +%Y%m%d_%H%M%S)"
+    warn "$datadir/amber already exists."
+    if [ -f "$datadir/amber/${file}_noconect.pdb" ]; then
+        warn "$datadir/amber/${file}_noconect.pdb already exists in amber directory."
+    else
+        mv "$datadir/${file}_noconect.pdb" "$datadir/amber/"
+    fi
+else
+    echo "$datadir/amber does not exist. Creating new directory."
+    mkdir -p "$datadir/amber"
+    mv "$datadir/${file}_noconect.pdb" "$datadir/amber/"
 fi
-mkdir -p "$datadir/amber"
-mv "$datadir/${file}_noconect.pdb" "$datadir/amber/"
 # Check that datadir/amber exists and contains the structure
 if [ -d "$datadir/amber" ] && [ -f "$datadir/amber/${file}_noconect.pdb" ]; then
     ok "$datadir/amber directory is ready. "
-    ok "${file}_noconect.pdb moved to $datadir/amber/ ."
+    ok "${file}_noconect.pdb is in $datadir/amber/ ."
 else
     error "$datadir/amber directory is missing or incomplete."
     exit 1
@@ -175,18 +186,16 @@ python prep_01_amber.py --path-pdb "${datadir}/amber/${file}_noconect.pdb"  \
 
 # Check that datadir/gromacs_common does not exist. If it exists, show a message and backup the old one (change the name)
 if [ -d "$datadir/gromacs_common" ]; then
-    warn "$datadir/gromacs_common already exists. Backing up old directory."
-    mv "$datadir/gromacs_common" "$datadir/gromacs_common_backup_$(date +%Y%m%d_%H%M%S)"
-fi
-# Create gromacs directory
-mkdir "$datadir/gromacs_common"
-gmxdir="$datadir/gromacs_common"
-# check gmxdir exists
-if [ -d "$gmxdir" ]; then
-    ok "Gromacs directory created at $gmxdir."
+    warn "$datadir/gromacs_common already exists."
 else
-    error "Gromacs directory could not be created at $gmxdir."
-    exit 1
+    mkdir "$datadir/gromacs_common"
+    gmxdir="$datadir/gromacs_common"
+    if [ -d "$gmxdir" ]; then
+        ok "Gromacs directory created at $gmxdir."
+    else
+        error "Gromacs directory could not be created at $gmxdir."
+        exit 1
+    fi
 fi
 
 #### Convert to Gromacs format with parmed
@@ -231,3 +240,6 @@ else
 fi
 
 ok "Preparation completed successfully."
+
+# Create checkpoint file
+touch "$datadir/check_00_all_$(date +%Y%m%d_%H%M%S).done"

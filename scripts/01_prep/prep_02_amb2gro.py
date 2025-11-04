@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import parmed as pmd
-import argparse
 import os
 import sys
+import glob
+from time import time
+import parmed as pmd
+import argparse
 from utils.colors import ok, warn, error
 
 
@@ -23,9 +25,25 @@ if len(sys.argv)==1:
     sys.exit(0)
 
 (options, args) = parser.parse_args()
+amberdir = os.path.dirname(os.path.abspath(options.top))
 
+##### Check for checkpoint files from previous runs #####
+expected_files = [
+	f"{options.top}",
+	f"{options.gro}"
+]
+
+checkpoint_files = glob.glob(f"{amberdir}/check_02_amb2gro_*.done")
+if checkpoint_files:
+    warn(f"Checkpoint file(s) found: {', '.join(checkpoint_files)}")
+    # Check if expected output files exist
+    missing = [p for p in expected_files if not os.path.isfile(p)]
+    if not missing:
+        warn("The expected output files are already present. Skipping Amber to GROMACS conversion.")
+        sys.exit(0)
+
+# If checkpoint files are not found, proceed with the conversion
 amber = pmd.load_file(options.prmtop,options.inpcrd)
-
 
 # Cmap correction, including PTR
 CX_dir = { 'ALA' : 'XC0', 'ARG' : 'XC1', 'ASH' : 'XC2', 'ASN' : 'XC3', 'ASP' : 'XC4', 'CYM' : 'XC5', 'CYS' : 'XC6', 
@@ -62,11 +80,6 @@ amber.save(options.gro, overwrite=True, format='gro')
 
 print("\nChecking generated files.")
 
-expected_files = [
-	f"{options.top}",
-	f"{options.gro}"
-]
-
 missing = [p for p in expected_files if not os.path.isfile(p)]
 for file in expected_files:
 	if file not in missing:
@@ -75,8 +88,11 @@ for file in expected_files:
 		error(f"{file} not generated")
 
 if not missing:
-	ok("AmberTools preparation completed successfully.")
+	ok("Amber to GROMACS conversion completed successfully.")
+	checkpoint_filename = f"{amberdir}/check_02_amb2gro_{int(time.time())}.done"
+	with open(checkpoint_filename, 'w') as f:
+		f.write("Amber to GROMACS conversion completed successfully.\n")
 	sys.exit(0)
 else:
-	error("AmberTools preparation failed. There are missing files.")
+	error("Amber to GROMACS conversion failed. There are missing files.")
 	sys.exit(1)

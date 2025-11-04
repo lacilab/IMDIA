@@ -2,6 +2,7 @@ import os
 import subprocess
 import time
 import sys
+import glob
 import argparse
 from utils.colors import ok, warn, error
 
@@ -152,6 +153,24 @@ filename = os.path.splitext(pdb)[0]
 
 ff_default = ['water.opc']
 
+##### Check for checkpoint files from previous runs #####
+expected_files = [
+	f"{amberdir}/{filename}_noconect_protonated_solvated.inpcrd",
+	f"{amberdir}/{filename}_noconect_protonated_solvated.prmtop",
+	f"{gmxdir}/topol.top",
+	f"{gmxdir}/gromacs.gro"
+]
+
+checkpoint_files = glob.glob(f"{amberdir}/check_01_amber_*.done")
+if checkpoint_files:
+    warn(f"Checkpoint file(s) found: {', '.join(checkpoint_files)}")
+    # Check if expected output files exist
+    missing = [p for p in expected_files if not os.path.isfile(p)]
+    if not missing:
+        warn("The expected output files are already present. Skipping AmberTools preparation.")
+        sys.exit(0)
+
+
 # Check if input file is a PDB file
 if not pdb.lower().endswith('.pdb'):
 	error("Input file must be a PDB file with .pdb extension.")
@@ -195,12 +214,6 @@ elapsed_time = end_time - start_time
 print(f"Total execution time: {elapsed_time:.2f} seconds")
 
 # Check output files
-expected_files = [
-	f"{amberdir}/{filename}_noconect_protonated_solvated.inpcrd",
-	f"{amberdir}/{filename}_noconect_protonated_solvated.prmtop",
-	f"{gmxdir}/topol.top",
-	f"{gmxdir}/gromacs.gro"
-]
 
 print("\nChecking generated files.")
 
@@ -213,7 +226,12 @@ for file in expected_files:
 
 if not missing:
 	ok("AmberTools preparation completed successfully.")
+	checkpoint_filename = f"{amberdir}/check_01_amber_{int(time.time())}.done"
+	with open(checkpoint_filename, 'w') as f:
+		f.write("AmberTools preparation completed successfully.\n")
 	sys.exit(0)
 else:
 	error("AmberTools preparation failed. There are missing files.")
 	sys.exit(1)
+
+

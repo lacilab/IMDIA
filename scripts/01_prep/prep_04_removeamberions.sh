@@ -45,6 +45,18 @@ check [ -f "$gmxdir/topol.top" ] "topol.top file not found in '$gmxdir'."
 check [ -d "$gmxdir/toppar" ] "toppar directory not found in '$gmxdir'."
 check [ "$(find "$gmxdir/toppar" -maxdepth 1 -name '*.itp' | wc -l)" -gt 0 ] "No .itp files found in '$gmxdir/toppar'."
 
+# Check if checkpoint file from previous run exists
+if ls "$gmxdir/check_04_removeamberions_"*.done 1> /dev/null 2>&1; then
+    warn "Checkpoint file found. Skipping Amber ions removal."
+    # check if updated_gromacs.gro exists
+    if [ -f "$gmxdir/updated_gromacs.gro" ]; then   
+        ok "Updated topology file found at $gmxdir/updated_gromacs.gro."
+        warn "Skipping Amber ions removal."
+        exit 0
+    else
+        warn "Checkpoint file found but updated_gromacs.gro not found at $gmxdir. The previous run might have been incomplete. Proceeding with Amber ions removal."
+    fi
+fi
 
 # count lines with Na and Cl in gromacs.gro (before removal)
 num_Na=$(grep -c 'Na' "${gmxdir}/gromacs.gro")
@@ -170,6 +182,9 @@ for itpfile in "$gmxdir/toppar/"*.itp; do
         warn "Cl- remain in topology file $itpfile after removal. This could result in clashing nomenclature later."
     fi
 done
+
+# Create checkpoint file
+touch "$gmxdir/check_04_removeamberions_$(date +%Y%m%d_%H%M%S).done"
 
 # TODO these were in the initial script, are they necessary?
 # sed -i "s/Cl-/Cl/g" "$gmxdir/topol.top"

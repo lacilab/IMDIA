@@ -31,6 +31,12 @@ fi
 gmxdir=$1
 # default ions.mdp path
 ions_mdp="../02_md/ions.mdp"
+
+# Check if checkpoint file from previous run exists
+if ls "$gmxdir/check_06_addgmxions_"*.done 1> /dev/null 2>&1; then
+    warn "Checkpoint file found. Skipping GROMACS ions addition."
+    exit 0
+
 # assign second argument if provided
 if [ "$#" -eq 2 ]; then
     ions_mdp="$2"
@@ -70,9 +76,11 @@ if ! [[ "$num_Na" =~ ^[0-9]+$ ]] || (( num_Na <= 1 )); then
 else
     ok "Ions added successfully. Na: $num_Na"
 fi
-
 if ! [[ "$num_Cl" =~ ^[0-9]+$ ]] || (( num_Cl <= 1 )); then
     warn "The number of Cl ions added to the system is smaller or equal to 1. The system is likely not neutralized."
 else
     ok "Ions added successfully. Cl: $num_Cl"
 fi
+
+# Create checkpoint file
+touch "$gmxdir/check_06_addgmxions_$(date +%Y%m%d_%H%M%S).done"

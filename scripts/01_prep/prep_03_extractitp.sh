@@ -13,6 +13,7 @@ Positional arguments:
 Options:
   --with-dna          Complex includes DNA
   -h, --help          Show this help message and exit
+
 USAGE
 }
 
@@ -33,17 +34,59 @@ fi
 top="$1"
 $gmxdir=$(dirname "$top")
 
+########## OPTIONAL ARGUMENTS ##########
+# Default params
+with_dna=false
+
+# Parse flags before positional arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --with-dna)
+      with_dna=true
+      ((with_dna ? expected_itps=8 : expected_itps=6))
+      echo "Including --with-dna flag for topology extraction. System should include DNA."
+      shift
+      ;;
+    -h|--help)
+      print_usage
+      exit 0
+      ;;
+    -*)
+      echo "Unknown option: $1"
+      print_usage
+      exit 1
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+
+# Check if checkpoint file from previous run exists
+if ls "$gmxdir/toppar/check_03_extractitp_"*.done 1> /dev/null 2>&1; then
+    warn "Checkpoint file found. Checking .itp files."
+    itps=$(find "$gmxdir/toppar" -maxdepth 1 -name "*.itp" | wc -l)
+    if [ "$itps" -ne "$expected_itps" ]; then
+        warn "Expected $expected_itps .itp files, but found $itps. The previous run might have been incomplete. Proceeding with .itp extraction."
+    else
+        ok "The number of .itp files found matches the expected count of ($expected_itps)."
+        warn "Skipping .itp extraction."
+        exit 0
+    fi
+fi
+
 # Check that gmxdir/toppar does not exist. If it exists, show a message and backup the old one (change the name)
 if [ -d "$gmxdir/toppar" ]; then
-    warn "$gmxdir/toppar already exists. Backing up old directory."
-    mv "$gmxdir/toppar" "$gmxdir/toppar_backup_$(date +%Y%m%d_%H%M%S)"
-fi
-mkdir "$gmxdir/toppar"
-if [ -d "$gmxdir/toppar" ]; then
-    ok "$gmxdir/toppar directory created at $gmxdir."
+    warn "$gmxdir/toppar already exists"
 else
-    error "$gmxdir/toppar directory could not be created at $gmxdir."
-    exit 1
+    mkdir "$gmxdir/toppar"
+    if [ -d "$gmxdir/toppar" ]; then
+        ok "$gmxdir/toppar directory created at $gmxdir."
+    else
+        error "$gmxdir/toppar directory could not be created at $gmxdir."
+        exit 1
+    fi
 fi
 
 # Extract molecule itps
@@ -76,8 +119,11 @@ echo "The following .itp files have been created in $gmxdir/toppar/ and included
 $(echo $gmxdir/toppar/*.itp)
 
 # Check that the expected number of .itp files have been created
-((with_dna ? expected_itps=8 : expected_itps=6))
 created_itps=$(find "$gmxdir/toppar" -maxdepth 1 -name "*.itp" | wc -l)
 if [ "$created_itps" -ne "$expected_itps" ]; then
     warn "Expected $expected_itps .itp files, but found $created_itps."
+else
+    ok "All expected .itp files have been created successfully."
+    # Create checkpoint file
+    touch "$gmxdir/toppar/check_03_extractitp_$(date +%Y%m%d_%H%M%S).done"
 fi

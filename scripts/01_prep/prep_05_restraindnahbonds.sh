@@ -136,7 +136,21 @@ if ! awk -v f="$fac" 'BEGIN{ if(f<=0) exit 1; exit 0 }'; then
     exit 1
 fi
 
-echo "Calculating distance restrains for h-bonds in $dna_a and $dna_b.
+# Check if checkpoint file from previous run exists
+if ls "$gmxdir/check_05_restraindnahbonds_"*.done 1> /dev/null 2>&1; then
+    warn "Checkpoint file found. Skipping DNA H-bond restraints addition."
+    # Check if topol file contains distance_restraints section
+    if grep -q "\[ distance_restraints \]" "$topol"; then
+        ok "[ distance_restraints ] section found in $topol."
+        warn "Skipping DNA H-bond restraints addition."
+        exit 0
+    else
+        warn "Checkpoint file found but [ distance_restraints ] section not found in $topol. The previous run might have been incomplete. Proceeding with DNA H-bond restraints addition."
+    fi
+fi
+
+# Start calculating distance restraints
+echo "Calculating distance restraints for h-bonds in $dna_a and $dna_b.
 Restrains will be writen to $topol.
 Parameters: 
 type    index    type'    low    up1    up2    fac
@@ -258,3 +272,6 @@ done
 rm dna_a_atoms.txt dna_b_atoms.txt dna_retraints_pairs.txt
 
 ok "DNA distance restraints added to $topol."
+
+# Create checkpoint file
+touch "$gmxdir/check_05_restraindnahbonds_$(date +%Y%m%d_%H%M%S).done"
