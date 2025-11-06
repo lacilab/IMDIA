@@ -1,16 +1,20 @@
-# Usage
-# snakemake --config structure="A,B,C" muts="X,Y,Z" reps="rep1,rep2,rep3"
+# ------------------------
+# Load configuration file
+# ------------------------
+configfile: "config.yaml"
 
-# Hydrogen bond analysis methods
-METHODS_HBONDS = ['gmx', 'mda']
+METHODS_HBONDS = config.get("methods_hbonds", ["gmx", "mda"])
+STRUCTURES     = config.get("structure", [])
+MUTS           = config.get("muts", [])
+REPS           = config.get("reps", [])
+DNA            = config.get("dna", False)
+OFFSET         = int(config.get("offset", 0))
+DOMAINS        = config["domains"]
 
-# Structures to analyze
-STRUCTURES = config["structure"].split(",") if "structure" in config else []
-# Mutations to analyze
-MUTS = config["muts"].split(",") if "muts" in config else []
-# Replicates to analyze
-REPS = config["reps"].split(",") if "reps" in config else []
 
+# ------------------------
+# Get replicates to analyze
+# ------------------------
 # List to store mutation-sample pairs as tuples
 combinations = []
 
@@ -165,28 +169,19 @@ rule qc:
         rmsf_prot_domains = report(f"{PATH_QC}/rmsf_prot_domains.png", 
             category="QC", subcategory="RMSF", labels={"sample": "{mut} {rep} RMSF Protein"}),
         rmsf_dna_res = report(f"{PATH_QC}/rmsf_dna_res.png", 
-            category="QC", subcategory="RMSF", labels={"sample": "{mut} {rep} RMSF DNA"}),
-        
+            category="QC", subcategory="RMSF", labels={"sample": "{mut} {rep} RMSF DNA"}) if DNA else None,
         rmsd_csv = f"{PATH_QC}/rmsd.csv",
         radius_axis_csv = f"{PATH_QC}/radius_axis.csv",
         rmsf_prot_csv = f"{PATH_QC}/rmsf_prot.csv",
-        rmsf_dna_csv = f"{PATH_QC}/rmsf_dna.csv",
+        rmsf_dna_csv = f"{PATH_QC}/rmsf_dna.csv" if DNA else None,
     shell:
        """
        scripts/qc.py \
-            --outdir "{PATH_ANALYSIS_WC}/001_qc" \
             --universe {input.universe} \
-            --rmsd {output.rmsd} \
-            --rmsd_cats {output.rmsd_cats} \
-            --rmsd_bb {output.rmsd_bb} \
-            --radius_axis {output.radius_axis} \
-            --radius_rmsd {output.radius_rmsd} \
-            --rmsf_prot_domains {output.rmsf_prot_domains} \
-            --rmsf_dna_res {output.rmsf_dna_res} \
-            --rmsd_csv {output.rmsd_csv} \
-            --radius_axis_csv {output.radius_axis_csv} \
-            --rmsf_prot_csv {output.rmsf_prot_csv} \
-            --rmsf_dna_csv {output.rmsf_dna_csv} \
+            --outdir "{PATH_ANALYSIS_WC}/001_qc" \
+            --with-dna {DNA} \
+            --offset {OFFSET} \
+            --domains {DOMAINS} \
        """
 
 rule hbonds_gmx:

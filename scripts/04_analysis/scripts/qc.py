@@ -1,52 +1,49 @@
 #!/usr/bin/env python3
 
-import pickle
 import sys
-from MDAnalysis.analysis import rms, align
+import os
+import argparse
+import pickle
 import pandas as pd
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import os
-import argparse
+from MDAnalysis.analysis import rms, align
 
 # Arguments
 parser = argparse.ArgumentParser(description="Quality control analysis of MD simulation")
-parser.add_argument("-d", "--outdir", help="Output directory")
 parser.add_argument("-u", "--universe", help="Path to the Universe object")
-parser.add_argument("--rmsd", help="Path to save the RMSD plot")
-parser.add_argument("--rmsd_cats", help="Path to save the RMSD categories plot")
-parser.add_argument("--rmsd_bb", help="Path to save the RMSD backbone plot")
-parser.add_argument("--radius_axis", help="Path to save the radius of gyration axis plot")
-parser.add_argument("--radius_rmsd", help="Path to save the radius of gyration RMSD plot")
-parser.add_argument("--rmsf_prot_domains", help="Path to save the RMSF protein domains plot")
-parser.add_argument("--rmsf_dna_res", help="Path to save the RMSF DNA residues plot")
-parser.add_argument("--rmsd_csv", help="Path to save the RMSD CSV file")
-parser.add_argument("--radius_axis_csv", help="Path to save the radius of gyration axis CSV file")
-parser.add_argument("--rmsf_prot_csv", help="Path to save the RMSF protein domains CSV file")
-parser.add_argument("--rmsf_dna_csv", help="Path to save the RMSF DNA residues CSV file")
+parser.add_argument("-d", "--outdir", help="Output directory")
+parser.add_argument("--with_dna", action='store_true', help="DNA is present in the system")
+parser.add_argument("--offset", type=int, default=0, help="Offset for residue numbering")
+parser.add_argument("--domains", type=list, default=[], help="Protein domain definitions.")
 
 if len(sys.argv)==1:
     parser.print_help()
     sys.exit(0)
 
 args = parser.parse_args()
-datadir = args.outdir
 universe = args.universe
-rmsd = args.rmsd
-rmsd_cats = args.rmsd_cats
-rmsd_bb = args.rmsd_bb
-radius_axis = args.radius_axis
-radius_rmsd = args.radius_rmsd
-rmsf_prot_domains = args.rmsf_prot_domains
-rmsf_dna_res = args.rmsf_dna_res
-rmsd_csv = args.rmsd_csv
-radius_axis_csv = args.radius_axis_csv
-rmsf_prot_csv = args.rmsf_prot_csv
-rmsf_dna_csv = args.rmsf_dna_csv
+outdir = args.outdir
+with_dna = args.with_dna
+offset = args.offset
+domains = args.domains
 
-os.makedirs(datadir, exist_ok=True)
+# Output file paths
+rmsd = f"{outdir}/rmsd.png"
+rmsd_cats = f"{outdir}/rmsd_cats.png"
+rmsd_bb = f"{outdir}/rmsd_bb.png"
+radius_axis = f"{outdir}/radius_axis.png"
+radius_rmsd = f"{outdir}/radius_rmsd.png"
+rmsf_prot_domains = f"{outdir}/rmsf_prot_domains.png"
+rmsf_dna_res = f"{outdir}/rmsf_dna_res.png"
+rmsd_csv = f"{outdir}/rmsd.csv"
+radius_axis_csv = f"{outdir}/radius_axis.csv"
+rmsf_prot_csv = f"{outdir}/rmsf_prot.csv"
+rmsf_dna_csv = f"{outdir}/rmsf_dna.csv"
+
+os.makedirs(outdir, exist_ok=True)
 
 with open(universe, 'rb') as f:
     u = pickle.load(f)
@@ -55,10 +52,7 @@ u.trajectory[0]
 # Select atoms by chain
 dimer = u.select_atoms("segid A B")  
 monoA = u.select_atoms("segid A")   
-monoB = u.select_atoms("segid B")   
-dna = u.select_atoms("segid C D")   
-dnaC = u.select_atoms("segid C") 
-dnaD = u.select_atoms("segid D") 
+monoB = u.select_atoms("segid B")
 
 ########## RMSD ##########
 rmsd_analysis = rms.RMSD(u, select='backbone', groupselections=['name CA', 'protein'])
@@ -180,37 +174,45 @@ rmsf_prot = pd.DataFrame({
 rmsf_prot.to_csv(rmsf_prot_csv, index=False)
 
 # Plot
-plt.plot(monoA_ca.resids + 135, RA.results.rmsf, label='RMSF Chain A')
-plt.plot(monoB_ca.resids + 135, RB.results.rmsf, label='RMSF Chain B')
-plt.axvspan(137, 317, zorder=0, alpha=0.2, color='blue', label='CCD')
-plt.axvspan(318, 488, zorder=0, alpha=0.2, color='red', label='DBD')
-plt.axvspan(489, 576, zorder=0, alpha=0.2, color='green', label='LD')
-plt.axvspan(577, 683, zorder=0, alpha=0.2, color='yellow', label='SH2')
-plt.axvspan(684, 708, zorder=0, alpha=0.2, color='pink', label='Tail')
+plt.plot(monoA_ca.resids + offset, RA.results.rmsf, label='RMSF Chain A')
+plt.plot(monoB_ca.resids + offset, RB.results.rmsf, label='RMSF Chain B')
+# Color by protein domains
+if len(domains) > 0:
+    for domain in domains:
+        start = domain['start'] + offset
+        end = domain['end'] + offset
+        plt.axvspan(start, end, zorder=0, alpha=0.2, color=domain['color'], label=domain['label'])
 plt.xlabel('Residue number (adjusted)')
 plt.ylabel('RMSF (Å)')
 plt.legend()
 plt.savefig(rmsf_prot_domains)
 plt.close()
 
-dnaC_p = dnaC.select_atoms('name P')
-RC = rms.RMSF(dnaC_p).run()
-dnaD_p = dnaD.select_atoms('name P')
-RD = rms.RMSF(dnaD_p).run()
+##### If the complex contains dsDNA #####
+if with_dna:
+    dna = u.select_atoms("segid C D")   
+    dnaC = u.select_atoms("segid C") 
+    dnaD = u.select_atoms("segid D") 
 
-# Save DNA RMSF to CSV
-rmsf_dna = pd.DataFrame({
-    'Residue': dnaC_p.resids,
-    'RMSF_C': RC.results.rmsf,
-    'RMSF_D': RD.results.rmsf
-})
-rmsf_dna.to_csv(rmsf_dna_csv, index=False)
+    # Select P atoms to focus on backbone fluctuations
+    dnaC_p = dnaC.select_atoms('name P')
+    RC = rms.RMSF(dnaC_p).run()
+    dnaD_p = dnaD.select_atoms('name P')
+    RD = rms.RMSF(dnaD_p).run()
 
-# Plot
-plt.plot(dnaC_p.resids, RC.results.rmsf, label='RMSF DNA C')
-plt.plot(dnaD_p.resids, RD.results.rmsf, label='RMSF DNA D')
-plt.xlabel('Residue number')
-plt.ylabel('RMSF (Å)')
-plt.legend()
-plt.savefig(rmsf_dna_res)
-plt.close()
+    # Save DNA RMSF to CSV
+    rmsf_dna = pd.DataFrame({
+        'Residue': dnaC_p.resids,
+        'RMSF_C': RC.results.rmsf,
+        'RMSF_D': RD.results.rmsf
+    })
+    rmsf_dna.to_csv(rmsf_dna_csv, index=False)
+
+    # Plot
+    plt.plot(dnaC_p.resids, RC.results.rmsf, label='RMSF DNA C')
+    plt.plot(dnaD_p.resids, RD.results.rmsf, label='RMSF DNA D')
+    plt.xlabel('Residue number')
+    plt.ylabel('RMSF (Å)')
+    plt.legend()
+    plt.savefig(rmsf_dna_res)
+    plt.close()
