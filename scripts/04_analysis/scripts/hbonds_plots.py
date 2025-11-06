@@ -1,17 +1,34 @@
+#!/usr/bin/env python3
+
 import sys
 import pandas as pd
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import argparse
 
 # Arguments
-hbonds_ext = sys.argv[1]
-hbonds_prot_domains = sys.argv[2]
-hbonds_prot_monomer = sys.argv[3]
-hbonds_dna = sys.argv[4]
-hbonds_dna_bb = sys.argv[5]
-hbonds_dna_base = sys.argv[6]
+parser = argparse.ArgumentParser(description='Generate plots from extended hydrogen bonds data.')
+parser.add_argument("-i", "--incsv", type=str, help='Path to the extended hydrogen bonds CSV file')
+parser.add_argument("-m", "--method", type=str, help='Method used for hydrogen bond calculation (e.g., "gmx, mda").')
+parser.add_argument("-d", "--outdir", type=str, help="Output directory")
+
+if len(sys.argv)==1:
+    parser.print_help()
+    sys.exit(0)
+
+args = parser.parse_args()
+hbonds_ext = args.incsv
+outdir = args.outdir
+method = args.method
+
+# Output file paths
+hbonds_prot_domains = f"{outdir}/hbonds_{method}_prot_domains.png"
+hbonds_prot_monomer = f"{outdir}/hbonds_{method}_monomer.png"
+hbonds_dna = f"{outdir}/hbonds_{method}_dna.png"
+hbonds_dna_bb = f"{outdir}/hbonds_{method}_dna_bb.png"
+hbonds_dna_base = f"{outdir}/hbonds_{method}_dna_base.png"
 
 hbonds_df = pd.read_csv(hbonds_ext)
 

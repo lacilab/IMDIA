@@ -1,14 +1,33 @@
+#!/usr/bin/env python3
+
+import sys
+import argparse
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import pandas as pd
-import sys
 
 # Arguments
-pca_data_file = sys.argv[1]
-clustering_labels_file = sys.argv[2]
-clustering_alg = sys.argv[3]
-outputdir = sys.argv[4]
+parser = argparse.ArgumentParser(description="Project sklearn clustering results on GROMACS PCA data.")
+parser.add_argument("-s", "--timescale", type=str, help="Path to the 2D projection timescale of the PCA (CSV file).")
+parser.add_argument("-l","--labels", type=str, help="Clustering labels output by sklearn. Expected format: algorithm_labels.csv")
+parser.add_argument("-d", "--outdir", type=str, help="Output directory")
 
+if len(sys.argv)==1:
+    parser.print_help()
+    sys.exit(0)
+
+args = parser.parse_args()
+pca_data_file = args.timescale
+clustering_labels_file = args.labels
+outputdir = args.outdir
+
+# TODO check files and directories exist
+# TODO check file extensions are correct
+
+# Extract clustering algorithm from filename
+clustering_alg = clustering_labels_file.split('_')[0]
+
+# Load csv files
 pca_data = pd.read_csv(pca_data_file, sep=",", header=None, skipfooter=1, names=['PCA1', 'PCA2', 'Time'])
 clustering_labels = pd.read_csv(clustering_labels_file)
 merged_data = pd.concat([pca_data, clustering_labels['Cluster']], axis=1)

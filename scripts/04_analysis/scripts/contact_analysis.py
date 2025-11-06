@@ -1,22 +1,37 @@
+#!/usr/bin/env python3
+
 import sys
 import pickle
+import argparse
+import MDAnalysis as mda
 from MDAnalysis.analysis.contacts import Contacts
 from MDAnalysis.lib.distances import distance_array
-import MDAnalysis as mda
 import numpy as np
+import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import pandas as pd
 
 # Arguments
-universe = sys.argv[1]
-timeseries_full_csv = sys.argv[2]
-timeseries_full_png = sys.argv[3]
-timeseries_dbd_csv = sys.argv[4]
-timeseries_dbd_png = sys.argv[5]
-pairs_dbd_csv = sys.argv[6]
-pairs_full_csv = sys.argv[7]
+parser = argparse.ArgumentParser(description="Perform contact analysis with MDAnalysis.")
+parser.add_argument("-u", "--universe", help="Path to the Universe object")
+parser.add_argument("-d", "--outdir", help="Output directory")
+
+if len(sys.argv)==1:
+    parser.print_help()
+    sys.exit(0)
+
+args = parser.parse_args()
+universe = args.universe
+outdir = args.outdir
+
+# Output file paths
+timeseries_full_csv = f"{outdir}/timeseries_full.csv"
+timeseries_full_png = f"{outdir}/timeseries_full.png"
+timeseries_dbd_csv = f"{outdir}/timeseries_dbd.csv"
+timeseries_dbd_png = f"{outdir}/timeseries_dbd.png"
+pairs_dbd_csv = f"{outdir}/pairs_dbd.csv"
+pairs_full_csv = f"{outdir}/pairs_full.csv"
 
 # Parameters
 cutoff = 5.0  # Distance cutoff in Å

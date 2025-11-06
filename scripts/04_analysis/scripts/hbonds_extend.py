@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import pickle
 import matplotlib
@@ -6,13 +8,26 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import MDAnalysis as mda
+import argparse
 
 # Arguments
-universe = sys.argv[1]
-hbonds_parsed = sys.argv[2]
-pdbfile = sys.argv[3]
-hbonds_ext = sys.argv[4]
-hbonds_perframe = sys.argv[5]
+parser = argparse.ArgumentParser(description="Extend hydrogen bonds data with additional information.")
+parser.add_argument("-f", "--pdb", help="PDB file.")
+parser.add_argument("-u", "--universe", help="MDAnalysis universe file.")
+parser.add_argument("-p", "--hbonds_parsed", help="Input. Parsed hydrogen bonds CSV file.")
+parser.add_argument("-o", "--hbonds_ext", help="Output. Extended hydrogen bonds file.")
+parser.add_argument("-r", "--hbonds_perframe", help="Output. Hydrogen bonds per frame file.")
+
+if len(sys.argv)==1:
+    parser.print_help()
+    sys.exit(0)
+
+args = parser.parse_args()
+pdbfile = args.pdb
+universe = args.universe
+hbonds_parsed = args.hbonds_parsed
+hbonds_ext = args.hbonds_ext
+hbonds_perframe = args.hbonds_perframe
 
 
 # Load universe

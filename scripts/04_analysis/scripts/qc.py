@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import pickle
 import sys
 from MDAnalysis.analysis import rms, align
@@ -7,21 +9,42 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
+import argparse
 
 # Arguments
-datadir = sys.argv[1]
-universe = sys.argv[2]
-rmsd = sys.argv[3]
-rmsd_cats = sys.argv[4]
-rmsd_bb = sys.argv[5]
-radius_axis = sys.argv[6]
-radius_rmsd = sys.argv[7]
-rmsf_prot_domains = sys.argv[8]
-rmsf_dna_res = sys.argv[9]
-rmsd_csv = sys.argv[10]
-radius_axis_csv = sys.argv[11]
-rmsf_prot_csv = sys.argv[12]
-rmsf_dna_csv = sys.argv[13]
+parser = argparse.ArgumentParser(description="Quality control analysis of MD simulation")
+parser.add_argument("-d", "--outdir", help="Output directory")
+parser.add_argument("-u", "--universe", help="Path to the Universe object")
+parser.add_argument("--rmsd", help="Path to save the RMSD plot")
+parser.add_argument("--rmsd_cats", help="Path to save the RMSD categories plot")
+parser.add_argument("--rmsd_bb", help="Path to save the RMSD backbone plot")
+parser.add_argument("--radius_axis", help="Path to save the radius of gyration axis plot")
+parser.add_argument("--radius_rmsd", help="Path to save the radius of gyration RMSD plot")
+parser.add_argument("--rmsf_prot_domains", help="Path to save the RMSF protein domains plot")
+parser.add_argument("--rmsf_dna_res", help="Path to save the RMSF DNA residues plot")
+parser.add_argument("--rmsd_csv", help="Path to save the RMSD CSV file")
+parser.add_argument("--radius_axis_csv", help="Path to save the radius of gyration axis CSV file")
+parser.add_argument("--rmsf_prot_csv", help="Path to save the RMSF protein domains CSV file")
+parser.add_argument("--rmsf_dna_csv", help="Path to save the RMSF DNA residues CSV file")
+
+if len(sys.argv)==1:
+    parser.print_help()
+    sys.exit(0)
+
+args = parser.parse_args()
+datadir = args.outdir
+universe = args.universe
+rmsd = args.rmsd
+rmsd_cats = args.rmsd_cats
+rmsd_bb = args.rmsd_bb
+radius_axis = args.radius_axis
+radius_rmsd = args.radius_rmsd
+rmsf_prot_domains = args.rmsf_prot_domains
+rmsf_dna_res = args.rmsf_dna_res
+rmsd_csv = args.rmsd_csv
+radius_axis_csv = args.radius_axis_csv
+rmsf_prot_csv = args.rmsf_prot_csv
+rmsf_dna_csv = args.rmsf_dna_csv
 
 os.makedirs(datadir, exist_ok=True)
 

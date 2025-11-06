@@ -1,4 +1,7 @@
+#!/usr/bin/env python3
+
 import sys
+import argparse
 import mdtraj as md
 import numpy as np
 from umap.umap_ import UMAP
@@ -16,9 +19,22 @@ from scipy.spatial.distance import pdist, squareform
 from tqdm import tqdm
 
 # Arguments
-pdb = sys.argv[1]
-xtc = sys.argv[2]
-outputdir = sys.argv[3]
+parser = argparse.ArgumentParser(description="Perform PCA and clustering analysis on MD trajectory using sklearn.")
+parser.add_argument("-f", "--pdb", help="Input. Path to the PDB file.")
+parser.add_argument("-x", "--xtc", help="Input. Path to the XTC file.")
+parser.add_argument("-d", "--outdir", help="Output directory.")
+
+if len(sys.argv)==1:
+    parser.print_help()
+    sys.exit(0)
+
+args = parser.parse_args()
+pdb = args.pdb
+xtc = args.xtc
+outdir = args.outdir
+
+os.makedirs(outdir, exist_ok=True)
+
 
 # ============= CONFIGURATION SECTION =============
 CONFIG = {

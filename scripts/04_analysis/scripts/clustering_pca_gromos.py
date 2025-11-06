@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+
+import argparse
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -5,9 +8,19 @@ import pandas as pd
 import sys
 
 # Arguments
-pca_data_file = sys.argv[1]
-clusters_index_file = sys.argv[2]
-outputdir = sys.argv[3]
+parser = argparse.ArgumentParser(description="Project gromos clustering on GROMACS PCA data.")
+parser.add_argument("-s", "--timescale", type=str, help="Path to the 2D projection timescale of the PCA (CSV file).")
+parser.add_argument("-n","--index", type=str, help="Path to the clusters index file (NDX file).")
+parser.add_argument("-d", "--outdir", type=str, help="Output directory")
+
+if len(sys.argv)==1:
+    parser.print_help()
+    sys.exit(0)
+
+args = parser.parse_args()
+pca_data_file = args.timescale
+clusters_index_file = args.index
+outputdir = args.outdir
 
 pca_data = pd.read_csv(pca_data_file, sep=",", header=None, skipfooter=1, names=['PC1', 'PC2', 'Time'])
 

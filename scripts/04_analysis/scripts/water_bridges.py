@@ -1,13 +1,25 @@
+#!/usr/bin/env python3
+
 import sys
 import pickle
+import argparse
 import pandas as pd
 import numpy as np
 import MDAnalysis as mda
 from MDAnalysis.analysis.hydrogenbonds import WaterBridgeAnalysis
 
 # Arguments
-universe = sys.argv[1]
-wb_csv = sys.argv[2]
+parser = argparse.ArgumentParser(description="Analyze water bridges between protein and nucleic acids.")
+parser.add_argument("-u", "--universe", help="Path to the Universe object")
+parser.add_argument("-o", "--wb_csv", help="Output CSV file with water bridges data.")
+
+if len(sys.argv)==1:
+    parser.print_help()
+    sys.exit(0)
+
+args = parser.parse_args()
+universe = args.universe
+wb_csv = args.wb_csv
 
 with open(universe, 'rb') as f:
     u = pickle.load(f)

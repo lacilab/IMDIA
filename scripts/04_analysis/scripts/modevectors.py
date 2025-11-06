@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 '''
 See more here: http://www.pymolwiki.org/index.php/Modevectors
 '''

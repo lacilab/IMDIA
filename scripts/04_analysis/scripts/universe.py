@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import MDAnalysis as mda
 import warnings
@@ -5,14 +7,26 @@ import warnings
 warnings.filterwarnings('ignore')
 import os
 import pickle
+import argparse
 
 # Arguments
-datadir = sys.argv[1]
-pdbfile = sys.argv[2]
-xtcfile = sys.argv[3]
-universe = sys.argv[4]
+parser = argparse.ArgumentParser(description="Create MDAnalysis Universe from PDB and XTC files.")
+parser.add_argument("-f", "--pdb", help="Path to the PDB file")
+parser.add_argument("-x", "--xtc", help="Path to the XTC file")
+parser.add_argument("-d", "--outdir", help="Output directory")
+parser.add_argument("-u", "--universe", help="Path to save the Universe object")
 
-os.makedirs(datadir, exist_ok=True)
+if len(sys.argv)==1:
+    parser.print_help()
+    sys.exit(0)
+
+args = parser.parse_args()
+pdbfile = args.pdb
+xtcfile = args.xtc
+outdir = args.outdir
+universe = args.universe
+
+os.makedirs(outdir, exist_ok=True)
 
 u = mda.Universe(pdbfile, xtcfile)
 with open(universe, 'wb') as f:

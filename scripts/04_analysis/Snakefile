@@ -1,5 +1,5 @@
 # Usage
-# snakemake --config structure="A,B,C" muts="1,2,3" 
+# snakemake --config structure="A,B,C" muts="X,Y,Z" reps="rep1,rep2,rep3"
 
 # Hydrogen bond analysis methods
 METHODS_HBONDS = ['gmx', 'mda']
@@ -8,6 +8,8 @@ METHODS_HBONDS = ['gmx', 'mda']
 STRUCTURES = config["structure"].split(",") if "structure" in config else []
 # Mutations to analyze
 MUTS = config["muts"].split(",") if "muts" in config else []
+# Replicates to analyze
+REPS = config["reps"].split(",") if "reps" in config else []
 
 # List to store mutation-sample pairs as tuples
 combinations = []
@@ -15,10 +17,13 @@ combinations = []
 # Get first-level directories starting with rep for each mutation in MUTS
 for structure in STRUCTURES:
     for mutation in MUTS:
-        reps = [d for d in os.listdir(f"../../data/{structure}/{mutation}/") 
-                    if os.path.isdir(os.path.join(f"../../data/{structure}/{mutation}/", d)) 
-                    and d.startswith("rep")]
-        # Create pairs for this mutation
+        if len(REPS) < 1:
+            reps = [d for d in os.listdir(f"../../data/{structure}/{mutation}/") 
+                        if os.path.isdir(os.path.join(f"../../data/{structure}/{mutation}/", d)) 
+                        and d.startswith("rep")]
+        else:
+            reps = REPS
+            # TODO check if input rep directories exist
         for rep in reps:
             combinations.append((structure, mutation, rep))
 
@@ -30,477 +35,450 @@ for structure, mutation, rep in mut_sample_pairs:
 structures, mutations, reps = zip(*combinations)
 
 # PATHS
-BASE_PATH = "../../data/{struct}/{mut}/{rep}/analysis"
-QC_PATH = f"{BASE_PATH}/001_qc"
-HBONDS_PATH = f"{BASE_PATH}/002_hbonds"
-PCA_PATH = f"{BASE_PATH}/003_pca"
-CONTACTS_PATH = f"{BASE_PATH}/004_contacts"
-CLUST_PATH = f"{BASE_PATH}/005_clustering"
-GBSA_PATH = f"{BASE_PATH}/006_gbsa"
+PATH_MUT = "../../data/{struct}/{mut}"
+PATH_REP = f"{PATH_MUT}/{rep}"
+PATH_ANALYSIS = f"{PATH_REP}/analysis"
+PATH_ANALYSIS_WC = "../../data/{wildcards.struct}/{wildcards.mut}/{wildcards.rep}/analysis"
+PATH_GMX = f"{PATH_REP}/gromacs"
+PATH_QC = f"{PATH_ANALYSIS}/001_qc"
+PATH_HBONDS = f"{PATH_ANALYSIS}/002_hbonds"
+PATH_PCA = f"{PATH_ANALYSIS}/003_pca"
+PATH_CONTACTS = f"{PATH_ANALYSIS}/004_contacts"
+PATH_CLUST = f"{PATH_ANALYSIS}/005_clustering"
+PATH_GBSA= f"{PATH_ANALYSIS}/006_gbsa"
 
 
 rule all:
     input:
         # QC
-        rmsdpng = expand(f"{QC_PATH}/rmsd.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        rmsd_cats = expand(f"{QC_PATH}/rmsd_cats.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        rmsd_bb = expand(f"{QC_PATH}/rmsd_bb.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        radius_axis = expand(f"{QC_PATH}/radius_axis.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        radius_rmsd = expand(f"{QC_PATH}/radius_rmsd.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        rmsf_prot_domains = expand(f"{QC_PATH}/rmsf_prot_domains.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        rmsf_dna_res = expand(f"{QC_PATH}/rmsf_dna_res.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        rmsd_csv = expand(f"{QC_PATH}/rmsd.csv", struct=structures, mut=mutations, rep=reps, zip=True),
-        radius_axis_csv = expand(f"{QC_PATH}/radius_axis.csv", struct=structures, mut=mutations, rep=reps, zip=True),
-        rmsf_prot_csv = expand(f"{QC_PATH}/rmsf_prot.csv", struct=structures, mut=mutations, rep=reps, zip=True),
-        rmsf_dna_csv = expand(f"{QC_PATH}/rmsf_dna.csv", struct=structures, mut=mutations, rep=reps, zip=True),
+        rmsdpng = expand(f"{PATH_QC}/rmsd.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        rmsd_cats = expand(f"{PATH_QC}/rmsd_cats.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        rmsd_bb = expand(f"{PATH_QC}/rmsd_bb.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        radius_axis = expand(f"{PATH_QC}/radius_axis.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        radius_rmsd = expand(f"{PATH_QC}/radius_rmsd.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        rmsf_prot_domains = expand(f"{PATH_QC}/rmsf_prot_domains.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        rmsf_dna_res = expand(f"{PATH_QC}/rmsf_dna_res.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        rmsd_csv = expand(f"{PATH_QC}/rmsd.csv", struct=structures, mut=mutations, rep=reps, zip=True),
+        radius_axis_csv = expand(f"{PATH_QC}/radius_axis.csv", struct=structures, mut=mutations, rep=reps, zip=True),
+        rmsf_prot_csv = expand(f"{PATH_QC}/rmsf_prot.csv", struct=structures, mut=mutations, rep=reps, zip=True),
+        rmsf_dna_csv = expand(f"{PATH_QC}/rmsf_dna.csv", struct=structures, mut=mutations, rep=reps, zip=True),
         
         # HBONDS
-        hbonds_mda_parsed = expand(f"{HBONDS_PATH}/hbonds_mda_parsed.csv", struct=structures, mut=mutations, rep=reps, zip=True),
+        hbonds_mda_parsed = expand(f"{PATH_HBONDS}/hbonds_mda_parsed.csv", struct=structures, mut=mutations, rep=reps, zip=True),
 
-        hbonds_gmx = expand(f"{HBONDS_PATH}/hbonds_gmx.ndx", struct=structures, mut=mutations, rep=reps, zip=True),
-        hbonds_gmx_num = expand(f"{HBONDS_PATH}/hbonds_gmx_num.xvg", struct=structures, mut=mutations, rep=reps, zip=True),
-        hbonds_gmx_parsed = expand(f"{HBONDS_PATH}/hbonds_gmx_parsed.csv", struct=structures, mut=mutations, rep=reps, zip=True),
+        hbonds_gmx = expand(f"{PATH_HBONDS}/hbonds_gmx.ndx", struct=structures, mut=mutations, rep=reps, zip=True),
+        hbonds_gmx_num = expand(f"{PATH_HBONDS}/hbonds_gmx_num.xvg", struct=structures, mut=mutations, rep=reps, zip=True),
+        hbonds_gmx_parsed = expand(f"{PATH_HBONDS}/hbonds_gmx_parsed.csv", struct=structures, mut=mutations, rep=reps, zip=True),
 
-        hbonds_perframe = expand(f"{HBONDS_PATH}/hbonds_{method}_perframe.png", struct=structures, mut=mutations, rep=reps, zip=True, method=METHODS_HBONDS),
-        hbonds_ext = expand(f"{HBONDS_PATH}/hbonds_{method}_ext.csv", struct=structures, mut=mutations, rep=reps, zip=True, method=METHODS_HBONDS),
+        hbonds_perframe = expand(f"{PATH_HBONDS}/hbonds_{method}_perframe.png", struct=structures, mut=mutations, rep=reps, zip=True, method=METHODS_HBONDS),
+        hbonds_ext = expand(f"{PATH_HBONDS}/hbonds_{method}_ext.csv", struct=structures, mut=mutations, rep=reps, zip=True, method=METHODS_HBONDS),
 
-        hbonds_prot_domains = expand(f"{HBONDS_PATH}/hbonds_{method}_prot_domain.png", struct=structures, mut=mutations, rep=reps, zip=True, method=METHODS_HBONDS),
-        hbonds_prot_monomer = expand(f"{HBONDS_PATH}/hbonds_{method}_monomer.png", struct=structures, mut=mutations, rep=reps, zip=True, method=METHODS_HBONDS),
-        hbonds_dna = expand(f"{HBONDS_PATH}/hbonds_{method}_dna.png", struct=structures, mut=mutations, rep=reps, zip=True, method=METHODS_HBONDS),
-        hbonds_dna_bb = expand(f"{HBONDS_PATH}/hbonds_{method}_dna_bb.png", struct=structures, mut=mutations, rep=reps, zip=True, method=METHODS_HBONDS),
-        hbonds_dna_base = expand(f"{HBONDS_PATH}/hbonds_{method}_dna_base.png", struct=structures, mut=mutations, rep=reps, zip=True, method=METHODS_HBONDS),
+        hbonds_prot_domains = expand(f"{PATH_HBONDS}/hbonds_{method}_prot_domain.png", struct=structures, mut=mutations, rep=reps, zip=True, method=METHODS_HBONDS),
+        hbonds_prot_monomer = expand(f"{PATH_HBONDS}/hbonds_{method}_monomer.png", struct=structures, mut=mutations, rep=reps, zip=True, method=METHODS_HBONDS),
+        hbonds_dna = expand(f"{PATH_HBONDS}/hbonds_{method}_dna.png", struct=structures, mut=mutations, rep=reps, zip=True, method=METHODS_HBONDS),
+        hbonds_dna_bb = expand(f"{PATH_HBONDS}/hbonds_{method}_dna_bb.png", struct=structures, mut=mutations, rep=reps, zip=True, method=METHODS_HBONDS),
+        hbonds_dna_base = expand(f"{PATH_HBONDS}/hbonds_{method}_dna_base.png", struct=structures, mut=mutations, rep=reps, zip=True, method=METHODS_HBONDS),
 
-        hbonds_pymol = expand(f"{HBONDS_PATH}/hbonds_{method}_pymol.txt", struct=structures, mut=mutations, rep=reps, zip=True, method=METHODS_HBONDS),
+        hbonds_pymol = expand(f"{PATH_HBONDS}/hbonds_{method}_pymol.txt", struct=structures, mut=mutations, rep=reps, zip=True, method=METHODS_HBONDS),
 
         # WATER BRIDGES
-        water_bridges = expand(f"{HBONDS_PATH}/waterbridges.csv", struct=structures, mut=mutations, rep=reps, zip=True),
+        water_bridges = expand(f"{PATH_HBONDS}/waterbridges.csv", struct=structures, mut=mutations, rep=reps, zip=True),
 
         # CONTACTS
 
-        timeseries_full_csv = expand(f"{CONTACTS_PATH}/timeseries_full.csv", struct=structures, mut=mutations, rep=reps, zip=True),
-        timeseries_full_png = expand(f"{CONTACTS_PATH}/timeseries_full.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        timeseries_dbd_csv = expand(f"{CONTACTS_PATH}/timeseries_dbd.csv", struct=structures, mut=mutations, rep=reps, zip=True),
-        timeseries_dbd_png = expand(f"{CONTACTS_PATH}/timeseries_dbd.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        pairs_dbd_csv = expand(f"{CONTACTS_PATH}/pairs_dbd.csv", struct=structures, mut=mutations, rep=reps, zip=True),
-        pairs_full_csv = expand(f"{CONTACTS_PATH}/pairs_full.csv", struct=structures, mut=mutations, rep=reps, zip=True),
+        timeseries_full_csv = expand(f"{PATH_CONTACTS}/timeseries_full.csv", struct=structures, mut=mutations, rep=reps, zip=True),
+        timeseries_full_png = expand(f"{PATH_CONTACTS}/timeseries_full.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        timeseries_dbd_csv = expand(f"{PATH_CONTACTS}/timeseries_dbd.csv", struct=structures, mut=mutations, rep=reps, zip=True),
+        timeseries_dbd_png = expand(f"{PATH_CONTACTS}/timeseries_dbd.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        pairs_dbd_csv = expand(f"{PATH_CONTACTS}/pairs_dbd.csv", struct=structures, mut=mutations, rep=reps, zip=True),
+        pairs_full_csv = expand(f"{PATH_CONTACTS}/pairs_full.csv", struct=structures, mut=mutations, rep=reps, zip=True),
 
         # PCA
-        pc_cumulative = expand(f"{PCA_PATH}/pc_cumulative.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        pc_pairgrid = expand(f"{PCA_PATH}/pc_pairgrid.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        pc_cosine = expand(f"{PCA_PATH}/pc_cosine.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        proj_timescale = expand(f"{PCA_PATH}/2dproj_timescale.csv", struct=structures, mut=mutations, rep=reps, zip=True),
-        pca_2dproj = expand(f"{PCA_PATH}/2D_projection_1_2.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        porcupine = expand(f"{PCA_PATH}/porcupine.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        pc_cumulative = expand(f"{PATH_PCA}/pc_cumulative.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        pc_pairgrid = expand(f"{PATH_PCA}/pc_pairgrid.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        pc_cosine = expand(f"{PATH_PCA}/pc_cosine.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        proj_timescale = expand(f"{PATH_PCA}/2dproj_timescale.csv", struct=structures, mut=mutations, rep=reps, zip=True),
+        pca_2dproj = expand(f"{PATH_PCA}/2D_projection_1_2.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        porcupine = expand(f"{PATH_PCA}/porcupine.png", struct=structures, mut=mutations, rep=reps, zip=True),
 
         # CLUSTERING
-        summary = expand(f"{CLUST_PATH}/analysis_summary.txt", struct=structures, mut=mutations, rep=reps, zip=True),
-        hclust = expand(f"{CLUST_PATH}/hclust_labels.csv", struct=structures, mut=mutations, rep=reps, zip=True),
-        kmeans = expand(f"{CLUST_PATH}/kmeans_labels.csv", struct=structures, mut=mutations, rep=reps, zip=True),
-        hclust_timeline = expand(f"{CLUST_PATH}/hclust_cluster_timeline.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        kmeans_timeline = expand(f"{CLUST_PATH}/kmeans_cluster_timeline.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        umap_timeline = expand(f"{CLUST_PATH}/umap_3d_timeline.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        umap_hclust_clusters = expand(f"{CLUST_PATH}/umap_hclust_clusters.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        umap_kmeans_clusters = expand(f"{CLUST_PATH}/umap_kmeans_clusters.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        umap_optimization = expand(f"{CLUST_PATH}/umap_optimization.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        pca_sk_hclust = expand(f"{CLUST_PATH}/pca_sklearn_clusters_hclust.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        pca_sk_kmeans = expand(f"{CLUST_PATH}/pca_sklearn_clusters_kmeans.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        pca_gmx_hclust = expand(f"{CLUST_PATH}/pca_gmx_clusters_hclust.jpg", struct=structures, mut=mutations, rep=reps, zip=True),
-        pca_gmx_kmeans = expand(f"{CLUST_PATH}/pca_gmx_clusters_kmeans.jpg", struct=structures, mut=mutations, rep=reps, zip=True),
-        gromos_xpm = expand(f"{CLUST_PATH}/gromos_clusters.xpm", struct=structures, mut=mutations, rep=reps, zip=True),
-        gromos_log = expand(f"{CLUST_PATH}/gromos_clusters.log", struct=structures, mut=mutations, rep=reps, zip=True),
-        pca_gromos = expand(f"{CLUST_PATH}/pca_gromos_clusters.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        pca_gromos_top10 = expand(f"{CLUST_PATH}/pca_gromos_clusters_top10.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        gromos_clusters_freq = expand(f"{CLUST_PATH}/gromos_clusters_freq.png", struct=structures, mut=mutations, rep=reps, zip=True),
-        gromos_clusters_freqcum = expand(f"{CLUST_PATH}/gromos_clusters_freq_cum.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        summary = expand(f"{PATH_CLUST}/analysis_summary.txt", struct=structures, mut=mutations, rep=reps, zip=True),
+        hclust = expand(f"{PATH_CLUST}/hclust_labels.csv", struct=structures, mut=mutations, rep=reps, zip=True),
+        kmeans = expand(f"{PATH_CLUST}/kmeans_labels.csv", struct=structures, mut=mutations, rep=reps, zip=True),
+        hclust_timeline = expand(f"{PATH_CLUST}/hclust_cluster_timeline.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        kmeans_timeline = expand(f"{PATH_CLUST}/kmeans_cluster_timeline.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        umap_timeline = expand(f"{PATH_CLUST}/umap_3d_timeline.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        umap_hclust_clusters = expand(f"{PATH_CLUST}/umap_hclust_clusters.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        umap_kmeans_clusters = expand(f"{PATH_CLUST}/umap_kmeans_clusters.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        umap_optimization = expand(f"{PATH_CLUST}/umap_optimization.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        pca_sk_hclust = expand(f"{PATH_CLUST}/pca_sklearn_clusters_hclust.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        pca_sk_kmeans = expand(f"{PATH_CLUST}/pca_sklearn_clusters_kmeans.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        pca_gmx_hclust = expand(f"{PATH_CLUST}/pca_gmx_clusters_hclust.jpg", struct=structures, mut=mutations, rep=reps, zip=True),
+        pca_gmx_kmeans = expand(f"{PATH_CLUST}/pca_gmx_clusters_kmeans.jpg", struct=structures, mut=mutations, rep=reps, zip=True),
+        gromos_xpm = expand(f"{PATH_CLUST}/gromos_clusters.xpm", struct=structures, mut=mutations, rep=reps, zip=True),
+        gromos_log = expand(f"{PATH_CLUST}/gromos_clusters.log", struct=structures, mut=mutations, rep=reps, zip=True),
+        pca_gromos = expand(f"{PATH_CLUST}/pca_gromos_clusters.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        pca_gromos_top10 = expand(f"{PATH_CLUST}/pca_gromos_clusters_top10.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        gromos_clusters_freq = expand(f"{PATH_CLUST}/gromos_clusters_freq.png", struct=structures, mut=mutations, rep=reps, zip=True),
+        gromos_clusters_freqcum = expand(f"{PATH_CLUST}/gromos_clusters_freq_cum.png", struct=structures, mut=mutations, rep=reps, zip=True),
      
         # GBSA
-        gbsa_info = expand(f"{GBSA_PATH}/_GMXMMPBSA_info", struct=structures, mut=mutations, rep=reps, zip=True),
-        gbsa_final_results = expand(f"{GBSA_PATH}/FINAL_RESULTS_MMPBSA.dat", struct=structures, mut=mutations, rep=reps, zip=True),
-        gbsa_final_decomp = expand(f"{GBSA_PATH}/FINAL_DECOMP_MMPBSA.dat", struct=structures, mut=mutations, rep=reps, zip=True),
-        gbsa_energy = expand(f"{GBSA_PATH}/FINAL_ENERGY.csv", struct=structures, mut=mutations, rep=reps, zip=True),
-        gbsa_energy_decomp = expand(f"{GBSA_PATH}/FINAL_ENERGY_DECOMP.csv", struct=structures, mut=mutations, rep=reps, zip=True),
+        gbsa_info = expand(f"{PATH_GBSA}/_GMXMMPBSA_info", struct=structures, mut=mutations, rep=reps, zip=True),
+        gbsa_final_results = expand(f"{PATH_GBSA}/FINAL_RESULTS_MMPBSA.dat", struct=structures, mut=mutations, rep=reps, zip=True),
+        gbsa_final_decomp = expand(f"{PATH_GBSA}/FINAL_DECOMP_MMPBSA.dat", struct=structures, mut=mutations, rep=reps, zip=True),
+        gbsa_energy = expand(f"{PATH_GBSA}/FINAL_ENERGY.csv", struct=structures, mut=mutations, rep=reps, zip=True),
+        gbsa_energy_decomp = expand(f"{PATH_GBSA}/FINAL_ENERGY_DECOMP.csv", struct=structures, mut=mutations, rep=reps, zip=True),
     run:
-        print("+-------------------------")
-        #print("Number of samples:")
-        #print(len(SAMPLE_NAMES))
-        #print("Samples:")
-        #print(SAMPLE_NAMES)
-        #print("+-------------------------")
+        print("+-----------------------------------------+")
+        print("|   STARTING ANALYSIS OF MD RESULTS  |")
+        print("+-----------------------------------------+")
 
 rule universe:
     input:
-        pdb = "../../data/{struct}/{mut}/{sample}/gromacs/md_sys.pdb",
-        xtc = "../../data/{struct}/{mut}/{sample}/gromacs/md_noPBC_mol_com_cluster_fit.xtc"
+        pdb = f"{PATH_GMX}/md_sys.pdb",
+        xtc = f"{PATH_GMX}/md_noPBC_mol_com_cluster_fit.xtc"
     output:
         universe = f"{BASE_PATH}/000_raw/universe"
     shell:
         """
-        python universe.py \
-            "../../data/{struct}/{wildcards.mut}/{wildcards.sample}/analysis/000_raw" \
-            {input.pdb} \
-            {input.xtc} \
-            {output.universe}
+        scripts/universe.py \
+            --pdb {input.pdb} \
+            --xtc {input.xtc} \
+            --outdir "{PATH_ANALYSIS_WC}/000_raw" \
+            --universe {output.universe} \
        """
 
 rule qc:
     input: 
         universe = f"{BASE_PATH}/000_raw/universe"
     output:
-        rmsd = report(f"{QC_PATH}/rmsd.png", 
-            category="QC", subcategory="RMSD", labels={"sample": "{mut} {sample} RMSD"}),
-        rmsd_cats = report(f"{QC_PATH}/rmsd_cats.png", 
-            category="QC", subcategory="RMSD", labels={"sample": "{mut} {sample} RMSD by category"}),
-        rmsd_bb = report(f"{QC_PATH}/rmsd_bb.png", 
-            category="QC", subcategory="RMSD", labels={"sample": "{mut} {sample} RMSD Backbone"}),
-        radius_axis = report(f"{QC_PATH}/radius_axis.png", 
-            category="QC", subcategory="RMSD", labels={"sample": "{mut} {sample} Radius of gyration"}),
-        radius_rmsd = report(f"{QC_PATH}/radius_rmsd.png", 
-            category="QC", subcategory="RMSD", labels={"sample": "{mut} {sample} Radius of gyration vs RMSD"}),
-        rmsf_prot_domains = report(f"{QC_PATH}/rmsf_prot_domains.png", 
-            category="QC", subcategory="RMSF", labels={"sample": "{mut} {sample} RMSF Protein"}),
-        rmsf_dna_res = report(f"{QC_PATH}/rmsf_dna_res.png", 
-            category="QC", subcategory="RMSF", labels={"sample": "{mut} {sample} RMSF DNA"}),
+        rmsd = report(f"{PATH_QC}/rmsd.png", 
+            category="QC", subcategory="RMSD", labels={"sample": "{mut} {rep} RMSD"}),
+        rmsd_cats = report(f"{PATH_QC}/rmsd_cats.png", 
+            category="QC", subcategory="RMSD", labels={"sample": "{mut} {rep} RMSD by category"}),
+        rmsd_bb = report(f"{PATH_QC}/rmsd_bb.png", 
+            category="QC", subcategory="RMSD", labels={"sample": "{mut} {rep} RMSD Backbone"}),
+        radius_axis = report(f"{PATH_QC}/radius_axis.png", 
+            category="QC", subcategory="RMSD", labels={"sample": "{mut} {rep} Radius of gyration"}),
+        radius_rmsd = report(f"{PATH_QC}/radius_rmsd.png", 
+            category="QC", subcategory="RMSD", labels={"sample": "{mut} {rep} Radius of gyration vs RMSD"}),
+        rmsf_prot_domains = report(f"{PATH_QC}/rmsf_prot_domains.png", 
+            category="QC", subcategory="RMSF", labels={"sample": "{mut} {rep} RMSF Protein"}),
+        rmsf_dna_res = report(f"{PATH_QC}/rmsf_dna_res.png", 
+            category="QC", subcategory="RMSF", labels={"sample": "{mut} {rep} RMSF DNA"}),
         
-        rmsd_csv = f"{QC_PATH}/rmsd.csv",
-        radius_axis_csv = f"{QC_PATH}/radius_axis.csv",
-        rmsf_prot_csv = f"{QC_PATH}/rmsf_prot.csv",
-        rmsf_dna_csv = f"{QC_PATH}/rmsf_dna.csv",
+        rmsd_csv = f"{PATH_QC}/rmsd.csv",
+        radius_axis_csv = f"{PATH_QC}/radius_axis.csv",
+        rmsf_prot_csv = f"{PATH_QC}/rmsf_prot.csv",
+        rmsf_dna_csv = f"{PATH_QC}/rmsf_dna.csv",
     shell:
        """
-       python qc.py \
-            "../../data/{struct}/{wildcards.mut}/{wildcards.sample}/analysis/001_qc" \
-            {input.universe} \
-            {output.rmsd} \
-            {output.rmsd_cats} \
-            {output.rmsd_bb} \
-            {output.radius_axis} \
-            {output.radius_rmsd} \
-            {output.rmsf_prot_domains} \
-            {output.rmsf_dna_res} \
-            {output.rmsd_csv} \
-            {output.radius_axis_csv} \
-            {output.rmsf_prot_csv} \
-            {output.rmsf_dna_csv}
+       scripts/qc.py \
+            --outdir "{PATH_ANALYSIS_WC}/001_qc" \
+            --universe {input.universe} \
+            --rmsd {output.rmsd} \
+            --rmsd_cats {output.rmsd_cats} \
+            --rmsd_bb {output.rmsd_bb} \
+            --radius_axis {output.radius_axis} \
+            --radius_rmsd {output.radius_rmsd} \
+            --rmsf_prot_domains {output.rmsf_prot_domains} \
+            --rmsf_dna_res {output.rmsf_dna_res} \
+            --rmsd_csv {output.rmsd_csv} \
+            --radius_axis_csv {output.radius_axis_csv} \
+            --rmsf_prot_csv {output.rmsf_prot_csv} \
+            --rmsf_dna_csv {output.rmsf_dna_csv} \
        """
 
 rule hbonds_gmx:
     input:
         universe = f"{BASE_PATH}/000_raw/universe"
     output:
-        hbonds_gmx = f"{HBONDS_PATH}/hbonds_gmx.ndx",
-        hbonds_gmx_num = f"{HBONDS_PATH}/hbonds_gmx_num.xvg"
+        hbonds_gmx = f"{PATH_HBONDS}/hbonds_gmx.ndx",
+        hbonds_gmx_num = f"{PATH_HBONDS}/hbonds_gmx_num.xvg"
     shell:
         """
-        bash hbonds_gmx.sh {wildcards.mut} {wildcards.sample}
+        scripts/hbonds_gmx.sh \
+            --struct {wildcards.struct} \
+            --mut {wildcards.mut} \
+            --rep {wildcards.rep} \
         """
 
 
 rule hbonds_gmx_parse:
     input:
-        hbonds_gmx = f"{HBONDS_PATH}/hbonds_gmx.ndx"
+        hbonds_gmx = f"{PATH_HBONDS}/hbonds_gmx.ndx"
     output:
-        hbonds_gmx_parsed = f"{HBONDS_PATH}/hbonds_gmx_parsed.csv"
+        hbonds_gmx_parsed = f"{PATH_HBONDS}/hbonds_gmx_parsed.csv"
     shell:
        """
-       python hbonds_gmx_parse.py \
-            {input.hbonds_gmx} \
-            {output.hbonds_gmx_parsed} 
+       scripts/hbonds_gmx_parse.py \
+            --ingmx {input.hbonds_gmx} \
+            --outcsv {output.hbonds_gmx_parsed} \
        """
 
 
 rule hbonds_mda:
     input: 
         universe = f"{BASE_PATH}/000_raw/universe",
-        tpr = "../../data/{struct}/{mut}/{sample}/gromacs/md.tpr",
-        xtc = "../../data/{struct}/{mut}/{sample}/gromacs/md_noPBC_mol_com_cluster_fit.xtc"
+        tpr = f"{PATH_GMX}/md.tpr",
+        xtc = f"{PATH_GMX}/md_noPBC_mol_com_cluster_fit.xtc"
     output: 
-        hbonds_mda_parsed = f"{HBONDS_PATH}/hbonds_mda_parsed.csv"
+        hbonds_mda_parsed = f"{PATH_HBONDS}/hbonds_mda_parsed.csv"
     shell:
        """
-       python hbonds_mda.py \
-            "../../data/{struct}/{wildcards.mut}/{wildcards.sample}/analysis/002_hbonds" \
-            {input.universe} \
-            {input.tpr} \
-            {input.xtc} \
-            {output.hbonds_mda_parsed}
+       scripts/hbonds_mda.py \
+            --universe {input.universe} \
+            --tpr {input.tpr} \
+            --xtc {input.xtc} \
+            --outdir "{PATH_ANALYSIS_WC}/002_hbonds" \
+            --outcsv {output.hbonds_mda_parsed} \
        """
 
 
 rule hbonds_extend:
     input: 
         universe = f"{BASE_PATH}/000_raw/universe",
-        hbonds_parsed = f"{HBONDS_PATH}/hbonds_{method}_parsed.csv",
-        pdb = "../../data/{struct}/{mut}/{sample}/gromacs/md_sys.pdb",
+        hbonds_parsed = f"{PATH_HBONDS}/hbonds_{method}_parsed.csv",
+        pdb = f"{PATH_GMX}/md_sys.pdb",
     output: 
-        hbonds_ext = f"{HBONDS_PATH}/hbonds_{method}_ext.csv",
-        hbonds_perframe = report(f"{HBONDS_PATH}/hbonds_{method}_perframe.png", 
-            category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {sample} Hbonds per frame (last 100ns)"})
+        hbonds_ext = f"{PATH_HBONDS}/hbonds_{method}_ext.csv",
+        hbonds_perframe = report(f"{PATH_HBONDS}/hbonds_{method}_perframe.png", 
+            category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} Hbonds per frame (last 100ns)"})
     shell: 
         """
-        python hbonds_extend.py \
-            {input.universe} \
-            {input.hbonds_parsed} \
-            {input.pdb} \
-            {output.hbonds_ext} \
-            {output.hbonds_perframe} \
+        scripts/hbonds_extend.py \
+            --pdb {input.pdb} \
+            --universe {input.universe} \
+            --hbonds_parsed {input.hbonds_parsed} \
+            --hbonds_ext {output.hbonds_ext} \
+            --hbonds_perframe {output.hbonds_perframe} \
         """
 
 rule hbonds_plots:
     input: 
-        hbonds_ext = f"{HBONDS_PATH}/hbonds_{method}_ext.csv",
+        hbonds_ext = f"{PATH_HBONDS}/hbonds_{method}_ext.csv",
     output: 
-        hbonds_prot_domains = report(f"{HBONDS_PATH}/hbonds_{method}_prot_domain.png", 
-            category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {sample} Hbonds per protein domain and residue"}),
-        hbonds_prot_monomer = report(f"{HBONDS_PATH}/hbonds_{method}_monomer.png", 
-            category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {sample} Hbonds per protein monomer and atom"}),
-        hbonds_dna = report(f"{HBONDS_PATH}/hbonds_{method}_dna.png", 
-            category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {sample} Hbonds per DNA chain and residue"}),
-        hbonds_dna_bb = report(f"{HBONDS_PATH}/hbonds_{method}_dna_bb.png", 
-            category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {sample} Hbonds per DNA backbone"}),
-        hbonds_dna_base = report(f"{HBONDS_PATH}/hbonds_{method}_dna_base.png", 
-            category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {sample} Hbonds per DNA base"})
+        hbonds_prot_domains = report(f"{PATH_HBONDS}/hbonds_{method}_prot_domain.png", 
+            category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} Hbonds per protein domain and residue"}),
+        hbonds_prot_monomer = report(f"{PATH_HBONDS}/hbonds_{method}_monomer.png", 
+            category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} Hbonds per protein monomer and atom"}),
+        hbonds_dna = report(f"{PATH_HBONDS}/hbonds_{method}_dna.png", 
+            category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} Hbonds per DNA chain and residue"}),
+        hbonds_dna_bb = report(f"{PATH_HBONDS}/hbonds_{method}_dna_bb.png", 
+            category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} Hbonds per DNA backbone"}),
+        hbonds_dna_base = report(f"{PATH_HBONDS}/hbonds_{method}_dna_base.png", 
+            category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} Hbonds per DNA base"})
     shell: 
         """
-        python hbonds_plots.py \
-            {input.hbonds_ext} \
-            {output.hbonds_prot_domains} \
-            {output.hbonds_prot_monomer} \
-            {output.hbonds_dna} \
-            {output.hbonds_dna_bb} \
-            {output.hbonds_dna_base} 
+        scripts/hbonds_plots.py \
+            --incsv {input.hbonds_ext} \
+            --method {method} \
+            --outdir "{PATH_ANALYSIS_WC}/002_hbonds" \
         """
 
 rule hbonds_pymol:
     input: 
-        hbonds_ext = f"{HBONDS_PATH}/hbonds_{method}_ext.csv",
+        hbonds_ext = f"{PATH_HBONDS}/hbonds_{method}_ext.csv",
     output: 
-        hbonds_pymol = f"{HBONDS_PATH}/hbonds_{method}_pymol.txt",
+        hbonds_pymol = f"{PATH_HBONDS}/hbonds_{method}_pymol.txt",
     shell: 
         """
-        python hbonds_pymol.py \
-            {input.hbonds_ext} \
-            {output.hbonds_pymol} 
+        scripts/hbonds_pymol.py \
+            --incsv {input.hbonds_ext} \
+            --outcmd {output.hbonds_pymol} \
         """
 
 rule contact_analysis:
     input: 
         universe = f"{BASE_PATH}/000_raw/universe",
     output: 
-        timeseries_full_csv = f"{CONTACTS_PATH}/timeseries_full.csv",
-        timeseries_full_png = report(f"{CONTACTS_PATH}/timeseries_full.png",
-                                category="Contact analysis", labels={"sample": "{mut} {sample} Timeseries full protein"}),
-        timeseries_dbd_csv = f"{CONTACTS_PATH}/timeseries_dbd.csv",
-        timeseries_dbd_png = report(f"{CONTACTS_PATH}/timeseries_dbd.png",
-                                category="Contact analysis", labels={"sample": "{mut} {sample} Timeseries DBD"}),
-        pairs_dbd_csv = f"{CONTACTS_PATH}/pairs_dbd.csv",
-        pairs_full_csv = f"{CONTACTS_PATH}/pairs_full.csv",
+        timeseries_full_csv = f"{PATH_CONTACTS}/timeseries_full.csv",
+        timeseries_full_png = report(f"{PATH_CONTACTS}/timeseries_full.png",
+                                category="Contact analysis", labels={"sample": "{mut} {rep} Timeseries full protein"}),
+        timeseries_dbd_csv = f"{PATH_CONTACTS}/timeseries_dbd.csv",
+        timeseries_dbd_png = report(f"{PATH_CONTACTS}/timeseries_dbd.png",
+                                category="Contact analysis", labels={"sample": "{mut} {rep} Timeseries DBD"}),
+        pairs_dbd_csv = f"{PATH_CONTACTS}/pairs_dbd.csv",
+        pairs_full_csv = f"{PATH_CONTACTS}/pairs_full.csv",
     shell: 
         """
-        python contact_analysis.py \
-            {input.universe} \
-            {output.timeseries_full_csv} \
-            {output.timeseries_full_png} \
-            {output.timeseries_dbd_csv} \
-            {output.timeseries_dbd_png} \
-            {output.pairs_dbd_csv} \
-            {output.pairs_full_csv}
+        scripts/contact_analysis.py \
+            --universe {input.universe} \
+            --outdir "{PATH_ANALYSIS_WC}/004_contacts" \
         """ 
 
 rule water_bridges:
     input: 
         universe = f"{BASE_PATH}/000_raw/universe",
     output: 
-        water_bridges = f"{HBONDS_PATH}/waterbridges.csv"
+        water_bridges = f"{PATH_HBONDS}/waterbridges.csv"
     shell: 
         """
-        python water_bridges.py \
-            {input.universe} \
-            {output.water_bridges}
+        scripts/water_bridges.py \
+            --universe {input.universe} \
+            --wb_csv {output.water_bridges} \
        """
 
 rule pca_mda:
     input: 
         universe = f"{BASE_PATH}/000_raw/universe",
     output: 
-        pc_cumulative = report(f"{PCA_PATH}/pc_cumulative.png", category="PCA", labels={"sample": "{mut} {sample} Cumulative variance"}),
-        pc_pairgrid = report(f"{PCA_PATH}/pc_pairgrid.png", category="PCA", labels={"sample": "{mut} {sample} 3 PC pairgrid"}),
-        pc_cosine = report(f"{PCA_PATH}/pc_cosine.png", category="PCA", labels={"sample": "{mut} {sample} Cosine content"}),
+        pc_cumulative = report(f"{PATH_PCA}/pc_cumulative.png", category="PCA", labels={"sample": "{mut} {rep} Cumulative variance"}),
+        pc_pairgrid = report(f"{PATH_PCA}/pc_pairgrid.png", category="PCA", labels={"sample": "{mut} {rep} 3 PC pairgrid"}),
+        pc_cosine = report(f"{PATH_PCA}/pc_cosine.png", category="PCA", labels={"sample": "{mut} {rep} Cosine content"}),
     shell: 
         """
-        python pca.py \
-            "../../data/{struct}/{wildcards.mut}/{wildcards.sample}/analysis/003_pca" \
-            {input.universe} \
-            {output.pc_cumulative} \
-            {output.pc_pairgrid} \
-            {output.pc_cosine}
+        scripts/pca.py \
+            --universe {input.universe} \
+            --outdir "{PATH_ANALYSIS_WC}/003_pca" \
         """
 
 rule pca_gmx:
     input: 
-        tpr = "../../data/{struct}/{mut}/{sample}/gromacs/md.tpr",
-        xtc = "../../data/{struct}/{mut}/{sample}/gromacs/md_noPBC_mol_com_cluster_fit.xtc"
+        tpr = f"{PATH_GMX}/md.tpr",
+        xtc = f"{PATH_GMX}/md_noPBC_mol_com_cluster_fit.xtc"
     output: 
-        proj_timescale = f"{PCA_PATH}/2dproj_timescale.csv",
-        eigenvec = f"{PCA_PATH}/eigenvec.trr",
-        pca_2dproj = report(f"{PCA_PATH}/2D_projection_1_2.png", category="PCA", labels={"sample": "{mut} {sample} gmx 2D projection"}),
+        proj_timescale = f"{PATH_PCA}/2dproj_timescale.csv",
+        eigenvec = f"{PATH_PCA}/eigenvec.trr",
+        pca_2dproj = report(f"{PATH_PCA}/2D_projection_1_2.png", category="PCA", labels={"sample": "{mut} {rep} gmx 2D projection"}),
     shell: 
         """
-        bash pca_gmx.sh \
-            "../../data/{struct}/{wildcards.mut}/{wildcards.sample}/analysis/003_pca" \
+        scripts/pca_gmx.sh \
+            --outdir "{PATH_ANALYSIS_WC}/003_pca" \
+            --tpr "{PATH_GMX}/md.tpr" \
+            --xtc "{PATH_GMX}/md_noPBC_mol_com_cluster_fit.xtc" \
         """
 
 
 rule pca_gmx_porcupine:
     input: 
-        eigenvec = f"{PCA_PATH}/eigenvec.trr",
-        tpr = "../../data/{struct}/{mut}/{sample}/gromacs/md.tpr",
-        xtc = "../../data/{struct}/{mut}/{sample}/gromacs/md_noPBC_mol_com_cluster_fit.xtc"
+        eigenvec = f"{PATH_PCA}/eigenvec.trr",
+        tpr = f"{PATH_GMX}/md.tpr",
+        xtc = f"{PATH_GMX}/md_noPBC_mol_com_cluster_fit.xtc"
     output: 
-        porcupine = report(f"{PCA_PATH}/porcupine.png", category="PCA", labels={"sample": "{mut} {sample} Porcupine plot"}),
+        porcupine = report(f"{PATH_PCA}/porcupine.png", category="PCA", labels={"sample": "{mut} {rep} Porcupine plot"}),
     shell: 
         """
-        bash pca_gmx_porcupine_plot.sh \
-            "../../data/{struct}/{wildcards.mut}/{wildcards.sample}/analysis/003_pca" \
+        scripts/pca_gmx_porcupine_plot.sh \
+            --outdir "{PATH_ANALYSIS_WC}/003_pca" \
+            --gmxdir "{PATH_GMX}" \
+            --tpr "{PATH_GMX}/md.tpr" \
+            --xtc "{PATH_GMX}/md_noPBC_mol_com_cluster_fit.xtc"
         """
 
 rule clustering_sklearn:
     input: 
-        pdb = "../../data/{struct}/{mut}/{sample}/gromacs/md_sys.pdb",
-        xtc = "../../data/{struct}/{mut}/{sample}/gromacs/md_noPBC_mol_com_cluster_fit.xtc"
+        pdb = f"{PATH_GMX}/md_sys.pdb",
+        xtc = f"{PATH_GMX}/md_noPBC_mol_com_cluster_fit.xtc"
     output: 
-        summary = report(f"{CLUST_PATH}/analysis_summary.txt",  
-                    category="Clustering", labels={"sample": "{mut} {sample} Summary"}),
-        hclust = f"{CLUST_PATH}/hclust_labels.csv",
-        kmeans = f"{CLUST_PATH}/kmeans_labels.csv",
-        hclust_timeline = report(f"{CLUST_PATH}/hclust_cluster_timeline.png",
-                        category="Clustering", subcategory="Hiearchical clustering", labels={"sample": "{mut} {sample} Timeline"}),
-        kmeans_timeline = report(f"{CLUST_PATH}/kmeans_cluster_timeline.png",
-                            category="Clustering", subcategory="Kmeans clustering", labels={"sample": "{mut} {sample} Timeline"}),
-        umap_timeline = report(f"{CLUST_PATH}/umap_3d_timeline.png",
-                            category="Clustering", labels={"sample": "{mut} {sample} UMAP timeline"}),
-        umap_hclust_clusters = report(f"{CLUST_PATH}/umap_hclust_clusters.png",
-                                category="Clustering", subcategory="Hiearchical clustering", labels={"sample": "{mut} {sample} Overlay on UMAP"}),
-        umap_kmeans_clusters = report(f"{CLUST_PATH}/umap_kmeans_clusters.png",
-                                category="Clustering", subcategory="Kmeans clustering", labels={"sample": "{mut} {sample} Overlay on UMAP"}),
-        umap_optimization = report(f"{CLUST_PATH}/umap_optimization.png",
-                                category="Clustering", labels={"sample": "{mut} {sample} UMAP Optimization"}),
-        pca_sk_hclust = report(f"{CLUST_PATH}/pca_sklearn_clusters_hclust.png",
-                             category="Clustering", subcategory="Hiearchical clustering", labels={"sample": "{mut} {sample} Overlay on sklearn PCA"}),
-        pca_sk_kmeans = report(f"{CLUST_PATH}/pca_sklearn_clusters_kmeans.png",
-                            category="Clustering", subcategory="Kmeans clustering", labels={"sample": "{mut} {sample} Overlay on sklearn PCA"}),
+        summary = report(f"{PATH_CLUST}/analysis_summary.txt",  
+                    category="Clustering", labels={"sample": "{mut} {rep} Summary"}),
+        hclust = f"{PATH_CLUST}/hclust_labels.csv",
+        kmeans = f"{PATH_CLUST}/kmeans_labels.csv",
+        hclust_timeline = report(f"{PATH_CLUST}/hclust_cluster_timeline.png",
+                        category="Clustering", subcategory="Hiearchical clustering", labels={"sample": "{mut} {rep} Timeline"}),
+        kmeans_timeline = report(f"{PATH_CLUST}/kmeans_cluster_timeline.png",
+                            category="Clustering", subcategory="Kmeans clustering", labels={"sample": "{mut} {rep} Timeline"}),
+        umap_timeline = report(f"{PATH_CLUST}/umap_3d_timeline.png",
+                            category="Clustering", labels={"sample": "{mut} {rep} UMAP timeline"}),
+        umap_hclust_clusters = report(f"{PATH_CLUST}/umap_hclust_clusters.png",
+                                category="Clustering", subcategory="Hiearchical clustering", labels={"sample": "{mut} {rep} Overlay on UMAP"}),
+        umap_kmeans_clusters = report(f"{PATH_CLUST}/umap_kmeans_clusters.png",
+                                category="Clustering", subcategory="Kmeans clustering", labels={"sample": "{mut} {rep} Overlay on UMAP"}),
+        umap_optimization = report(f"{PATH_CLUST}/umap_optimization.png",
+                                category="Clustering", labels={"sample": "{mut} {rep} UMAP Optimization"}),
+        pca_sk_hclust = report(f"{PATH_CLUST}/pca_sklearn_clusters_hclust.png",
+                             category="Clustering", subcategory="Hiearchical clustering", labels={"sample": "{mut} {rep} Overlay on sklearn PCA"}),
+        pca_sk_kmeans = report(f"{PATH_CLUST}/pca_sklearn_clusters_kmeans.png",
+                            category="Clustering", subcategory="Kmeans clustering", labels={"sample": "{mut} {rep} Overlay on sklearn PCA"}),
     shell:
         """
-        outdir="../../data/{struct}/{wildcards.mut}/{wildcards.sample}/analysis/005_clustering"
-
-        if [ ! -d "$outdir" ]; then
-            mkdir "$outdir"
-            echo "Creating directory: $outdir"
-        else
-            echo "Directory already exists: $outdir"
-        fi
-
-        python clustering_sklearn.py \
-            {input.pdb} \
-            {input.xtc} \
-            "../../data/{struct}/{wildcards.mut}/{wildcards.sample}/analysis/005_clustering" \
+        scripts/clustering_sklearn.py \
+            --pdb {input.pdb} \
+            --xtc {input.xtc} \
+            --outdir "{PATH_ANALYSIS_WC}/005_clustering" \
         """
 
 rule clustering_gromos:
     input: 
-        proj_timescale = f"{PCA_PATH}/2dproj_timescale.csv",
-        tpr = "../../data/{struct}/{mut}/{sample}/gromacs/md.tpr",
-        xtc = "../../data/{struct}/{mut}/{sample}/gromacs/md_noPBC_mol_com_cluster_fit.xtc"
+        # proj_timescale = f"{PATH_PCA}/2dproj_timescale.csv",
+        tpr = f"{PATH_GMX}/md.tpr",
+        xtc = f"{PATH_GMX}/md_noPBC_mol_com_cluster_fit.xtc"
     output: 
-        gromos_index = f"{CLUST_PATH}/gromos_clusters.ndx",
-        gromos_xpm = f"{CLUST_PATH}/gromos_clusters.xpm",
-        gromos_log = f"{CLUST_PATH}/gromos_clusters.log",
-        rmsd_dist = f"{CLUST_PATH}/rmsd-dist.xvg",
+        gromos_index = f"{PATH_CLUST}/gromos_clusters.ndx",
+        gromos_xpm = f"{PATH_CLUST}/gromos_clusters.xpm",
+        gromos_log = f"{PATH_CLUST}/gromos_clusters.log",
+        rmsd_dist = f"{PATH_CLUST}/gromos_clusters_rmsd_dist.xvg",
     shell: 
         """
-        bash -c '
-        outdir="../../data/{struct}/{wildcards.mut}/{wildcards.sample}/analysis/005_clustering"
-
-        if [ ! -d "$outdir" ]; then
-            mkdir "$outdir"
-            echo "Creating directory: $outdir"
-        else
-            echo "Directory already exists: $outdir"
-        fi
-
-        source /opt/gromacs/gromacs_2024/bin/GMXRC.bash
-
-        gmx cluster -f {input.xtc} -s {input.tpr} -method gromos -cutoff 0.2 \
-            -o {output.gromos_xpm} -g {output.gromos_log} -clndx {output.gromos_index} -dist {output.rmsd_dist} -quiet << EOL
-        C-alpha
-        C-alpha
-        EOL
-        '
+        scripts/clustering_gromos.sh \
+            --tpr {input.tpr} \
+            --xtc {input.xtc} \
+            --outdir "{PATH_ANALYSIS_WC}/005_clustering" \
         """
 
-rule clustering_gromos_pca:
+rule clustering_pca_gromos:
     input: 
-        proj_timescale = f"{PCA_PATH}/2dproj_timescale.csv",
-        gromos_index = f"{CLUST_PATH}/gromos_clusters.ndx",
+        proj_timescale = f"{PATH_PCA}/2dproj_timescale.csv",
+        gromos_index = f"{PATH_CLUST}/gromos_clusters.ndx",
     output: 
-        pca_gromos = report(f"{CLUST_PATH}/pca_gromos_clusters.png", 
-            category="Clustering", subcategory="Gromos clustering", labels={"sample": "{mut} {sample} Overlay on gmx PCA"}),
-        pca_gromos_top10 = report(f"{CLUST_PATH}/pca_gromos_clusters_top10.png", 
-            category="Clustering", subcategory="Gromos clustering", labels={"sample": "{mut} {sample} Overlay on gmx PCA, top 10 clusters"}),
-        gromos_clusters_freq = report(f"{CLUST_PATH}/gromos_clusters_freq.png", 
-            category="Clustering", subcategory="Gromos clustering", labels={"sample": "{mut} {sample} Cluster frequencies"}),
-        gromos_clusters_freqcum = report(f"{CLUST_PATH}/gromos_clusters_freq_cum.png", 
-            category="Clustering", subcategory="Gromos clustering", labels={"sample": "{mut} {sample} Cluster cumulative frequencies"}),
+        pca_gromos = report(f"{PATH_CLUST}/pca_gromos_clusters.png", 
+            category="Clustering", subcategory="Gromos clustering", labels={"sample": "{mut} {rep} Overlay on gmx PCA"}),
+        pca_gromos_top10 = report(f"{PATH_CLUST}/pca_gromos_clusters_top10.png", 
+            category="Clustering", subcategory="Gromos clustering", labels={"sample": "{mut} {rep} Overlay on gmx PCA, top 10 clusters"}),
+        gromos_clusters_freq = report(f"{PATH_CLUST}/gromos_clusters_freq.png", 
+            category="Clustering", subcategory="Gromos clustering", labels={"sample": "{mut} {rep} Cluster frequencies"}),
+        gromos_clusters_freqcum = report(f"{PATH_CLUST}/gromos_clusters_freq_cum.png", 
+            category="Clustering", subcategory="Gromos clustering", labels={"sample": "{mut} {rep} Cluster cumulative frequencies"}),
     shell: 
         """
-        python clustering_gromos.py \
-            {input.proj_timescale} \
-            {input.gromos_index} \
-            "../../data/{struct}/{wildcards.mut}/{wildcards.sample}/analysis/005_clustering" \
+        scripts/clustering_pca_gromos.py \
+            --timescale {input.proj_timescale} \
+            --index {input.gromos_index} \
+            --outdir "{PATH_ANALYSIS_WC}/005_clustering" \
         """
 
 rule clustering_pca_gmx:
     input: 
-        proj_timescale = f"{PCA_PATH}/2dproj_timescale.csv",
-        hclust = f"{CLUST_PATH}/hclust_labels.csv",
-        kmeans = f"{CLUST_PATH}/kmeans_labels.csv",
+        proj_timescale = f"{PATH_PCA}/2dproj_timescale.csv",
+        hclust = f"{PATH_CLUST}/hclust_labels.csv",
+        kmeans = f"{PATH_CLUST}/kmeans_labels.csv",
     output: 
-        pca_gmx_hclust = report(f"{CLUST_PATH}/pca_gmx_clusters_hclust.jpg", 
-                        category="Clustering", subcategory="Hiearchical clustering", labels={"sample": "{mut} {sample} Overlay on gmx PCA"}),
-        pca_gmx_kmeans = report(f"{CLUST_PATH}/pca_gmx_clusters_kmeans.jpg",
-                         category="Clustering", subcategory="Kmeans clustering", labels={"sample": "{mut} {sample} Overlay on gmx PCA"}),
+        pca_gmx_hclust = report(f"{PATH_CLUST}/pca_gmx_clusters_hclust.jpg", 
+                        category="Clustering", subcategory="Hiearchical clustering", labels={"sample": "{mut} {rep} Overlay on gmx PCA"}),
+        pca_gmx_kmeans = report(f"{PATH_CLUST}/pca_gmx_clusters_kmeans.jpg",
+                         category="Clustering", subcategory="Kmeans clustering", labels={"sample": "{mut} {rep} Overlay on gmx PCA"}),
     shell:
         """
-        python clustering_pca_gmx.py \
-            {input.proj_timescale} \
-            {input.hclust} \
-            "hclust" \
-            "../../data/{struct}/{wildcards.mut}/{wildcards.sample}/analysis/005_clustering" \
+        scripts/clustering_pca_gmx.py \
+            --timescale {input.proj_timescale} \
+            --labels {input.hclust} \
+            --outdir "{PATH_ANALYSIS_WC}/005_clustering" \
 
-        python clustering_pca_gmx.py \
-            {input.proj_timescale} \
-            {input.kmeans} \
-            "kmeans" \
-            "../../data/{struct}/{wildcards.mut}/{wildcards.sample}/analysis/005_clustering" \
+        scripts/clustering_pca_gmx.py \
+            --timescale {input.proj_timescale} \
+            --labels {input.kmeans} \
+            --outdir "{PATH_ANALYSIS_WC}/005_clustering" \
         """
 
 rule gbsa:
     input: 
-        tpr = "../../data/{struct}/{mut}/{sample}/gromacs/md.tpr",
-        xtc = "../../data/{struct}/{mut}/{sample}/gromacs/md_noPBC_mol_com_cluster_fit.xtc",
-        top = "../../data/{struct}/{mut}/gromacs_common/topol.top",
-        index = "../../data/{struct}/{mut}/{sample}/gromacs/indexmd.ndx",
+        tpr = f"{PATH_GMX}/md.tpr",
+        xtc = f"{PATH_GMX}/md_noPBC_mol_com_cluster_fit.xtc",
+        top = f"{PATH_MUT}/gromacs_common/topol.top",
+        index = f"{PATH_GMX}/indexmd.ndx",
     output: 
-        gbsa_info = f"{GBSA_PATH}/_GMXMMPBSA_info",
-        gbsa_final_results = f"{GBSA_PATH}/FINAL_RESULTS_MMPBSA.dat",
-        gbsa_final_decomp = f"{GBSA_PATH}/FINAL_DECOMP_MMPBSA.dat",
-        gbsa_energy = f"{GBSA_PATH}/FINAL_ENERGY.csv",
-        gbsa_energy_decomp = f"{GBSA_PATH}/FINAL_ENERGY_DECOMP.csv",
+        gbsa_info = f"{PATH_GBSA}/_GMXMMPBSA_info",
+        gbsa_final_results = f"{PATH_GBSA}/FINAL_RESULTS_MMPBSA.dat",
+        gbsa_final_decomp = f"{PATH_GBSA}/FINAL_DECOMP_MMPBSA.dat",
+        gbsa_energy = f"{PATH_GBSA}/FINAL_ENERGY.csv",
+        gbsa_energy_decomp = f"{PATH_GBSA}/FINAL_ENERGY_DECOMP.csv",
     shell: 
         """
-        bash MMPBSA.sh \
-            "md.tpr" \
-            "md_noPBC_mol_com_cluster_fit.xtc" \
-            "topol.top" \
-            "indexmd.ndx" \
-            "../../data/{struct}/{wildcards.mut}/{wildcards.sample}/analysis/006_gbsa"
+        scripts/MMPBSA.sh \
+            --tpr {input.tpr} \
+            --xtc {input.xtc} \
+            --top {input.top} \
+            --index {input.index} \
+            --outdir "{PATH_ANALYSIS_WC}/006_gbsa"
         """

@@ -1,9 +1,21 @@
+#!/usr/bin/env python3
+
 import sys
 import pandas as pd
+import argparse
 
 # Arguments
-hbonds_gmx = sys.argv[1]
-hbonds_gmx_parsed = sys.argv[2]
+parser = argparse.ArgumentParser(description="Parse GROMACS hydrogen bonds output into a CSV file.")
+parser.add_argument("-i", "--ingmx", help="Input file, from the GROMACS hbond analysis.")
+parser.add_argument("-o", "--outcsv", help="Output path to save the parsed CSV file.")
+
+if len(sys.argv)==1:
+    parser.print_help()
+    sys.exit(0)
+
+args = parser.parse_args()
+hbonds_gmx = args.ingmx
+hbonds_gmx_parsed = args.outcsv
 
 # Lists to store hydrogen bond data
 hbonds_data = []

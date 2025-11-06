@@ -1,9 +1,21 @@
+#!/usr/bin/env python3
+
 import sys
 import pandas as pd
+import argparse
 
 # Arguments
-hbonds_ext = sys.argv[1]
-pymol_txt = sys.argv[2]
+parser = argparse.ArgumentParser(description="Generate PyMOL commands to highlight residues involved in significant hydrogen bonding.")
+parser.add_argument("-i", "--incsv", type=str, help='Path to the extended hydrogen bonds CSV file')
+parser.add_argument("-o", "--outcmd", type=str, help="Output PyMOL commands text file.")
+
+if len(sys.argv)==1:
+    parser.print_help()
+    sys.exit(0)
+
+args = parser.parse_args()
+hbonds_ext = args.incsv
+pymol_txt = args.outcmd
 
 hbonds_df = pd.read_csv(hbonds_ext)
 

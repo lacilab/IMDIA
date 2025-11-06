@@ -1,6 +1,9 @@
+#!/usr/bin/env python3
+
 import sys
 import os
 import pickle
+import argparse
 import MDAnalysis as mda
 from MDAnalysis.analysis import pca, align
 import numpy as np
@@ -9,13 +12,24 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 
 # Arguments
-datadir = sys.argv[1]
-universe = sys.argv[2]
-pc_cumulative = sys.argv[3]
-pc_pairgrid = sys.argv[4]
-pc_cosine = sys.argv[5]
+parser = argparse.ArgumentParser(description="Analyze water bridges between protein and nucleic acids.")
+parser.add_argument("-u", "--universe", help="Path to the Universe object")
+parser.add_argument("-d", "--outdir", help="Directory for output data")
 
-os.makedirs(datadir, exist_ok=True)
+if len(sys.argv)==1:
+    parser.print_help()
+    sys.exit(0)
+
+args = parser.parse_args()
+outdir = args.outdir
+universe = args.universe
+
+# Output file paths
+pc_cumulative = f"{outdir}/pc_cumulative.png"
+pc_pairgrid = f"{outdir}/pc_pairgrid.png"
+pc_cosine = f"{outdir}/pc_cosine.png"
+
+os.makedirs(outdir, exist_ok=True)
 
 with open(universe, 'rb') as f:
     u = pickle.load(f)

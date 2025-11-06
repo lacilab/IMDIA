@@ -2,12 +2,6 @@
 
 source "../utils/colors.sh"
 
-# Check if the top file is provided
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 gromacs_directory replicate_n"
-    exit 1
-fi
-
 # Print usage/help
 print_usage() {
     cat <<'USAGE'
@@ -32,6 +26,14 @@ Options:
   -h, --help          Show this help message and exit
 USAGE
 }
+
+
+# if there are less than two arguments, print usage and exit
+if [ "$#" -lt 2 ]; then
+    error "Insufficient arguments provided. gromacs_directory and replicate_n are required."
+    print_usage
+    exit 1
+fi
 
 ##### HELPER FUNCTIONS #####
 

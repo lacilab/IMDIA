@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import os
 import pickle
@@ -5,15 +7,28 @@ import MDAnalysis as mda
 from MDAnalysis.analysis.hydrogenbonds.hbond_analysis import HydrogenBondAnalysis as HBA
 import numpy as np
 import pandas as pd
+import argparse
 
 # Arguments
-datadir = sys.argv[1]
-universe = sys.argv[2]
-tprfile = sys.argv[3]
-xtcfile = sys.argv[4]
-hbonds_mda_parsed = sys.argv[5]
+parser = argparse.ArgumentParser(description="Parse MDAnalysis hydrogen bonds output into a CSV file.")
+parser.add_argument("-u", "--universe", help="MDAnalysis universe file.")
+parser.add_argument("-t", "--tpr", help="Path to the TPR file.")
+parser.add_argument("-x", "--xtc", help="Path to the XTC file.")
+parser.add_argument("-d", "--outdir", help="Output directory.")
+parser.add_argument("-o", "--outcsv", help="Output path to save the parsed CSV file.")
 
-os.makedirs(datadir, exist_ok=True)
+args = parser.parse_args()
+if len(sys.argv)==1:
+    parser.print_help()
+    sys.exit(0)
+
+universe = args.universe
+tprfile = args.tpr
+xtcfile = args.xtc
+outdir = args.outdir
+hbonds_mda_parsed = args.outcsv
+
+os.makedirs(outdir, exist_ok=True)
 
 with open(universe, 'rb') as f:
     u = pickle.load(f)
