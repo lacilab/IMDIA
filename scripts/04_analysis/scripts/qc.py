@@ -10,6 +10,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from MDAnalysis.analysis import rms, align
+from utils.colors import ok, warn, error
 
 # Arguments
 parser = argparse.ArgumentParser(description="Quality control analysis of MD simulation")
@@ -45,6 +46,16 @@ rmsf_dna_csv = f"{outdir}/rmsf_dna.csv"
 
 os.makedirs(outdir, exist_ok=True)
 
+# Check if outdir exists
+if not os.path.exists(outdir):
+    error (f"Output directory {outdir} does not exist and could not be created.")
+    sys.exit(1)
+
+# Check if universe file exists
+if not os.path.isfile(universe):
+    error (f"Universe file {universe} does not exist.")
+    sys.exit(1)
+
 with open(universe, 'rb') as f:
     u = pickle.load(f)
 u.trajectory[0]
@@ -53,6 +64,13 @@ u.trajectory[0]
 dimer = u.select_atoms("segid A B")  
 monoA = u.select_atoms("segid A")   
 monoB = u.select_atoms("segid B")
+
+# Check if protein selections are empty
+prot_sele = {"dimer": dimer, "monoA": monoA, "monoB": monoB}
+for name, sele in prot_sele.items():
+    if sele.n_atoms == 0:
+        error(f"Selection {name} is empty. Please check the chain ids.")
+        sys.exit(1)
 
 ########## RMSD ##########
 rmsd_analysis = rms.RMSD(u, select='backbone', groupselections=['name CA', 'protein'])
@@ -200,6 +218,13 @@ if with_dna:
     dnaD_p = dnaD.select_atoms('name P')
     RD = rms.RMSF(dnaD_p).run()
 
+    # Check if DNA selections are empty
+    dna_sele = {"dnaC_p": dnaC_p, "dnaD_p": dnaD_p}
+    for name, sele in dna_sele.items():
+        if sele.n_atoms == 0:
+            error(f"Selection {name} is empty. Please check the chain ids.")
+            sys.exit(1)
+
     # Save DNA RMSF to CSV
     rmsf_dna = pd.DataFrame({
         'Residue': dnaC_p.resids,
@@ -216,3 +241,37 @@ if with_dna:
     plt.legend()
     plt.savefig(rmsf_dna_res)
     plt.close()
+
+
+
+print("\nChecking generated files.")
+
+expected_files_prot = [
+    rmsd,
+    rmsd_cats,
+    rmsd_bb,
+    radius_axis,
+    radius_rmsd,
+    rmsf_prot_domains,
+    rmsd_csv,
+    radius_axis_csv,
+    rmsf_prot_csv
+]
+expected_files_dna = [
+    rmsf_dna_res,
+    rmsf_dna_csv
+]
+
+expected_files = (expected_files_prot + expected_files_dna, expected_files_prot)[with_dna]
+
+missing = [p for p in expected_files if not os.path.isfile(p)]
+for file in expected_files:
+	if file not in missing:
+		ok(f"generated {file}")
+	else:
+		warn(f"{file} not generated")
+
+if not missing:
+	ok("QC completed successfully. All expected files were generated.")
+else:
+	warn("QC completed with warnings. Some expected files are missing.")
