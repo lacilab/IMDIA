@@ -189,4 +189,6 @@ touch "$gmxdir/check_04_removeamberions_$(date +%Y%m%d_%H%M%S).done"
 # TODO these were in the initial script, are they necessary?
 # sed -i "s/Cl-/Cl/g" "$gmxdir/topol.top"
 # sed -i "s/Na+/Na/g" "$gmxdir/topol.top"
-# sed -i "s/Water/WAT/g" "$gmxdir/toppar/molecule_7.itp" "$gmxdir/toppar/forcefield.itp" "$gmxdir/topol.top"
+sed -i "s/WAT/Water/g" "$gmxdir/topol.top"
+remaining_WAT=$(grep -c '/WAT/d' "$gmxdir/topol.top")
+warn "WAT remain in topology file $gmxdir/topol.top after removal. This could result in clashing nomenclature later."

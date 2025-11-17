@@ -22,7 +22,7 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
 fi
 
 # Check if the top file is provided
-if [ "$#" -ne 1 ]; then
+if [ "$#" -lt 1 ]; then
     error "gmxdir argument is required."
     print_usage
     exit 1
@@ -30,12 +30,13 @@ fi
 
 gmxdir=$1
 # default ions.mdp path
-ions_mdp="../02_md/ions.mdp"
+ions_mdp="02_md/ions.mdp"
 
 # Check if checkpoint file from previous run exists
 if ls "$gmxdir/check_06_addgmxions_"*.done 1> /dev/null 2>&1; then
     warn "Checkpoint file found. Skipping GROMACS ions addition."
     exit 0
+fi
 
 # assign second argument if provided
 if [ "$#" -eq 2 ]; then
@@ -44,6 +45,7 @@ if [ "$#" -eq 2 ]; then
     if [ ! -f "$ions_mdp" ] || [[ "$ions_mdp" != *.mdp ]]; then
         error "Provided parameter file '$ions_mdp' does not exist or is not an .mdp file."
         exit 1
+    fi
 fi
 
 cp "$ions_mdp" "$gmxdir"
@@ -58,9 +60,9 @@ fi
 # Add ions with GROMACS to neutralize and reach target concentration
 echo "Adding ions to neutralize the system and reach the target concentration."
 gmx grompp -f "$gmxdir/ions.mdp" -c "$gmxdir/updated_gromacs.gro" -p "$gmxdir/topol.top" -o "$gmxdir/ions.tpr" -quiet -maxwarn 1
-# There will be a warning because the system is not neutralized.
+# There will be a warning because the system is not neutralized
 gmx genion -s "$gmxdir/ions.tpr" -o "$gmxdir/ions.gro" -p "$gmxdir/topol.top" -pname Na+ -nname Cl- -neutral -conc 0.15 -quiet > $gmxdir/genion.log 2>&1 << EOL
-Water
+Water 
 quit
 EOL
 
@@ -69,15 +71,15 @@ tail -n 3 $gmxdir/genion.log
 echo "Ions in topology file after genion:"
 grep -E "^(Na|Cl)\s+[0-9]+" "$gmxdir/topol.top"
 # check if topol.top contains more than 1 Na and Cl ions
-num_Na=$(grep -E "^(Na)\s+[0-9]+" "$gmxdir/topol.top" | awk '{print $2}')
-num_Cl=$(grep -E "^(Cl)\s+[0-9]+" "$gmxdir/topol.top" | awk '{print $2}')
+num_Na=$(grep -E "^Na\+?" "$gmxdir/topol.top" | awk '{print $2}')
+num_Cl=$(grep -E "^Cl\-?" "$gmxdir/topol.top" | awk '{print $2}')
 if ! [[ "$num_Na" =~ ^[0-9]+$ ]] || (( num_Na <= 1 )); then
-    warn "The number of Na ions added to the system is smaller or equal to 1. The system is likely not neutralized."
+    warn "The number of Na ions added to the system is smaller or equal to 1. The system is likely not neutralized. Na: $num_Na."
 else
     ok "Ions added successfully. Na: $num_Na"
 fi
 if ! [[ "$num_Cl" =~ ^[0-9]+$ ]] || (( num_Cl <= 1 )); then
-    warn "The number of Cl ions added to the system is smaller or equal to 1. The system is likely not neutralized."
+    warn "The number of Cl ions added to the system is smaller or equal to 1. The system is likely not neutralized. Cl: $num_Cl."
 else
     ok "Ions added successfully. Cl: $num_Cl"
 fi

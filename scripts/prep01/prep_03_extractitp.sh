@@ -24,7 +24,7 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
 fi
 
 # Check if the top file is provided
-if [ "$#" -ne 1 ]; then
+if [ "$#" -lt 1 ]; then
     error "topology argument is required."
     print_usage
     exit 1
@@ -32,18 +32,18 @@ fi
 
 # Input gromacs topology
 top="$1"
-$gmxdir=$(dirname "$top")
+gmxdir=$(dirname "$top")
 
 ########## OPTIONAL ARGUMENTS ##########
 # Default params
 with_dna=false
 
 # Parse flags before positional arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
+while [[ $# -gt 1 ]]; do
+  case "$2" in
     --with-dna)
       with_dna=true
-      ((with_dna ? expected_itps=8 : expected_itps=6))
+      expected_itps=$([[ $with_dna == true ]] && echo 8 || echo 6)
       echo "Including --with-dna flag for topology extraction. System should include DNA."
       shift
       ;;
@@ -67,6 +67,7 @@ done
 if ls "$gmxdir/toppar/check_03_extractitp_"*.done 1> /dev/null 2>&1; then
     warn "Checkpoint file found. Checking .itp files."
     itps=$(find "$gmxdir/toppar" -maxdepth 1 -name "*.itp" | wc -l)
+    echo "Found $itps .itp files. Expected: $expected_itps."
     if [ "$itps" -ne "$expected_itps" ]; then
         warn "Expected $expected_itps .itp files, but found $itps. The previous run might have been incomplete. Proceeding with .itp extraction."
     else
@@ -116,7 +117,9 @@ awk '
     ' "$top" > temp_file && mv temp_file "$top"
 
 echo "The following .itp files have been created in $gmxdir/toppar/ and included in $top:"
-$(echo $gmxdir/toppar/*.itp)
+for f in "$gmxdir/toppar/"*.itp; do
+    echo "$(basename "$f")"
+done
 
 # Check that the expected number of .itp files have been created
 created_itps=$(find "$gmxdir/toppar" -maxdepth 1 -name "*.itp" | wc -l)

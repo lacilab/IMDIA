@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source "../utils/colors.sh"
+source "utils/colors.sh"
 
 # Print usage/help
 print_usage() {
@@ -14,6 +14,8 @@ Positional arguments:
 
 Options:
   --with-dna          Complex includes DNA
+  --range_a INT,INT     Range of residues to consider for DNA A [default: full length]
+  --range_b INT,INT     Range of residues to consider for DNA B [default: full length]
   --with-phosphate    Complex includes phosphorylated residues
   --ffs <list>        Specify force fields (space-separated list) to use in LEaP. Avoid using clashing force fields. Default: protein.ff19SB, water.opc.
   -h, --help          Show this help message and exit
@@ -27,7 +29,7 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
 fi
 
 # Require exactly 2 positional arguments
-if [ "$#" -ne 2 ]; then
+if [ "$#" -lt 2 ]; then
     error "datadir and filename are required."
     print_usage
     exit 1
@@ -49,6 +51,8 @@ if [ ! -d "$datadir" ]; then
     error "datadir '$datadir' does not exist or is not a directory."
     exit 1
 fi
+# if datadir ends with /, remove it
+datadir="${datadir%/}"
 
 #### LOG
 
@@ -68,21 +72,21 @@ fi
 ########### Check key software dependencies
 # Check GROMACS is ready and print version
 if ! command -v gmx >/dev/null 2>&1; then
-    echo "GROMACS (gmx) not found. Please install GROMACS and ensure it is in your PATH."
+    error "GROMACS (gmx) not found. Please install GROMACS and ensure it is in your PATH."
     exit 1
 fi
 gmx --version
 
 # Check AmberTools is ready and print version
 if ! command -v ambpdb >/dev/null 2>&1; then
-    echo "AmberTools (ambpdb) not found. Please install AmberTools and ensure it is in your PATH."
+    error "AmberTools (ambpdb) not found. Please install AmberTools and ensure it is in your PATH."
     exit 1
 fi
-ambpdb -V
+ambpdb --version
 
 # Check ParmEd is ready and print version
 if ! command -v parmed >/dev/null 2>&1; then
-    echo "ParmEd (parmed) not found. Please install ParmEd and ensure it is in your PATH."
+    error "ParmEd (parmed) not found. Please install ParmEd and ensure it is in your PATH."
     exit 1
 fi
 parmed --version
@@ -96,13 +100,21 @@ with_dna=false
 with_phosphate=false
 ffs=()
 
-# Parse flags before positional arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
+# Parse flags
+while [[ $# -gt 2 ]]; do
+  case "$3" in
     --with-dna)
       with_dna=true
       echo "Including --with-dna flag for preparation. System should include DNA."
       shift
+      ;;
+    --range_a)
+      range_a="$4"
+      shift 2
+      ;;
+    --range_b)
+      range_b="$4"
+      shift 2
       ;;
     --with-phosphate)
       with_phosphate=true
@@ -110,7 +122,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --ffs)
-      shift
+      shift 2
       # Collect all following arguments that are not options
       while [[ $# -gt 0 && ! $1 =~ ^- ]]; do
         ffs+=("$1")
@@ -133,14 +145,25 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# TODO check for checkpoint file here and skip if exists
+
+# Check if datadir/amber already exists.
+if [ -d "$datadir/amber" ]; then
+    warn "$datadir/amber already exists."
+else
+    echo "$datadir/amber does not exist. Creating new directory."
+    mkdir -p "$datadir/amber"
+fi
+
+
 # Remove lines starting with CONECT, which are added by MOE and cause issues in AmberTools 
 # check if $datadir/${file}_noconect.pdb already exists
-if [ -f "$datadir/${file}_noconect.pdb" ]; then
-    warn "$datadir/${file}_noconect.pdb already exists. Skipping CONECT removal."
+if [ -f "$datadir/amber/${file}_noconect.pdb" ]; then
+    warn "$datadir/amber/${file}_noconect.pdb already exists. Skipping CONECT removal."
 else
     echo "Removing CONECT lines from ${file}.pdb. These lines can cause issues in AmberTools."
-    sed '/^CONECT/d' "$datadir/${file}.pdb" > "$datadir/${file}_noconect.pdb"
-    remaining=$(grep -c '^CONECT' "$datadir/${file}_noconect.pdb")
+    sed '/^CONECT/d' "$datadir/${file}.pdb" > "$datadir/amber/${file}_noconect.pdb"
+    remaining=$(grep -c '^CONECT' "$datadir/amber/${file}_noconect.pdb")
     echo "CONECT lines before: $(grep -c '^CONECT' "$datadir/${file}.pdb")"
     echo "CONECT lines after:  $remaining"
     if [ "$remaining" -gt 0 ]; then
@@ -149,19 +172,6 @@ else
 fi
 
 
-# Check if datadir/amber already exists.
-if [ -d "$datadir/amber" ]; then
-    warn "$datadir/amber already exists."
-    if [ -f "$datadir/amber/${file}_noconect.pdb" ]; then
-        warn "$datadir/amber/${file}_noconect.pdb already exists in amber directory."
-    else
-        mv "$datadir/${file}_noconect.pdb" "$datadir/amber/"
-    fi
-else
-    echo "$datadir/amber does not exist. Creating new directory."
-    mkdir -p "$datadir/amber"
-    mv "$datadir/${file}_noconect.pdb" "$datadir/amber/"
-fi
 # Check that datadir/amber exists and contains the structure
 if [ -d "$datadir/amber" ] && [ -f "$datadir/amber/${file}_noconect.pdb" ]; then
     ok "$datadir/amber directory is ready. "
@@ -175,21 +185,22 @@ fi
 
 ##### AmberTools preparation
 # add --with-dna if $with_dna is true
-((with_dna ? dna_flag="--with-dna" : dna_flag="")) 
+dna_flag=$([[ $with_dna == true ]] && echo "--with-dna")
 # add --with-phosphate if $with_phosphate is true
-((with_phosphate ? phosphate_flag="--with-phosphate" : phosphate_flag=""))
+phosphate_flag=$([[ $with_phosphate == true ]] && echo "--with-phosphate")
 
-python prep_01_amber.py --path-pdb "${datadir}/amber/${file}_noconect.pdb"  \
+python -m prep01.prep_01_amber --path-pdb "${datadir}/amber/${file}_noconect.pdb"  \
     --ffs "${ffs[@]}" \
     $dna_flag \
     $phosphate_flag
 
 # Check that datadir/gromacs_common does not exist. If it exists, show a message and backup the old one (change the name)
-if [ -d "$datadir/gromacs_common" ]; then
-    warn "$datadir/gromacs_common already exists."
+gmxdir="$datadir/gromacs_common"
+
+if [ -d "$gmxdir" ]; then
+    warn "$gmxdir already exists."
 else
-    mkdir "$datadir/gromacs_common"
-    gmxdir="$datadir/gromacs_common"
+    mkdir "$gmxdir"
     if [ -d "$gmxdir" ]; then
         ok "Gromacs directory created at $gmxdir."
     else
@@ -199,20 +210,20 @@ else
 fi
 
 #### Convert to Gromacs format with parmed
-python prep_02_amb2gro.py -p "${datadir}/amber/${file}_noconect_protonated_solvated.prmtop" \
+python -m prep01.prep_02_amb2gro -p "${datadir}/amber/${file}_noconect_protonated_solvated.prmtop" \
     -c "${datadir}/amber/${file}_noconect_protonated_solvated.inpcrd" \
     -t "${gmxdir}/topol.top" \
     -g "${gmxdir}/gromacs.gro" \
 
 
 # Extract .itps from .top file
-bash prep_03_extractitp.sh "$gmxdir/topol.top" $dna_flag
+bash prep01/prep_03_extractitp.sh "$gmxdir/topol.top" $dna_flag
 
 # Remove the 2 ions added with AmberTools from .gro files
-bash prep_04_removeamberions.sh "$gmxdir"
+bash prep01/prep_04_removeamberions.sh "$gmxdir"
 
 # Add ions with GROMACS (neutralize and reach target concentration)
-bash prep_06_addgmxions.sh "$gmxdir"
+bash prep01/prep_06_addgmxions.sh "$gmxdir"
 
 # Add DNA H-bonds restraints 
 if [[ $with_dna == true ]]; then
@@ -231,10 +242,12 @@ if [[ $with_dna == true ]]; then
         exit 1
     fi
     echo "The complex includes DNA. Adding DNA H-bond restraints."
-    bash prep_05_restraindnahbonds.sh --gmxdir $gmxdir \
+    bash prep01/prep_05_restraindnahbonds.sh --gmxdir $gmxdir \
         --topol $gmxdir/topol.top \
         --dna_a ${dna_files[0]} \
-        --dna_b ${dna_files[1]}
+        --dna_b ${dna_files[1]} \
+        --range_a "$range_a" \
+        --range_b "$range_b"
 else    
     echo "The complex does not include DNA. Skipping DNA H-bond restraints. If this is incorrect, rerun with the --with-dna flag."
 fi

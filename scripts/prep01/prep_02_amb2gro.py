@@ -3,7 +3,7 @@
 import os
 import sys
 import glob
-from time import time
+import time
 import parmed as pmd
 import argparse
 from utils.colors import ok, warn, error
@@ -24,13 +24,13 @@ if len(sys.argv)==1:
     parser.print_help()
     sys.exit(0)
 
-(options, args) = parser.parse_args()
-amberdir = os.path.dirname(os.path.abspath(options.top))
+args = parser.parse_args()
+amberdir = os.path.dirname(os.path.abspath(args.top))
 
 ##### Check for checkpoint files from previous runs #####
 expected_files = [
-	f"{options.top}",
-	f"{options.gro}"
+	f"{args.top}",
+	f"{args.gro}"
 ]
 
 checkpoint_files = glob.glob(f"{amberdir}/check_02_amb2gro_*.done")
@@ -43,7 +43,7 @@ if checkpoint_files:
         sys.exit(0)
 
 # If checkpoint files are not found, proceed with the conversion
-amber = pmd.load_file(options.prmtop,options.inpcrd)
+amber = pmd.load_file(args.prmtop,args.inpcrd)
 
 # Cmap correction, including PTR
 CX_dir = { 'ALA' : 'XC0', 'ARG' : 'XC1', 'ASH' : 'XC2', 'ASN' : 'XC3', 'ASP' : 'XC4', 'CYM' : 'XC5', 'CYS' : 'XC6', 
@@ -75,8 +75,8 @@ for cmap in amber.cmaps:  # loop through all cmap terms
 
 
 # output 
-amber.save(options.top, overwrite=True, format='gromacs')
-amber.save(options.gro, overwrite=True, format='gro')
+amber.save(args.top, overwrite=True, format='gromacs')
+amber.save(args.gro, overwrite=True, format='gro')
 
 print("\nChecking generated files.")
 

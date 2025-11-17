@@ -6,6 +6,7 @@ import glob
 import argparse
 from utils.colors import ok, warn, error
 
+
 def remove_hydrogens(dir, filename):
     cmd = f'''
 pdb4amber -i {dir}/{filename}.pdb -o {dir}/{filename}_noH.pdb --nohyd --no-conect
@@ -23,7 +24,7 @@ pdb4amber -i {dir}/{filename}_noH.pdb -o {dir}/{filename}_reduced.pdb --reduce -
     return f"{dir}/{filename}_reduced.pdb"
 
 
-def add_hydrogens(file, ffs=['protein.ff19SB', 'water.opc']):
+def add_hydrogens(file, ffs=['water.opc', 'protein.ff19SB']):
 	"""Add hydrogen atoms to a PDB file using tleap."""
 	protonated_file = file.replace('_reduced.pdb', '_protonated.pdb')
 
@@ -47,7 +48,7 @@ def add_hydrogens(file, ffs=['protein.ff19SB', 'water.opc']):
 	return protonated_file
 
 
-def gen_chains(complex_file, *chains):
+def gen_chains(complex_file, ffs=['water.opc', 'protein.ff19SB'], *chains):
 	"""Generate separate PDB files.
 		*chains takes a varible number of arguments for the chains to be separated, for example:
 		mono_a='A', mono_b='B', dna_a='C', dna_b='D'
@@ -73,13 +74,13 @@ def gen_chains(complex_file, *chains):
 		with open(chain_file, 'w') as f:
 			f.write(stdout_chain)
 
-		chain_file = add_hydrogens(chain_file)
+		chain_file = add_hydrogens(chain_file, ffs)
 		files.append(chain_file)
 
 	return tuple(files)
 
 
-def solvate_gen_parm(complex_file, ffs=['protein.ff19SB', 'water.opc'], *chains):
+def solvate_gen_parm(complex_file, ffs=['water.opc', 'protein.ff19SB'], *chains):
 	"""Protonate and solvate the complex and chains using LEaP."""
 	complex_name = os.path.splitext(complex_file)[0]
 	complex_solvated_file = complex_name + '_solvated.pdb'
@@ -101,7 +102,7 @@ def solvate_gen_parm(complex_file, ffs=['protein.ff19SB', 'water.opc'], *chains)
 
 	# Dynamically add loadPdb commands
 	for chain in filebases:
-		cmd += f'{chain} = loadPdb {chain}\n'
+		cmd += f'{chain} = loadPdb {chain}.pdb\n'
 
 	cmd += '\nset default PBRadii mbondi2\n\n'
 
@@ -132,6 +133,9 @@ def solvate_gen_parm(complex_file, ffs=['protein.ff19SB', 'water.opc'], *chains)
 
 ########## RUN ##########
 
+print("Current Working Directory:", os.getcwd()) 
+
+
 start_time = time.time()
 
 parser = argparse.ArgumentParser(description="Prepare system using AmberTools. Add solvent and ions, generate prmtop and inpcrd files based on force fields.")
@@ -155,10 +159,8 @@ ff_default = ['water.opc']
 
 ##### Check for checkpoint files from previous runs #####
 expected_files = [
-	f"{amberdir}/{filename}_noconect_protonated_solvated.inpcrd",
-	f"{amberdir}/{filename}_noconect_protonated_solvated.prmtop",
-	f"{gmxdir}/topol.top",
-	f"{gmxdir}/gromacs.gro"
+	f"{amberdir}/{filename}_protonated_solvated.inpcrd",
+	f"{amberdir}/{filename}_protonated_solvated.prmtop",
 ]
 
 checkpoint_files = glob.glob(f"{amberdir}/check_01_amber_*.done")
@@ -198,11 +200,11 @@ noH_complex = remove_hydrogens(amberdir, filename)
 protonated_complex = add_hydrogens(noH_complex, ffs)
 
 # Generate the receptor & ligand (also match the hydrogens to amber specifics)
-if args.incl_dna:
-	mono_a_file, mono_b_file, dna_a_file, dna_b_file = gen_chains(noH_complex, 'A', 'B', 'C', 'D')
+if args.with_dna:
+	mono_a_file, mono_b_file, dna_a_file, dna_b_file = gen_chains(noH_complex, ffs, 'A', 'B', 'C', 'D')
 	solvate_gen_parm(protonated_complex, ffs, mono_a_file, mono_b_file, dna_a_file, dna_b_file)
 else:
-	mono_a_file, mono_b_file = gen_chains(noH_complex, 'A', 'B')	
+	mono_a_file, mono_b_file = gen_chains(noH_complex, ffs, 'A', 'B')	
 	solvate_gen_parm(protonated_complex, ffs, mono_a_file, mono_b_file)
 
 solvated_complex_prmtop = protonated_complex.replace('.pdb', '_solvated.prmtop')
