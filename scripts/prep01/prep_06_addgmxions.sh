@@ -30,7 +30,7 @@ fi
 
 gmxdir=$1
 # default ions.mdp path
-ions_mdp="02_md/ions.mdp"
+ions_mdp="md02/ions.mdp"
 
 # Check if checkpoint file from previous run exists
 if ls "$gmxdir/check_06_addgmxions_"*.done 1> /dev/null 2>&1; then
@@ -83,6 +83,9 @@ if ! [[ "$num_Cl" =~ ^[0-9]+$ ]] || (( num_Cl <= 1 )); then
 else
     ok "Ions added successfully. Cl: $num_Cl"
 fi
+
+sed -i "s/Na+/Na/g" "$gmxdir/topol.top"
+sed -i "s/Cl-/Cl/g" "$gmxdir/topol.top"
 
 # Create checkpoint file
 touch "$gmxdir/check_06_addgmxions_$(date +%Y%m%d_%H%M%S).done"

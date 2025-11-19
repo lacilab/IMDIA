@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source "../utils/colors.sh"
+source "utils/colors.sh"
 
 # Print usage/help
 print_usage() {
@@ -42,17 +42,17 @@ fi
 param_mdp() {
     custom="$1"
     filename="$2"
-    # prefer custom if provided and exists, otherwise use default from scriptdir
+    # prefer custom if provided and exists, otherwise use default
     if [ -n "$custom" ]; then
         if [ -f "$custom" ]; then
             echo "Using custom $filename: $custom"
             cp -- "$custom" "$outdir/$filename"
         else
             error "Custom '$custom' not found. Using default $filename."
-            cp -- "$scriptdir/$filename" "$outdir/$filename"
+            cp -- "md02/$filename" "$outdir/$filename"
         fi
     else
-        cp -- "$scriptdir/$filename" "$outdir/$filename"
+        cp -- "md02/$filename" "$outdir/$filename"
     fi
 }
 
@@ -61,16 +61,15 @@ check_step(){
   step_short="$1"
   step_name="$2"
 
-  if grep -q "Finished mdrun" "$step_short".log 2>/dev/null && [ -f "$step_short".gro ]; then
+  if grep -q "Finished mdrun" "$outdir/$step_short.log" 2>/dev/null && [ -f "$outdir/$step_short.gro" ]; then
       ok "$step_name completed successfully."
   else
-      error "$step_name failed. Check $step_short.log for details."
+      error "$step_name failed. Check $outdir/$step_short.log for details."
       exit 1
   fi
 }
 
 
-scriptdir=$(pwd)
 # Positional arguments
 gmxdir=$1
 n=$2
@@ -222,8 +221,6 @@ echo "Using $NGPUS GPU(s) with gputasks: $GPULIST"
 
 ##### PARAMETER FILES SETUP #####
 # copy parameter files to outdir
-cp "$scriptdir"/*.mdp "$outdir"
-cd "$outdir"
 
 # parameter files
 param_mdp "$EM_FILE"  "minim.mdp"
@@ -232,38 +229,50 @@ param_mdp "$NPT_FILE" "npt.mdp"
 param_mdp "$MD_FILE"  "md.mdp"
 
 # check outdir exists and contains minim.mdp, nvt.mdp, npt.mdp, md.mdp
-if [ ! -d "$outdir" ] || [ ! -f "minim.mdp" ] || [ ! -f "nvt.mdp" ] || [ ! -f "npt.mdp" ] || [ ! -f "md.mdp" ]; then
-    error "Output directory '$outdir' is does not exist or is missing parameter files. Required files:  minim.mdp, nvt.mdp, npt.mdp, md.mdp"
+if [ ! -d "$outdir" ] || [ ! -f "$outdir/minim.mdp" ] || [ ! -f "$outdir/nvt.mdp" ] || [ ! -f "$outdir/npt.mdp" ] || [ ! -f "$outdir/md.mdp" ]; then
+    error "Output directory '$outdir' does not exist or is missing parameter files. Required files:  minim.mdp, nvt.mdp, npt.mdp, md.mdp"
     exit 1
 fi
 
+echo "Working directory: $(pwd), gmxdir: $gmxdir, outdir: $outdir"
+
 ###### Energy minimization
 # if em.log exists and contains "Finished mdrun", and em.gro exists, skip minimization
-if grep -q "Finished mdrun" em.log 2>/dev/null && [ -f em.gro ]; then
+if grep -q "Finished mdrun" "$outdir/em.log" 2>/dev/null && [ -f "$outdir/em.gro" ]; then
   warn "em.log indicates minimization already completed and em.gro exists. Skipping energy minimization."
 else
   echo "Starting energy minimization."
-  gmx grompp -f minim.mdp -c "$gmxdir/ions.gro" -r "$gmxdir/ions.gro" -p "$gmxdir/topol.top" -o em.tpr -quiet -maxwarn 1
-  gmx mdrun -v -deffnm em -quiet $flag_nb_gpu
+  gmx grompp -f "$outdir/minim.mdp" -c "$gmxdir/ions.gro" -r "$gmxdir/ions.gro" -p "$gmxdir/topol.top" -o "$outdir/em.tpr" -quiet -maxwarn 1
+  gmx mdrun -v -deffnm "$outdir/em" -quiet $flag_nb_gpu
 fi
 
 check_step "em" "Energy minimization"
 
 # Create groups
 if [[ $with_dna == true ]] && [[ $with_phosphate == true ]]; then
-gmx make_ndx -f em.gro -o index.ndx -quiet << EOL
-r DA | r DC | r DT | r DG | r DC3 | r DC5 | r DG3 | r DG5
-name 19 DNA
-1 | 19 | 13
-name 20 Protein_DNA_PTR
-14 | 15 | 16
-name 21 Water_and_ions 
-1 | 13
-name 22 Protein_PTR
+  echo "DNA and PHOSPHATE present: creating combined groups."
+  gmx make_ndx -f "$outdir/em.gro" -o "$outdir/index.ndx" -quiet << EOL
+  r DA | r DC | r DT | r DG | r DC3 | r DC5 | r DG3 | r DG5
+  name 19 DNA
+  1 | 19 | 13
+  name 20 Protein_DNA_PTR
+  14 | 15 | 16
+  name 21 Water_and_ions 
+  1 | 13
+  name 22 Protein_PTR
+  quit
+EOL
+elif [[ $with_dna == true ]]; then
+  echo "DNA present: creating combined groups."
+gmx make_ndx -f "$outdir/em.gro" -o "$outdir/index.ndx" -quiet << EOL
+1 | 12
+name 16 Protein_DNA
+13 | 14 | 15
+name 17 Water_and_ions 
 quit
 EOL
 else
-gmx make_ndx -f em.gro -o index.ndx -quiet << EOL
+gmx make_ndx -f "$outdir/em.gro" -o "$outdir/index.ndx" -quiet << EOL
 12 | 16 | 17
 name 18 Water_and_ions 
 quit
@@ -272,40 +281,40 @@ fi
 
 
 ###### NVT Equilibration
-if grep -q "Finished mdrun" nvt.log 2>/dev/null && [ -f nvt.gro ]; then
+if grep -q "Finished mdrun" "$outdir/nvt.log" 2>/dev/null && [ -f "$outdir/nvt.gro" ]; then
   warn "nvt.log indicates NVT equilibration already completed and nvt.gro exists. Skipping NVT equilibration."
 else
   echo "Starting NVT equilibration."
-  gmx grompp -f nvt.mdp -c em.gro -r em.gro -p "$gmxdir/topol.top" -o nvt.tpr -n index.ndx -quiet -maxwarn 1
-  gmx_mpi mdrun -v -deffnm nvt -quiet $flag_nb_gpu
+  gmx grompp -f "$outdir/nvt.mdp" -c "$outdir/em.gro" -r "$outdir/em.gro" -p "$gmxdir/topol.top" -o "$outdir/nvt.tpr" -n "$outdir/index.ndx" -quiet -maxwarn 1
+  gmx_mpi mdrun -v -deffnm "$outdir/nvt" -quiet $flag_nb_gpu
 fi
 
 check_step "nvt" "NVT equilibration"
 
 
 ###### NPT Equilibration
-if grep -q "Finished mdrun" npt.log 2>/dev/null && [ -f npt.gro ]; then
+if grep -q "Finished mdrun" "$outdir/npt.log" 2>/dev/null && [ -f "$outdir/npt.gro" ]; then
   warn "npt.log indicates NPT equilibration already completed and npt.gro exists. Skipping NPT equilibration."
 else
   echo "Starting NPT equilibration."
-  gmx grompp -f npt.mdp -c nvt.gro -r nvt.gro -t nvt.cpt -p "$gmxdir/topol.top" -o npt.tpr -n index.ndx -quiet -maxwarn 1 
-  gmx_mpi mdrun -v -deffnm npt -quiet $flag_nb_gpu
+  gmx grompp -f "$outdir/npt.mdp" -c "$outdir/nvt.gro" -r "$outdir/nvt.gro" -t "$outdir/nvt.cpt" -p "$gmxdir/topol.top" -o "$outdir/npt.tpr" -n "$outdir/index.ndx" -quiet -maxwarn 1 
+  gmx_mpi mdrun -v -deffnm "$outdir/npt" -quiet $flag_nb_gpu
 fi
 
 check_step "npt" "NPT equilibration"
 
 ###### Production MD
-if grep -q "Finished mdrun" md.log 2>/dev/null && [ -f md.gro ]; then
+if grep -q "Finished mdrun" "$outdir/md.log" 2>/dev/null && [ -f "$outdir/md.gro" ]; then
   warn "md.log indicates production MD already completed and md.gro exists. Skipping production MD."
-elif [ -f md.cpt ]; then
+elif [ -f "$outdir/md.cpt" ]; then
   echo "Restarting production MD from checkpoint md.cpt."
   gmx_mpi mdrun -ntmpi $NTMPI -ntomp $NTOMP $flag_nb_gpu $flag_pme_gpu $flag_gpu_tasks \
-    -cpi md.cpt -append -v -deffnm md -quiet > mdtrack_$(date +%Y%m%d_%H%M%S).log 2>&1
+    -cpi "$outdir/md.cpt" -append -v -deffnm "$outdir/md" -quiet > "$outdir/mdtrack_$(date +%Y%m%d_%H%M%S).log" 2>&1
 else
   echo "Starting production MD."
-  gmx grompp -f md.mdp -c npt.gro -r npt.gro -t npt.cpt -p "$gmxdir/topol.top" -o md.tpr -n index.ndx -quiet -maxwarn 1
+  gmx grompp -f "$outdir/md.mdp" -c "$outdir/npt.gro" -r "$outdir/npt.gro" -t "$outdir/npt.cpt" -p "$gmxdir/topol.top" -o "$outdir/md.tpr" -n "$outdir/index.ndx" -quiet -maxwarn 1
   gmx_mpi mdrun -ntmpi $NTMPI -ntomp $NTOMP $flag_nb_gpu $flag_pme_gpu $flag_gpu_tasks \
-    -v -deffnm md -quiet > mdtrack_$(date +%Y%m%d_%H%M%S).log 2>&1
+    -v -deffnm "$outdir/md" -quiet > "$outdir/mdtrack_$(date +%Y%m%d_%H%M%S).log" 2>&1
 fi
 
 check_step "md" "Production MD"

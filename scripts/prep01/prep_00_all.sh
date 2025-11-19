@@ -110,10 +110,12 @@ while [[ $# -gt 2 ]]; do
       ;;
     --range_a)
       range_a="$4"
+      echo "Range A: $range_a"
       shift 2
       ;;
     --range_b)
       range_b="$4"
+      echo "Range B: $range_b"  
       shift 2
       ;;
     --with-phosphate)

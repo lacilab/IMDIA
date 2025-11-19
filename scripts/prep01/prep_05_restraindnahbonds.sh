@@ -51,8 +51,8 @@ while [[ $# -gt 0 ]]; do
     --topol) topol="$2"; shift 2 ;;
     --dna_a) dna_a="$2"; shift 2 ;;
     --dna_b) dna_b="$2"; shift 2 ;;
-    --range_a) range_a="$2"; IFS=',' read -r range_a_start range_a_end <<< "$range_a"; shift 2 ;;
-    --range_b) range_b="$2"; IFS=',' read -r range_b_start range_b_end <<< "$range_b"; shift 2 ;;
+    --range_a) range_a="$2"; IFS=',' read -r range_a_start range_a_end <<< "$range_a"; echo "Range A: $range_a"; shift 2 ;;
+    --range_b) range_b="$2"; IFS=',' read -r range_b_start range_b_end <<< "$range_b"; echo "Range B: $range_b"; shift 2 ;;
     --type) type="$2"; shift 2 ;;
     --type2) type2="$2"; shift 2 ;;
     --low) low="$2"; shift 2 ;;
