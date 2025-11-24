@@ -1,7 +1,7 @@
 import argparse
 import yaml
 import prep01.prep
-import md02.md
+import md02.md_wrap
 
 def main(datadir, filename, gmxdir, repn,
         with_dna = False, with_phosphate = False, range_a = None, range_b = None, ffs = None,
@@ -11,7 +11,7 @@ def main(datadir, filename, gmxdir, repn,
         if args.prep:
             prep01.prep.main(datadir, filename, with_dna, with_phosphate, range_a, range_b, ffs)
         if args.md:
-            md02.md.main(gmxdir, repn, with_dna, with_phosphate, ntmpi, ntomp, ngpu, gpulist, em, nvt, npt, md)
+            md02.md_wrap.main(gmxdir, repn, with_dna, with_phosphate, ntmpi, ntomp, ngpu, gpulist, em, nvt, npt, md)
 
 
 parser = argparse.ArgumentParser(description="Pipeline for preparing and running MD simulations.")
