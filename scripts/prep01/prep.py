@@ -17,18 +17,7 @@ def main(datadir: str, filename: str,
     ffs_flag = "--ffs" if ffs is not None else ""
     ffs_val = ffs if ffs is not None else ""
 
-    print ("Running prep script...")
-    print( f"sh_path: {sh_path}",
-           f"datadir: {datadir}",
-           f"filename: {filename}",
-           f"dna_flag: {dna_flag}",
-           f"range_a_flag: {range_a_flag}", f"rang_a_val: {rang_a_val}",
-           f"range_b_flag: {range_b_flag}", f"range_b_val: {range_b_val}",
-           f"phosphate_flag: {phosphate_flag}",
-           f"ffs_flag: {ffs_flag}", f"ffs_val: {ffs_val}",
-         )
-
-    subprocess.run([
+    cmd = [
         sh_path,
         datadir,
         filename,
@@ -37,4 +26,10 @@ def main(datadir: str, filename: str,
         range_b_flag, range_b_val,
         phosphate_flag,
         ffs_flag, ffs_val
-    ])
+    ]
+
+    print("Running command for prep script:")
+    # remove empty strings from cmd before joining
+    cmd = [c for c in cmd if c != ""]
+    print(" ".join(cmd))
+    subprocess.call(cmd)

@@ -1,3 +1,4 @@
+import cmd
 import os
 import subprocess
 
@@ -28,7 +29,7 @@ def main(gmxdir: str, repn: int,
     md_flag = "--md" if md is not None else ""
     md_val = md if md is not None else ""
     
-    subprocess.call([
+    cmd = [
         sh_path,
         gmxdir,
         repn,
@@ -42,4 +43,10 @@ def main(gmxdir: str, repn: int,
         nvt_flag, nvt_val,
         npt_flag, npt_val,
         md_flag, md_val
-    ])
+    ]
+
+    print("Running command for md script:")
+    # remove empty strings from cmd before joining
+    cmd = [c for c in cmd if c != ""]
+    print(" ".join(cmd))
+    subprocess.call(cmd)

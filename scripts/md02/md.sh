@@ -74,6 +74,8 @@ check_step(){
 gmxdir=$1
 n=$2
 
+echo "Received positional arguments: gmxdir='$gmxdir', n='$n'"
+
 # check gmxdir exists
 if [ ! -d "$gmxdir" ]; then
     error "gmxdir '$gmxdir' does not exist or is not a directory."
@@ -108,7 +110,7 @@ if [ -f "${outdir}/check_02_md_*.done" ]; then
 fi
 
 #### LOG
-LOGFILE="${outdir}/mdsteps_$rep{n}_$(date +%Y%m%d_%H%M%S).log"
+LOGFILE="${outdir}/mdsteps_rep${n}_$(date +%Y%m%d_%H%M%S).log"
 # Redirect all stdout and stderr to tee
 # This will print to screen AND save to the logfile, removing color tags
 exec > >(tee >(sed -r "s/\x1B\[[0-9;]*[mK]//g" >> "$LOGFILE")) 2>&1
@@ -136,8 +138,8 @@ else
 fi
 
 # Parse flags 
-while [[ $# -gt 0 ]]; do
-  case "$1" in
+while [[ $# -gt 2 ]]; do
+  case "$3" in
     --with-dna)
       with_dna=true
       echo "Including --with-dna flag. System should include DNA."
@@ -149,35 +151,35 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --ntmpi)
-      NTMPI="$2"
+      NTMPI="$4"
       shift 2
       ;;
     --ntomp)
-      NTOMP="$2"
+      NTOMP="$4"
       shift 2
       ;;
     --ngpu)
-      NGPUS="$2"
+      NGPUS="$4"
       shift 2
       ;;
     --gpulist)
-      GPULIST="$2"
+      GPULIST="$4"
       shift 2
       ;;
     --em)
-      EM_FILE="$2"
+      EM_FILE="$4"
       shift 2
       ;;
     --nvt)
-      NVT_FILE="$2"
+      NVT_FILE="$4"
       shift 2
       ;;
     --npt)
-      NPT_FILE="$2"
+      NPT_FILE="$4"
       shift 2
       ;;
     --md)
-      MD_FILE="$2"
+      MD_FILE="$4"
       shift 2
       ;;
     -h|--help)
@@ -185,7 +187,7 @@ while [[ $# -gt 0 ]]; do
       exit 0
       ;;
     -*)
-      echo "Unknown option: $1"
+      echo "Unknown option: $3"
       print_usage
       exit 1
       ;;
@@ -286,7 +288,7 @@ if grep -q "Finished mdrun" "$outdir/nvt.log" 2>/dev/null && [ -f "$outdir/nvt.g
 else
   echo "Starting NVT equilibration."
   gmx grompp -f "$outdir/nvt.mdp" -c "$outdir/em.gro" -r "$outdir/em.gro" -p "$gmxdir/topol.top" -o "$outdir/nvt.tpr" -n "$outdir/index.ndx" -quiet -maxwarn 1
-  gmx_mpi mdrun -v -deffnm "$outdir/nvt" -quiet $flag_nb_gpu
+  gmx mdrun -v -deffnm "$outdir/nvt" -quiet $flag_nb_gpu
 fi
 
 check_step "nvt" "NVT equilibration"
@@ -298,7 +300,7 @@ if grep -q "Finished mdrun" "$outdir/npt.log" 2>/dev/null && [ -f "$outdir/npt.g
 else
   echo "Starting NPT equilibration."
   gmx grompp -f "$outdir/npt.mdp" -c "$outdir/nvt.gro" -r "$outdir/nvt.gro" -t "$outdir/nvt.cpt" -p "$gmxdir/topol.top" -o "$outdir/npt.tpr" -n "$outdir/index.ndx" -quiet -maxwarn 1 
-  gmx_mpi mdrun -v -deffnm "$outdir/npt" -quiet $flag_nb_gpu
+  gmx mdrun -v -deffnm "$outdir/npt" -quiet $flag_nb_gpu
 fi
 
 check_step "npt" "NPT equilibration"
@@ -308,12 +310,12 @@ if grep -q "Finished mdrun" "$outdir/md.log" 2>/dev/null && [ -f "$outdir/md.gro
   warn "md.log indicates production MD already completed and md.gro exists. Skipping production MD."
 elif [ -f "$outdir/md.cpt" ]; then
   echo "Restarting production MD from checkpoint md.cpt."
-  gmx_mpi mdrun -ntmpi $NTMPI -ntomp $NTOMP $flag_nb_gpu $flag_pme_gpu $flag_gpu_tasks \
+  gmx mdrun -ntmpi $NTMPI -ntomp $NTOMP $flag_nb_gpu $flag_pme_gpu $flag_gpu_tasks \
     -cpi "$outdir/md.cpt" -append -v -deffnm "$outdir/md" -quiet > "$outdir/mdtrack_$(date +%Y%m%d_%H%M%S).log" 2>&1
 else
   echo "Starting production MD."
   gmx grompp -f "$outdir/md.mdp" -c "$outdir/npt.gro" -r "$outdir/npt.gro" -t "$outdir/npt.cpt" -p "$gmxdir/topol.top" -o "$outdir/md.tpr" -n "$outdir/index.ndx" -quiet -maxwarn 1
-  gmx_mpi mdrun -ntmpi $NTMPI -ntomp $NTOMP $flag_nb_gpu $flag_pme_gpu $flag_gpu_tasks \
+  gmx mdrun -ntmpi $NTMPI -ntomp $NTOMP $flag_nb_gpu $flag_pme_gpu $flag_gpu_tasks \
     -v -deffnm "$outdir/md" -quiet > "$outdir/mdtrack_$(date +%Y%m%d_%H%M%S).log" 2>&1
 fi
 
