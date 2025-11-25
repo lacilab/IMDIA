@@ -11,7 +11,7 @@ Positional arguments:
   topology    Path to the GROMACS topology file (e.g. 'topol.top')
 
 Options:
-  --with-dna          Complex includes DNA
+  --dna          Complex includes DNA
   -h, --help          Show this help message and exit
 
 USAGE
@@ -41,10 +41,10 @@ with_dna=false
 # Parse flags before positional arguments
 while [[ $# -gt 1 ]]; do
   case "$2" in
-    --with-dna)
+    --dna)
       with_dna=true
       expected_itps=$([[ $with_dna == true ]] && echo 8 || echo 6)
-      echo "Including --with-dna flag for topology extraction. System should include DNA."
+      echo "Including --dna flag for topology extraction. System should include DNA."
       shift
       ;;
     -h|--help)

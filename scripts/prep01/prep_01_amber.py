@@ -140,8 +140,8 @@ start_time = time.time()
 
 parser = argparse.ArgumentParser(description="Prepare system using AmberTools. Add solvent and ions, generate prmtop and inpcrd files based on force fields.")
 parser.add_argument('--path-pdb', dest='path_pdb', default='.', help='Input pdb file path')
-parser.add_argument('--with-dna', dest='with_dna', action='store_true', help='Use if the system contains DNA. Adds DNA.bsc1 force field.')
-parser.add_argument('--with-phosphate', dest='with_phosphate', action='store_true', help='Use if the system contains phosphorylated residues. Adds phosaa19SB force field.')
+parser.add_argument('--dna', dest='with_dna', action='store_true', help='Use if the system contains DNA. Adds DNA.bsc1 force field.')
+parser.add_argument('--phos', dest='with_phosphate', action='store_true', help='Use if the system contains phosphorylated residues. Adds phosaa19SB force field.')
 parser.add_argument('--ffs', dest='ffs', nargs='*', help='List of force fields to use from the list available in LEaP. Avoid using clashing force fields. Default: protein.ff19SB, water.opc')
 
 # print help if no arguments are provided
@@ -179,11 +179,11 @@ if not pdb.lower().endswith('.pdb'):
 	sys.exit(1)
 
 if args.with_dna:
-	print("Flag --with-dna used. This is a DNA-protein complex.")
+	print("Flag --dna used. This is a DNA-protein complex.")
 	ff_default.append('DNA.bsc1')
 
 if args.with_phosphate:
-	print("Flag --with-phosphate used. This system contains phosphorylated residues.")
+	print("Flag --phos used. This system contains phosphorylated residues.")
 	ff_default.append('phosaa19SB')
 else:
 	ff_default.append('protein.ff19SB')

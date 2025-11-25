@@ -16,7 +16,7 @@ from utils.colors import ok, warn, error
 parser = argparse.ArgumentParser(description="Quality control analysis of MD simulation")
 parser.add_argument("-u", "--universe", help="Path to the Universe object")
 parser.add_argument("-d", "--outdir", help="Output directory")
-parser.add_argument("--with_dna", action='store_true', help="DNA is present in the system")
+parser.add_argument("--dna", action='store_true', dest='with_dna', help="DNA is present in the system")
 parser.add_argument("--offset", type=int, default=0, help="Offset for residue numbering")
 parser.add_argument("--domains", type=list, default=[], help="Protein domain definitions.")
 

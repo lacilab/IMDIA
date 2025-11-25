@@ -12,8 +12,8 @@ Positional arguments:
   gromacs_directory   Directory containing GROMACS input files (md.tpr, md.xtc, index.ndx etc.)
 
 Options:
-  --with-dna          Complex includes DNA
-  --with-phosphate    Complex includes phosphorylated residues
+  --dna          Complex includes DNA
+  --phos    Complex includes phosphorylated residues
   -h, --help          Show this help message and exit
 USAGE
 }
@@ -47,14 +47,14 @@ with_phosphate=false
 # Parse flags before positional arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --with-dna)
+    --dna)
       with_dna=true
-      echo "Including --with-dna flag. System should include DNA."
+      echo "Including --dna flag. System should include DNA."
       shift
       ;;
-    --with-phosphate)
+    --phos)
       with_phosphate=true
-      echo "Including --with-phosphate flag. System should include phosphorylated residues."
+      echo "Including --phos flag. System should include phosphorylated residues."
       shift
       ;;
       ;;

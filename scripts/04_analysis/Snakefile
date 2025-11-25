@@ -179,7 +179,7 @@ rule qc:
        scripts/qc.py \
             --universe {input.universe} \
             --outdir "{PATH_ANALYSIS_WC}/001_qc" \
-            --with-dna {DNA} \
+            --dna {DNA} \
             --offset {OFFSET} \
             --domains {DOMAINS} \
        """

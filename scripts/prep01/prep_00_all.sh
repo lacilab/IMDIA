@@ -13,10 +13,10 @@ Positional arguments:
   filename   Name of the PDB file (with or without .pdb)
 
 Options:
-  --with-dna          Complex includes DNA
+  --dna          Complex includes DNA
   --range_a INT,INT     Range of residues to consider for DNA A [default: full length]
   --range_b INT,INT     Range of residues to consider for DNA B [default: full length]
-  --with-phosphate    Complex includes phosphorylated residues
+  --phos    Complex includes phosphorylated residues
   --ffs <list>        Specify force fields (space-separated list) to use in LEaP. Avoid using clashing force fields. Default: protein.ff19SB, water.opc.
   -h, --help          Show this help message and exit
 USAGE
@@ -103,9 +103,9 @@ ffs=()
 # Parse flags
 while [[ $# -gt 2 ]]; do
   case "$3" in
-    --with-dna)
+    --dna)
       with_dna=true
-      echo "Including --with-dna flag for preparation. System should include DNA."
+      echo "Including --dna flag for preparation. System should include DNA."
       shift
       ;;
     --range_a)
@@ -118,9 +118,9 @@ while [[ $# -gt 2 ]]; do
       echo "Range B: $range_b"  
       shift 2
       ;;
-    --with-phosphate)
+    --phos)
       with_phosphate=true
-      echo "Including --with-phosphate flag for preparation. System should include phosphorylated residues."
+      echo "Including --phos flag for preparation. System should include phosphorylated residues."
       shift
       ;;
     --ffs)
@@ -186,10 +186,10 @@ fi
 ########## PREPARATION ##########
 
 ##### AmberTools preparation
-# add --with-dna if $with_dna is true
-dna_flag=$([[ $with_dna == true ]] && echo "--with-dna")
-# add --with-phosphate if $with_phosphate is true
-phosphate_flag=$([[ $with_phosphate == true ]] && echo "--with-phosphate")
+# add --dna if $with_dna is true
+dna_flag=$([[ $with_dna == true ]] && echo "--dna")
+# add --phos if $with_phosphate is true
+phosphate_flag=$([[ $with_phosphate == true ]] && echo "--phos")
 
 python -m prep01.prep_01_amber --path-pdb "${datadir}/amber/${file}_noconect.pdb"  \
     --ffs "${ffs[@]}" \
@@ -240,7 +240,7 @@ if [[ $with_dna == true ]]; then
     done
     # if dna_files does not contain 2 files, print message and exit
     if [ ${#dna_files[@]} -ne 2 ]; then
-        error "--with-dna flag provided but found ${#dna_files[@]} files containing DNA residues. Expected 2 files."
+        error "--dna flag provided but found ${#dna_files[@]} files containing DNA residues. Expected 2 files."
         exit 1
     fi
     echo "The complex includes DNA. Adding DNA H-bond restraints."
@@ -251,7 +251,7 @@ if [[ $with_dna == true ]]; then
         --range_a "$range_a" \
         --range_b "$range_b"
 else    
-    echo "The complex does not include DNA. Skipping DNA H-bond restraints. If this is incorrect, rerun with the --with-dna flag."
+    echo "The complex does not include DNA. Skipping DNA H-bond restraints. If this is incorrect, rerun with the --dna flag."
 fi
 
 ok "Preparation completed successfully."
