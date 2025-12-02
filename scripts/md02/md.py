@@ -10,7 +10,7 @@ import multiprocessing
 import subprocess
 import shutil
 import argparse
-from utils.colors import ok, warn, error
+from scripts.utils.colors import ok, warn, error
 
 parser = argparse.ArgumentParser(description="Perform MD simulation steps: minimization, NVT, NPT, and production MD.")
 parser.add_argument('--gmxdir', '-g', dest='gmxdir', default='.', help='Directory containing GROMACS input files (ions.gro, topol.top, etc.)')
@@ -21,10 +21,10 @@ parser.add_argument('--ntmpi', dest='ntmpi', type=int, default=None, help='Numbe
 parser.add_argument('--ntomp', dest='ntomp', type=int, default=None, help='Number of OpenMP threads per rank (default: auto-detected)')
 parser.add_argument('--ngpu', dest='ngpu', type=int, default=None, help='Number of GPUs to use (default: auto-detected)')
 parser.add_argument('--gpulist', dest='gpulist', type=str, default=None, help='Sequence of GPU IDs to use i.e. 0011 (default: auto-detected)')
-parser.add_argument('--em', dest='em', type=str, default='minim.mdp', help='Energy minimization parameter file (default: minim.mdp)')
-parser.add_argument('--nvt', dest='nvt', type=str, default='nvt.mdp', help='NVT equilibration parameter file (default: nvt.mdp)')    
-parser.add_argument('--npt', dest='npt', type=str, default='npt.mdp', help='NPT equilibration parameter file (default: npt.mdp)')
-parser.add_argument('--md', dest='md', type=str, default='md.mdp', help='Production MD parameter file (default: md.mdp)')
+parser.add_argument('--em', dest='em', type=str, default=None, help='Energy minimization parameter file (default: minim.mdp)')
+parser.add_argument('--nvt', dest='nvt', type=str, default=None, help='NVT equilibration parameter file (default: nvt.mdp)')    
+parser.add_argument('--npt', dest='npt', type=str, default=None, help='NPT equilibration parameter file (default: npt.mdp)')
+parser.add_argument('--md', dest='md', type=str, default=None, help='Production MD parameter file (default: md.mdp)')
 
 # print help if no arguments are provided
 if len(sys.argv) == 1:
@@ -44,20 +44,20 @@ def param_mdp(filename, outdir, custom_path = None):
             ok(f"Using custom parameter file {custom_path} for {filename}.")
         else:
             warn(f"Custom parameter file {custom_path} not found. Using default {filename}.")
-            shutil.copy(f"md02/{filename}", f"{outdir}/{filename}")
+            shutil.copy(f"scripts/md02/{filename}", f"{outdir}/{filename}")
     else:
-        shutil.copy(f"md02/{filename}", f"{outdir}/{filename}")
+        shutil.copy(f"scripts/md02/{filename}", f"{outdir}/{filename}")
 
 # Helper to read last N lines of the file (adapted from GeeksforGeeks)
 def LastNlines(fname, N):
     lines = []
     with open(fname) as file:
-        for line in (file.readlines() [-N:]):
+        for line in (file.readlines()[-N:]):
             lines.append(line)
     return lines
 
-def check_finished(step_short, step_name, outdir):
-    if os.path.isfile(f"{outdir}/{step_short}.gro") and os.path.isfile(f"{outdir}/{step_short}.log") and "Finished mdrun" in LastNlines(f"{outdir}/{step_short}.log", 20):
+def check_finished(step_short, outdir):
+    if os.path.isfile(f"{outdir}/{step_short}.gro") and os.path.isfile(f"{outdir}/{step_short}.log") and "Finished mdrun" in " ".join(LastNlines(f"{outdir}/{step_short}.log", 20)):
         return True
     else:
         return False
@@ -65,7 +65,7 @@ def check_finished(step_short, step_name, outdir):
 
 # helper to check the step outputs.
 def check_step(step_short, step_name, outdir):
-    if check_finished(step_short, step_name, outdir):
+    if check_finished(step_short, outdir):
         ok(f"{step_name} completed successfully.")
     else:
         error(f"{step_name} failed. Check {outdir}/{step_short}.log for details.")
@@ -98,6 +98,8 @@ if args.repn == None:
     else:
         n = rep_numbers[-1] + 1
     print("Next rep number:", n)
+else:
+    n = args.repn
 
 outdir = f"{parent_dir}/rep{n}/gromacs"
 # check if outdir exists, if not create it
@@ -147,9 +149,9 @@ if args.ntomp is not None:
 print(f"Running {NTMPI} MPI ranks x {NTOMP} threads per rank, with {NGPUS} GPUs")
 
 # Initialize empty flags
-flag_nb_gpu = ""
-flag_pme_gpu = ""
-flag_gpu_tasks = ""
+flag_nb_gpu = []
+flag_pme_gpu = []
+flag_gpu_tasks = []
 GPULIST = ""
 
 # Assign flags based on resources
@@ -194,21 +196,21 @@ print(f"Working directory: {os.getcwd()}, gmxdir: {args.gmxdir}, outdir: {outdir
 ##### MD STEPS #####
 
 ### 1. Energy Minimization
-if check_finished("em", "Energy Minimization", outdir):
+if check_finished("em", outdir):
     warn("em.log indicates minimization already completed and em.gro exists. Skipping energy minimization.")
 else:
     print("Starting energy minimization...")
-    subprocess.call(["gmx",
-                      "grompp",
-                       "-f", f"{outdir}/minim.mdp", 
-                       "-c", f"{args.gmxdir}/ions.gro", 
-                       "-r", f"{args.gmxdir}/ions.gro", 
-                       "-p", f"{args.gmxdir}/topol.top", 
-                       "-o", f"{outdir}/em.tpr", 
-                       "-quiet", "-maxwarn", "1"], shell=True)
-    subprocess.call(["gmx", "mdrun", "-v", "-deffnm", f"{outdir}/em", "-quiet"] + flag_nb_gpu)
-
-check_step("em", "Energy Minimization", outdir)
+    cmd = ["gmx", "grompp",
+           "-f", f"{outdir}/minim.mdp",
+           "-c", f"{args.gmxdir}/ions.gro",
+           "-r", f"{args.gmxdir}/ions.gro",
+           "-p", f"{args.gmxdir}/topol.top",
+           "-o", f"{outdir}/em.tpr",
+           "-quiet", "-maxwarn", "1"]
+    subprocess.run(cmd, check=True)
+    cmd = ["gmx", "mdrun", "-v", "-deffnm", f"{outdir}/em", "-quiet"] + flag_nb_gpu
+    subprocess.run(cmd, check=True)
+    check_step("em", "Energy Minimization", outdir)
 
 ### 2. Create groups
 # Get groups in the index file
@@ -222,7 +224,7 @@ cmd = [
 # Run gmx make_ndx and auto-quit with "q"
 result = subprocess.run(
     cmd,
-    input=b"q\n",
+    input="q\n",
     stdout=subprocess.PIPE,
     stderr=subprocess.PIPE,
     text=True
@@ -275,18 +277,18 @@ else:
     quit
     """
 
-subprocess.call([
+subprocess.run([
     "gmx", "make_ndx", "-f", f"{outdir}/em.gro",
     "-o", f"{outdir}/index.ndx",
     "-quiet"
-    ], input=groups_input.encode(), shell=True)
+    ], input=groups_input, text=True, check=True)
 
 ### 3. NVT Equilibration
-if check_finished("nvt", "NVT Equilibration", outdir):
+if check_finished("nvt", outdir):
     warn("nvt.log indicates NVT equilibration already completed and nvt.gro exists. Skipping NVT equilibration.")
 else:
     print("Starting NVT equilibration...")
-    subprocess.call(["gmx",
+    subprocess.run(["gmx",
                       "grompp",
                        "-f", f"{outdir}/nvt.mdp",
                        "-c", f"{outdir}/em.gro",
@@ -294,17 +296,16 @@ else:
                        "-p", f"{args.gmxdir}/topol.top",
                        "-o", f"{outdir}/nvt.tpr",
                        "-n", f"{outdir}/index.ndx", 
-                       "-quiet", "-maxwarn", "1"], shell=True)
-    subprocess.call(["gmx", "mdrun", "-v", "-deffnm", f"{outdir}/nvt", "-quiet"] + flag_nb_gpu)
-
-check_step("nvt", "NVT Equilibration", outdir)
+                       "-quiet", "-maxwarn", "1"], check=True)
+    subprocess.run(["gmx", "mdrun", "-v", "-deffnm", f"{outdir}/nvt", "-quiet"] + flag_nb_gpu)
+    check_step("nvt", "NVT Equilibration", outdir)
 
 ### 4. NPT Equilibration
-if check_finished("npt", "NPT Equilibration", outdir):
+if check_finished("npt", outdir):
     warn("npt.log indicates NPT equilibration already completed and npt.gro exists. Skipping NPT equilibration.")
 else:
     print("Starting NPT equilibration...")
-    subprocess.call(["gmx",
+    subprocess.run(["gmx",
                       "grompp",
                       "-f", f"{outdir}/npt.mdp",
                       "-c", f"{outdir}/nvt.gro",
@@ -313,13 +314,12 @@ else:
                       "-p", f"{args.gmxdir}/topol.top",
                       "-o", f"{outdir}/npt.tpr",
                       "-n", f"{outdir}/index.ndx",
-                      "-quiet", "-maxwarn", "1"], shell=True)
-    subprocess.call(["gmx", "mdrun", "-v", "-deffnm", f"{outdir}/npt", "-quiet"] + flag_nb_gpu)
-
-check_step("npt", "NPT Equilibration", outdir)
+                      "-quiet", "-maxwarn", "1"], check=True)
+    subprocess.run(["gmx", "mdrun", "-v", "-deffnm", f"{outdir}/npt", "-quiet"] + flag_nb_gpu)
+    check_step("npt", "NPT Equilibration", outdir)
 
 ### 5. Production MD
-if check_finished("md", "Production MD", outdir):
+if check_finished("md", outdir):
     warn("md.log indicates production MD already completed and md.gro exists. Skipping production MD.")
 else:
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -331,10 +331,10 @@ else:
             "-ntomp", str(NTOMP)] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + [
                 "-cpi", f"{outdir}/md.cpt", "-append", "-v", "-deffnm", f"{outdir}/md", "-quiet"]
         with open(logfile, "w") as log:
-            subprocess.call(cmd, stdout=log, stderr=log)
+            subprocess.run(cmd, stdout=log, stderr=log)
     else:
         print("Starting production MD...")
-        subprocess.call(["gmx",
+        subprocess.run(["gmx",
                       "grompp",
                       "-f", f"{outdir}/md.mdp",
                       "-c", f"{outdir}/npt.gro",
@@ -343,16 +343,14 @@ else:
                       "-p", f"{args.gmxdir}/topol.top",
                       "-o", f"{outdir}/md.tpr",
                       "-n", f"{outdir}/index.ndx",
-                      "-quiet", "-maxwarn", "1"], shell=True)
-        cmd = ["gmx", "mdrun", "-ntmpi", str(NTMPI), "-ntomp", str(NTOMP)] 
-        + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + ["-v", "-deffnm", f"{outdir}/md", "-quiet"]
+                      "-quiet", "-maxwarn", "1"], check=True)
+        cmd = ["gmx", "mdrun", "-ntmpi", str(NTMPI), "-ntomp", str(NTOMP)] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + ["-v", "-deffnm", f"{outdir}/md", "-quiet"]
         with open(logfile, "w") as log:
-            subprocess.call(cmd, stdout=log, stderr=log)
-
-check_step("md", "Production MD", outdir)
+            subprocess.run(cmd, stdout=log, stderr=log, check=True)
+    check_step("md", "Production MD", outdir)
 
 # Create checkpoint file
 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 checkpoint = os.path.join(outdir, f"check_02_md_{timestamp}.done")
 with open(checkpoint, 'a'):
-        os.utime(checkpoint, None)
+    os.utime(checkpoint, None)
