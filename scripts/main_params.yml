@@ -1,15 +1,18 @@
-datadir: '../data/8RM6/'
+datadir: './data/8RM6_bis/'
 filename: '8RM6_mod.pdb'
-with_dna: True
-with_phosphate: False
+dna: True
+phos: False
 range_a: '2,-1'
 range_b: '2,-1'
-gmxdir: '../data/8RM6/gromacs_common'
+gmxdir: '../data/8RM6_bis/gromacs_common'
 repn: "1"
 # ntmpi: "2"
 # ntomp: "16"
 # ngpu: "1"
 # gpulist: '01'
+# gpu_nb: True
+# gpu_pme: True
+# npme: "1"
 nvt: 'md02/nvt_mod.mdp'
 npt: 'md02/npt_mod.mdp'
 md: 'md02/md_10ns.mdp'

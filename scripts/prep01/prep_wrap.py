@@ -1,6 +1,7 @@
 import os
 import subprocess
-from utils.helpers import gen_flags 
+import sys
+from scripts.utils.helpers import gen_flags 
 
 def main(datadir: str, filename: str,
     dna = False, phos = False,
@@ -8,16 +9,15 @@ def main(datadir: str, filename: str,
     ffs = None):
 
     args = locals()
-    args.pop(['datadir', 'filename'])
+    args.pop('datadir', None)
+    args.pop('filename', None)
     flags = gen_flags(args)
 
-    here = os.path.dirname(os.path.abspath(__file__))
-    sh_path = os.path.join(here, "prep_00_all.sh")
-
-    cmd = [
-        sh_path,
-        datadir,
-        filename,
+    cmd = [sys.executable,
+        "-m",
+        "scripts.prep01.prep",
+        "--datadir", datadir,
+        "--filename", filename,
     ] + flags
 
     print("Running command for prep script:")

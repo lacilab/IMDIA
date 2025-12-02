@@ -1,7 +1,8 @@
 import cmd
 import os
 import subprocess
-from utils.helpers import gen_flags
+import sys
+from scripts.utils.helpers import gen_flags
 
 def main(gmxdir: str, repn: int, 
     dna = False, phos = False,
@@ -13,11 +14,10 @@ def main(gmxdir: str, repn: int,
     args.pop('gmxdir')
     flags = gen_flags(args)
 
-    here = os.path.dirname(os.path.abspath(__file__))
-    sh_path = os.path.join(here, "md.py")
-    
     cmd = [
-        sh_path,
+        sys.executable,
+        "-m",
+        "scripts.md02.md",
         "--gmxdir", gmxdir
     ] + flags
 

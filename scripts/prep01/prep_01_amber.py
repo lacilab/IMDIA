@@ -1,10 +1,14 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import os
 import subprocess
 import time
 import sys
+import shutil
 import glob
 import argparse
-from utils.colors import ok, warn, error
+from scripts.utils.colors import ok, warn, error
 
 
 def remove_hydrogens(dir, filename):
@@ -131,109 +135,117 @@ def solvate_gen_parm(complex_file, ffs=['water.opc', 'protein.ff19SB'], *chains)
 
 
 
-########## RUN ##########
+########## MAIN ##########
 
-print("Current Working Directory:", os.getcwd()) 
+def main():
+	print("Current Working Directory:", os.getcwd()) 
+
+	start_time = time.time()
+
+	parser = argparse.ArgumentParser(description="Prepare system using AmberTools. Add solvent and ions, generate prmtop and inpcrd files based on force fields.")
+	parser.add_argument('--path-pdb', dest='path_pdb', help='Input pdb file path')
+	parser.add_argument('--dna', dest='with_dna', action='store_true', help='Use if the system contains DNA. Adds DNA.bsc1 force field.')
+	parser.add_argument('--phos', dest='with_phosphate', action='store_true', help='Use if the system contains phosphorylated residues. Adds phosaa19SB force field.')
+	parser.add_argument('--ffs', dest='ffs', help='Comma separated list of force fields to use from the list available in LEaP. Avoid using clashing force fields. Default: protein.ff19SB, water.opc')
+
+	# print help if no arguments are provided
+	if len(sys.argv) < 2:
+		parser.print_help()
+		sys.exit(0)
+
+	args = parser.parse_args()
+
+	amberdir, pdb = os.path.split(args.path_pdb)
+	filename = os.path.splitext(pdb)[0]
+
+	ff_default = ['water.opc']
+
+	##### Check for checkpoint files from previous runs #####
+	expected_files = [
+		f"{amberdir}/{filename}_protonated_solvated.inpcrd",
+		f"{amberdir}/{filename}_protonated_solvated.prmtop",
+	]
+
+	checkpoint_files = glob.glob(f"{amberdir}/check_01_amber_*.done")
+	if checkpoint_files:
+		warn(f"Checkpoint file(s) found: {', '.join(checkpoint_files)}")
+		# Check if expected output files exist
+		missing = [p for p in expected_files if not os.path.isfile(p)]
+		if not missing:
+			warn("The expected output files are already present. Skipping AmberTools preparation.")
+			sys.exit(0)
 
 
-start_time = time.time()
+	# Check if input file is a PDB file
+	if not pdb.lower().endswith('.pdb'):
+		error("Input file must be a PDB file with .pdb extension.")
+		sys.exit(1)
 
-parser = argparse.ArgumentParser(description="Prepare system using AmberTools. Add solvent and ions, generate prmtop and inpcrd files based on force fields.")
-parser.add_argument('--path-pdb', dest='path_pdb', default='.', help='Input pdb file path')
-parser.add_argument('--dna', dest='with_dna', action='store_true', help='Use if the system contains DNA. Adds DNA.bsc1 force field.')
-parser.add_argument('--phos', dest='with_phosphate', action='store_true', help='Use if the system contains phosphorylated residues. Adds phosaa19SB force field.')
-parser.add_argument('--ffs', dest='ffs', nargs='*', help='List of force fields to use from the list available in LEaP. Avoid using clashing force fields. Default: protein.ff19SB, water.opc')
+	if args.with_dna:
+		print("Flag --dna used. This is a DNA-protein complex.")
+		ff_default.append('DNA.bsc1')
 
-# print help if no arguments are provided
-if len(sys.argv)==1:
-    parser.print_help()
-    sys.exit(0)
-
-args = parser.parse_args()
-
-amberdir, pdb = os.path.split(args.path_pdb)
-gmxdir = os.path.dirname(amberdir)
-filename = os.path.splitext(pdb)[0]
-
-ff_default = ['water.opc']
-
-##### Check for checkpoint files from previous runs #####
-expected_files = [
-	f"{amberdir}/{filename}_protonated_solvated.inpcrd",
-	f"{amberdir}/{filename}_protonated_solvated.prmtop",
-]
-
-checkpoint_files = glob.glob(f"{amberdir}/check_01_amber_*.done")
-if checkpoint_files:
-    warn(f"Checkpoint file(s) found: {', '.join(checkpoint_files)}")
-    # Check if expected output files exist
-    missing = [p for p in expected_files if not os.path.isfile(p)]
-    if not missing:
-        warn("The expected output files are already present. Skipping AmberTools preparation.")
-        sys.exit(0)
-
-
-# Check if input file is a PDB file
-if not pdb.lower().endswith('.pdb'):
-	error("Input file must be a PDB file with .pdb extension.")
-	sys.exit(1)
-
-if args.with_dna:
-	print("Flag --dna used. This is a DNA-protein complex.")
-	ff_default.append('DNA.bsc1')
-
-if args.with_phosphate:
-	print("Flag --phos used. This system contains phosphorylated residues.")
-	ff_default.append('phosaa19SB')
-else:
-	ff_default.append('protein.ff19SB')
-
-if args.ffs:
-	print(f"Custom force fields provided: {args.ffs}")
-	ffs = args.ffs
-else:
-	print(f"No custom force fields provided. Using default: {ff_default}")
-	ffs = ff_default
-
-# Prepare the complex (make sure the hydrogens naming matches amber)
-noH_complex = remove_hydrogens(amberdir, filename)
-protonated_complex = add_hydrogens(noH_complex, ffs)
-
-# Generate the receptor & ligand (also match the hydrogens to amber specifics)
-if args.with_dna:
-	mono_a_file, mono_b_file, dna_a_file, dna_b_file = gen_chains(noH_complex, ffs, 'A', 'B', 'C', 'D')
-	solvate_gen_parm(protonated_complex, ffs, mono_a_file, mono_b_file, dna_a_file, dna_b_file)
-else:
-	mono_a_file, mono_b_file = gen_chains(noH_complex, ffs, 'A', 'B')	
-	solvate_gen_parm(protonated_complex, ffs, mono_a_file, mono_b_file)
-
-solvated_complex_prmtop = protonated_complex.replace('.pdb', '_solvated.prmtop')
-solvated_complex_pdb = protonated_complex.replace('.pdb', '_solvated.pdb')
-
-end_time = time.time()
-elapsed_time = end_time - start_time
-
-print(f"Total execution time: {elapsed_time:.2f} seconds")
-
-# Check output files
-
-print("\nChecking generated files.")
-
-missing = [p for p in expected_files if not os.path.isfile(p)]
-for file in expected_files:
-	if file not in missing:
-		ok(f"generated {file}")
+	if args.with_phosphate:
+		print("Flag --phos used. This system contains phosphorylated residues.")
+		ff_default.append('phosaa19SB')
 	else:
-		error(f"{file} not generated")
+		ff_default.append('protein.ff19SB')
 
-if not missing:
-	ok("AmberTools preparation completed successfully.")
-	checkpoint_filename = f"{amberdir}/check_01_amber_{int(time.time())}.done"
-	with open(checkpoint_filename, 'w') as f:
-		f.write("AmberTools preparation completed successfully.\n")
-	sys.exit(0)
-else:
-	error("AmberTools preparation failed. There are missing files.")
-	sys.exit(1)
+	if args.ffs:
+		print(f"Custom force fields provided: {args.ffs}")
+		ffs = args.ffs.split(",")
+	else:
+		print(f"No custom force fields provided. Using default: {ff_default}")
+		ffs = ff_default
+
+	# Prepare the complex (make sure the hydrogens naming matches amber)
+	noH_complex = remove_hydrogens(amberdir, filename)
+	protonated_complex = add_hydrogens(noH_complex, ffs)
+
+	# Generate the receptor & ligand (also match the hydrogens to amber specifics)
+	if args.with_dna:
+		mono_a_file, mono_b_file, dna_a_file, dna_b_file = gen_chains(noH_complex, ffs, 'A', 'B', 'C', 'D')
+		solvate_gen_parm(protonated_complex, ffs, mono_a_file, mono_b_file, dna_a_file, dna_b_file)
+	else:
+		mono_a_file, mono_b_file = gen_chains(noH_complex, ffs, 'A', 'B')	
+		solvate_gen_parm(protonated_complex, ffs, mono_a_file, mono_b_file)
+
+	solvated_complex_prmtop = protonated_complex.replace('.pdb', '_solvated.prmtop')
+	solvated_complex_pdb = protonated_complex.replace('.pdb', '_solvated.pdb')
+
+	end_time = time.time()
+	elapsed_time = end_time - start_time
+
+	print(f"Total execution time: {elapsed_time:.2f} seconds")
+
+	# Move logs to amberdir
+	if os.path.isfile("leap.log"):
+		shutil.move("leap.log", f"{amberdir}/leap.log")
+	if os.path.isfile("reduce_info.log"):
+		shutil.move("reduce_info.log", f"{amberdir}/reduce_info.log")
+
+	# Check output files
+	print("\nChecking generated files.")
+
+	missing = [p for p in expected_files if not os.path.isfile(p)]
+	for file in expected_files:
+		if file not in missing:
+			ok(f"generated {file}")
+		else:
+			error(f"{file} not generated")
+
+	if not missing:
+		ok("AmberTools preparation completed successfully.")
+		checkpoint_filename = f"{amberdir}/check_01_amber_{int(time.time())}.done"
+		with open(checkpoint_filename, 'w') as f:
+			f.write("AmberTools preparation completed successfully.\n")
+		sys.exit(0)
+	else:
+		error("AmberTools preparation failed. There are missing files.")
+		sys.exit(1)
+
+
+if __name__ == "__main__":
+	main()
 
 

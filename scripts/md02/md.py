@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(description="Perform MD simulation steps: minim
 parser.add_argument('--gmxdir', '-g', dest='gmxdir', default='.', help='Directory containing GROMACS input files (ions.gro, topol.top, etc.)')
 parser.add_argument('--repn', '-n', dest='repn', type=int, default=None, help='Replicate number (used to create output directory)')
 parser.add_argument('--dna', dest='with_dna', action='store_true', help='Use if the system contains DNA. Adds DNA.bsc1 force field.')
-parser.add_argument('--phosphate', dest='with_phosphate', action='store_true', help='Use if the system contains phosphorylated residues.')
+parser.add_argument('--phos', dest='with_phosphate', action='store_true', help='Use if the system contains phosphorylated residues.')
 parser.add_argument('--ntmpi', dest='ntmpi', type=int, default=None, help='Number of MPI ranks (default: auto-detected)')
 parser.add_argument('--ntomp', dest='ntomp', type=int, default=None, help='Number of OpenMP threads per rank (default: auto-detected)')
 parser.add_argument('--ngpu', dest='ngpu', type=int, default=None, help='Number of GPUs to use (default: auto-detected)')
@@ -161,7 +161,7 @@ if NGPUS > 0:
         print(f"Using specified GPU list: {GPULIST}")
     else:
         print("No GPU list specified. Generating GPU task list automatically.")
-        for i in range(NTMPI):
+        for i in range(1, NTMPI+1):
             gpu = i % NGPUS if NGPUS > 0 else 0
             GPULIST += str(gpu)
     flag_gpu_tasks = ["-gpu_tasks", GPULIST]
