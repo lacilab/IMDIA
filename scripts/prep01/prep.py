@@ -69,10 +69,10 @@ subprocess.run(["parmed", "--version"])
 logger.info(f"Preparing {datadir}/{file}.pdb")
 
 # Check for checkpoint files
-if glob.glob(f"{datadir}/check_01_prep_*.done"):
-    logger.warning("Checkpoint file found. Skipping preparation.")
-    print(f"To rerun these steps, please remove the checkpoint file(s): {datadir}/check_01_prep_*.done")
-    sys.exit(0)
+#if glob.glob(f"{datadir}/check_01_prep_*.done"):
+#    logger.warning("Checkpoint file found. Skipping preparation.")
+#    print(f"To rerun these steps, please remove the checkpoint file(s): {datadir}/check_01_prep_*.done")
+#    sys.exit(0)
 
 # Check if datadir/amber already exists.
 if os.path.isdir(f"{datadir}/amber"):
