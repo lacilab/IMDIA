@@ -3,6 +3,7 @@ data/*
 discard/*
 
 scripts/04_analysis/.snakemake/
+scripts/__pycache__/
 scripts/*/__pycache__/
 
 motif_analysis/1h/model_group/gene_count.xls

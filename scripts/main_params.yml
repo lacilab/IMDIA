@@ -1,4 +1,4 @@
-datadir: './data/8RM6_bis/'
+datadir: './data/8RM6_bis'
 filename: '8RM6_mod.pdb'
 dna: True
 phos: False

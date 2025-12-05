@@ -1,7 +1,9 @@
-# Generate command-line flags from argument dictionary
+import logging
+import os
 import re
 
 
+# Generate command-line flags from argument dictionary
 def gen_flags(args):
     flags = []
 
@@ -28,3 +30,29 @@ def count_lines(file, *names):
                 counts[name] += len(pattern.findall(line))
 
     return [counts[name] for name in names]
+
+def setup_logger(name, logfile, level=logging.DEBUG):
+
+    logger = logging.getLogger(name)
+
+    if logger.handlers:
+        return logger
+
+    os.makedirs(os.path.dirname(logfile), exist_ok=True)
+
+    logger.setLevel(level)
+
+    fh = logging.FileHandler(logfile, mode="a")
+    ch = logging.StreamHandler()
+
+    formatter = logging.Formatter(
+        "%(asctime)s - %(levelname)s - %(message)s"
+    )
+
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+
+    return logger

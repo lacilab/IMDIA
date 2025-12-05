@@ -323,7 +323,7 @@ if check_finished("md", outdir):
     warn("md.log indicates production MD already completed and md.gro exists. Skipping production MD.")
 else:
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    logfile = os.path.join(outdir, f"mdtrack_{timestamp}.log")
+    logfile = os.path.join(outdir, f"md_{timestamp}.log")
     if os.path.isfile(f"{outdir}/md.cpt"):
         print(f"Resuming production MD from checkpoint {outdir}/md.cpt...")
         cmd = ["gmx", "mdrun", 
@@ -331,7 +331,7 @@ else:
             "-ntomp", str(NTOMP)] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + [
                 "-cpi", f"{outdir}/md.cpt", "-append", "-v", "-deffnm", f"{outdir}/md", "-quiet"]
         with open(logfile, "w") as log:
-            subprocess.run(cmd, stdout=log, stderr=log)
+            subprocess.run(cmd, stdout=log, stderr=log, check=True)
     else:
         print("Starting production MD...")
         subprocess.run(["gmx",
@@ -344,7 +344,8 @@ else:
                       "-o", f"{outdir}/md.tpr",
                       "-n", f"{outdir}/index.ndx",
                       "-quiet", "-maxwarn", "1"], check=True)
-        cmd = ["gmx", "mdrun", "-ntmpi", str(NTMPI), "-ntomp", str(NTOMP)] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + ["-v", "-deffnm", f"{outdir}/md", "-quiet"]
+        cmd = ["gmx", "mdrun", "-ntmpi", str(NTMPI), "-ntomp", str(NTOMP)
+               ] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + ["-v", "-deffnm", f"{outdir}/md", "-quiet"]
         with open(logfile, "w") as log:
             subprocess.run(cmd, stdout=log, stderr=log, check=True)
     check_step("md", "Production MD", outdir)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+from datetime import datetime
 import sys
 import os
 import glob
@@ -8,9 +8,10 @@ import re
 import subprocess
 import shutil
 import argparse
-from scripts.utils.colors import ok, warn, error
+from scripts.utils.helpers import setup_logger
 
 parser = argparse.ArgumentParser(description="Prepare a PDB structure for MD simulations.")
+parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
 parser.add_argument('--datadir', '-g', dest='datadir', default='.', help='Directory that contains the input PDB file.')
 parser.add_argument('--filename', '-f', dest='filename', default=None, help='Name of the PDB file (with or without .pdb).')
 parser.add_argument('--dna', dest='with_dna', action='store_true', help='Use if the system contains DNA. Adds DNA.bsc1 force field.')
@@ -26,6 +27,9 @@ if len(sys.argv) < 3:
 
 args = parser.parse_args()
 
+##### INITIALIZE LOG
+logger = setup_logger("prep", args.logfile)
+
 ###### CHECK INPUTS ######
 # Normalize filename: accept with or without .pdb, store basename without extension
 file = os.path.basename(args.filename)
@@ -33,46 +37,46 @@ file, ext = os.path.splitext(file)
 
 # check datadir exists
 if not os.path.isdir(args.datadir):
-    error(f"datadir '{args.datadir}' does not exist or is not a directory.")
+    logger.error(f"datadir '{args.datadir}' does not exist or is not a directory.")
     sys.exit(1)
 # remove trailing / from datadir
 datadir = args.datadir.rstrip("/")
 
 # check input PDB file exists
 if not os.path.isfile(f"{datadir}/{file}.pdb"):
-    error(f"Input PDB file '{datadir}/{file}.pdb' not found.")
+    logger.error(f"Input PDB file '{datadir}/{file}.pdb' not found.")
     sys.exit(1)
 
 ##### CHECK KEY SOFTWARE DEPENDENCIES ######
 # Check GROMACS is ready and print version
 if shutil.which("gmx") is None:
-    error("ERROR: GROMACS (gmx) not found. Please install GROMACS and ensure it is in your PATH.", file=sys.stderr)
+    logger.error("GROMACS (gmx) not found. Please install GROMACS and ensure it is in your PATH.", file=sys.stderr)
     sys.exit(1)
 subprocess.run(["gmx", "--version"])
 
 # Check ambpdb is ready and print version
 if shutil.which("ambpdb") is None:
-    error("ERROR: ambpdb not found. Please install ambpdb and ensure it is in your PATH.", file=sys.stderr)
+    logger.error("ERROR: ambpdb not found. Please install ambpdb and ensure it is in your PATH.", file=sys.stderr)
     sys.exit(1)
 subprocess.run(["ambpdb", "--version"])
 
 # Check ParmEd is ready and print version
 if shutil.which("parmed") is None:
-    error("ERROR: ParmEd (parmed) not found. Please install ParmEd and ensure it is in your PATH.", file=sys.stderr)
+    logger.error("ERROR: ParmEd (parmed) not found. Please install ParmEd and ensure it is in your PATH.", file=sys.stderr)
     sys.exit(1)
 subprocess.run(["parmed", "--version"])
 
-ok(f"Preparing {datadir}/{file}.pdb")
+logger.info(f"Preparing {datadir}/{file}.pdb")
 
 # Check for checkpoint files
 if glob.glob(f"{datadir}/check_01_prep_*.done"):
-    warn("Checkpoint file found. Skipping preparation.")
+    logger.warning("Checkpoint file found. Skipping preparation.")
     print(f"To rerun these steps, please remove the checkpoint file(s): {datadir}/check_01_prep_*.done")
     sys.exit(0)
 
 # Check if datadir/amber already exists.
 if os.path.isdir(f"{datadir}/amber"):
-    warn(f"{datadir}/amber already exists.")
+    logger.warning(f"{datadir}/amber already exists.")
 else:
     print(f"{datadir}/amber does not exist. Creating new directory.")
     os.makedirs(f"{datadir}/amber")
@@ -80,13 +84,13 @@ else:
 
 # Remove lines starting with CONECT, which are added by MOE and cause issues in AmberTools 
 if os.path.isfile(f"{datadir}/amber/{file}_noconect.pdb"):
-    warn(f"{datadir}/amber/{file}_noconect.pdb already exists. Skipping CONECT removal.")
+    logger.warning(f"{datadir}/amber/{file}_noconect.pdb already exists. Skipping CONECT removal.")
 else:
     connect_before = 0
     with open(f"{datadir}/{file}.pdb") as f:
         connect_before = sum(1 for line in f if line.startswith("CONECT"))
     if connect_before == 0:
-        ok(f"No CONECT lines found in {file}.pdb. No need to remove them.")
+        logger.info(f"No CONECT lines found in {file}.pdb. No need to remove them.")
         shutil.copy(f"{datadir}/{file}.pdb", f"{datadir}/amber/{file}_noconect.pdb")
         print(f"Copied {file}.pdb to amber/{file}_noconect.pdb without changes.")
     else:
@@ -99,13 +103,13 @@ else:
         print(f"CONECT lines before: {connect_before}")
         print(f"CONECT lines after:  {remaining}")
         if remaining > 0:
-            warn(f"{remaining} CONECT lines remain in {file}_noconect.pdb")
+            logger.warning(f"{remaining} CONECT lines remain in {file}_noconect.pdb")
 
 if os.path.isdir(f"{datadir}/amber") and os.path.isfile(f"{datadir}/amber/{file}_noconect.pdb"):
-    ok(f"{datadir}/amber directory is ready. ")
-    ok(f"{file}_noconect.pdb is in {datadir}/amber/")
+    logger.info(f"{datadir}/amber directory is ready. ")
+    logger.info(f"{file}_noconect.pdb is in {datadir}/amber/")
 else:
-    error(f"{datadir}/amber directory is missing or incomplete.")
+    logger.error(f"{datadir}/amber directory is missing or incomplete.")
     sys.exit(1)
 
 
@@ -118,10 +122,12 @@ phos_flag = "--phos" if args.with_phosphate else ""
 ffs_flag = "--ffs " if args.ffs else ""
 ffs_val = ','.join([str(x) for x in args.ffs]) if args.ffs else ""
 
-cmd = [sys.executable, "-m", "scripts.prep01.prep_01_amber", "--path-pdb", f"{datadir}/amber/{file}_noconect.pdb",
-    dna_flag,
-    phos_flag,
-    ffs_flag, ffs_val,
+cmd = [sys.executable, "-m", "scripts.prep01.prep_01_amber", 
+        "--logfile", f"{args.logfile}",
+       "--path-pdb", f"{datadir}/amber/{file}_noconect.pdb",
+       dna_flag,
+       phos_flag,
+       ffs_flag, ffs_val,
     ]
 cmd = [x for x in cmd if x.strip()]
 subprocess.run(cmd, check=True)
@@ -129,18 +135,19 @@ subprocess.run(cmd, check=True)
 # Check that datadir/gromacs_common does not exist. If it exists, show a message and backup the old one (change the name)
 gmxdir = f"{datadir}/gromacs_common"
 if os.path.isdir(gmxdir):
-    warn(f"{gmxdir} already exists.")
+    logger.warning(f"{gmxdir} already exists.")
 else:
     os.makedirs(gmxdir)
     if os.path.isdir(f"{datadir}/gromacs_common"):
-        ok(f"GROMACS directory created at {gmxdir}.")
+        logger.info(f"GROMACS directory created at {gmxdir}.")
     else:
-        error(f"Failed to create GROMACS directory at {gmxdir}.")
+        logger.error(f"Failed to create GROMACS directory at {gmxdir}.")
         sys.exit(1)
 
 ### 2. Conversion from Amber to GROMACS with parmed
 
 cmd = [sys.executable, "-m", "scripts.prep01.prep_02_amb2gro", 
+        "--logfile", f"{args.logfile}",
        "-p", f"{datadir}/amber/{file}_noconect_protonated_solvated.prmtop",
         "-c", f"{datadir}/amber/{file}_noconect_protonated_solvated.inpcrd",
         "-t", f"{gmxdir}/topol.top",
@@ -149,15 +156,15 @@ cmd = [sys.executable, "-m", "scripts.prep01.prep_02_amb2gro",
 subprocess.run(cmd, check=True)
 
 ### 3. Extract .itps from .top file
-cmd = [sys.executable, "-m", "scripts.prep01.prep_03_extractitp",  "--top", f"{gmxdir}/topol.top", dna_flag]
+cmd = [sys.executable, "-m", "scripts.prep01.prep_03_extractitp",  "--logfile", f"{args.logfile}", "--top", f"{gmxdir}/topol.top", dna_flag]
 subprocess.run(cmd, check=True)
 
 ### 4. Remove the 2 ions added with AmberTools from .gro files
-cmd = [sys.executable, "-m", "scripts.prep01.prep_04_removeamberions", "--gmxdir", f"{gmxdir}"]
+cmd = [sys.executable, "-m", "scripts.prep01.prep_04_removeamberions", "--logfile", f"{args.logfile}","--gmxdir", f"{gmxdir}"]
 subprocess.run(cmd, check=True)
 
 ### 5. Add ions with GROMACS (neutralize and reach target concentration)
-cmd = [sys.executable, "-m", "scripts.prep01.prep_06_addgmxions", "--gmxdir", f"{gmxdir}"]
+cmd = [sys.executable, "-m", "scripts.prep01.prep_06_addgmxions", "--logfile", f"{args.logfile}", "--gmxdir", f"{gmxdir}"]
 subprocess.run(cmd, check=True)
 
 ### 6. Add DNA H-bonds restraints if DNA is present
@@ -168,10 +175,10 @@ if args.with_dna:
             print(f"Found DNA base in {file}")
             dna_files.append(file)
     if len(dna_files) != 2:
-        error(f"--dna flag provided but found {len(dna_files)} files containing DNA residues. Expected 2 files.")
+        logger.error(f"--dna flag provided but found {len(dna_files)} files containing DNA residues. Expected 2 files.")
         sys.exit(1)
     print("The complex includes DNA. Adding DNA H-bond restraints.")
-    cmd = [sys.executable, "-m", "scripts.prep01.prep_05_restraindnahbonds", "--gmxdir", gmxdir,
+    cmd = [sys.executable, "-m", "scripts.prep01.prep_05_restraindnahbonds", "--logfile", f"{args.logfile}", "--gmxdir", gmxdir,
         "--topol", f"{gmxdir}/topol.top",
         "--dna_a", dna_files[0],
         "--dna_b", dna_files[1],
@@ -181,4 +188,4 @@ if args.with_dna:
 else:
     print("The complex does not include DNA. Skipping DNA H-bond restraints. If this is incorrect, rerun with the --dna flag.")
 
-ok("Preparation completed successfully.")
+logger.info("Preparation completed successfully.")

@@ -8,13 +8,13 @@ import re
 import sys
 import glob
 import time
-from scripts.utils.colors import ok, warn, error
-from scripts.utils.helpers import count_lines
+from scripts.utils.helpers import count_lines, setup_logger
 
 
 def main():
     parser = argparse.ArgumentParser(description="Remove Amber ions from the GROMACS topology files.")
-    parser.add_argument("--gmxdir", '-g', dest='gmxdir', type=str,
+    parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
+    parser.add_argument("--gmxdir", '-g', dest='gmxdir', type=str, required=True,
                         help='Path to the GROMACS directory (containing gromacs.gro and topol.top)')
     
     if len(sys.argv) < 2:
@@ -23,34 +23,37 @@ def main():
 
     args = parser.parse_args()
 
+    ##### Initialize logger
+    logger = setup_logger("prep", args.logfile)
+
     # Check if checkpoint file from previous run exists
     if glob.glob(f"{args.gmxdir}/toppar/check_04_removeamberions_*.done"):
-        warn("Checkpoint file found.")
+        logger.warning("Checkpoint file found.")
          # check if updated_gromacs.gro exists
         if os.path.isfile(f"{args.gmxdir}/updated_gromacs.gro"):
-            ok(f"Updated topology file found at {args.gmxdir}/updated_gromacs.gro.")
-            warn("Skipping Amber ions removal.")
+            logger.info(f"Updated topology file found at {args.gmxdir}/updated_gromacs.gro.")
+            logger.warning("Skipping Amber ions removal.")
             sys.exit(0)
         else:
-            warn(f"Checkpoint file found but updated_gromacs.gro not found at {args.gmxdir}. The previous run might have been incomplete. Proceeding with Amber ions removal.")
+            logger.warning(f"Checkpoint file found but updated_gromacs.gro not found at {args.gmxdir}. The previous run might have been incomplete. Proceeding with Amber ions removal.")
 
     ##### CHECK INPUT FILES #####
     if not os.path.isdir(args.gmxdir):
-        error(f"GROMACS directory '{args.gmxdir}' does not exist or is not a directory.")
+        logger.error(f"GROMACS directory '{args.gmxdir}' does not exist or is not a directory.")
         sys.exit(1)
     if not os.path.isfile(f"{args.gmxdir}/gromacs.gro"):
-        error( f"gromacs.gro file not found in '{args.gmxdir}'.")
+        logger.error( f"gromacs.gro file not found in '{args.gmxdir}'.")
         sys.exit(1)
     if not os.path.isfile(f"{args.gmxdir}/topol.top"):
-        error( f"topol.top file not found in '{args.gmxdir}'.")
+        logger.error( f"topol.top file not found in '{args.gmxdir}'.")
         sys.exit(1)
     if not os.path.isdir(f"{args.gmxdir}/toppar"):
-        error( f"toppar directory not found in '{args.gmxdir}'.")
+        logger.error( f"toppar directory not found in '{args.gmxdir}'.")
         sys.exit(1)
     # check number of .itp files in toppar is greater or equal to 2
     itp_files = glob.glob(f"{args.gmxdir}/toppar/*.itp")
     if len(itp_files) < 2:
-        error( f"No .itp files found in '{args.gmxdir}/toppar'.")
+        logger.error( f"No .itp files found in '{args.gmxdir}/toppar'.")
         sys.exit(1)
 
 
@@ -75,21 +78,21 @@ def main():
             # first Cl
             if line_Cl is None and "Cl" in line:
                 line_Cl = line_no
-    print(f"Number of Na ions in gromacs.gro: {num_Na}")
-    print(f"Number of Cl ions in gromacs.gro: {num_Cl}")
+    logger.debug(f"Number of Na ions in gromacs.gro: {num_Na}")
+    logger.debug(f"Number of Cl ions in gromacs.gro: {num_Cl}")
 
     # Warnings if num_Na or num_Cl is more than 1
     if num_Na > 1:
-        warn(f"Number of Na ions is expected to be one, but was {num_Na}. Later addition of ions with GROMACS may not work as expected.")
+        logger.warning(f"Number of Na ions is expected to be one, but was {num_Na}. Later addition of ions with GROMACS may not work as expected.")
     if num_Cl > 1:
-        warn(f"Number of Cl ions is expected to be one, but was {num_Cl}. Later addition of ions with GROMACS may not work as expected.")
+        logger.warning(f"Number of Cl ions is expected to be one, but was {num_Cl}. Later addition of ions with GROMACS may not work as expected.")
 
     # Check if both Na and Cl lines were found
     if line_Na is None or line_Cl is None:
-        error("Could not find both Na and Cl lines in gromacs.gro.")
+        logger.error("Could not find both Na and Cl lines in gromacs.gro.")
         sys.exit(1)
     else:
-        ok(f"Found Na at line {line_Na} and Cl at line {line_Cl} in gromacs.gro.")
+        logger.info(f"Found Na at line {line_Na} and Cl at line {line_Cl} in gromacs.gro.")
 
     
     line1, line2 = sorted([line_Na, line_Cl])
@@ -156,25 +159,25 @@ def main():
 
     # check updated_gromacs.gro was created
     if os.path.isfile(f"{args.gmxdir}/updated_gromacs.gro"):
-        ok(f"Updated gromacs.gro file created at {args.gmxdir}/updated_gromacs.gro.")
+        logger.info(f"Updated gromacs.gro file created at {args.gmxdir}/updated_gromacs.gro.")
     else:
-        error(f"Failed to create updated gromacs.gro file at {args.gmxdir}/updated_gromacs.gro.")
+        logger.error(f"Failed to create updated gromacs.gro file at {args.gmxdir}/updated_gromacs.gro.")
         sys.exit(1)
 
     # check there are no Na or Cl updated_gromacs.gro
     with open(f"{args.gmxdir}/updated_gromacs.gro") as f:
         num_Na_updated, num_Cl_updated = count_lines(f"{args.gmxdir}/updated_gromacs.gro", "Na", "Cl")
     if num_Na_updated == 0 and num_Cl_updated == 0:
-        ok("Successfully removed Amber ions from gromacs.gro. No Na or Cl lines found in updated_gromacs.gro.")
+        logger.info("Successfully removed Amber ions from gromacs.gro. No Na or Cl lines found in updated_gromacs.gro.")
     else:
-        warn(f"Found {num_Na_updated} Na and {num_Cl_updated} Cl lines in updated_gromacs.gro, but expected 0.")
+        logger.warning(f"Found {num_Na_updated} Na and {num_Cl_updated} Cl lines in updated_gromacs.gro, but expected 0.")
 
     # remove Na and Cl from topol.top
     with fileinput.FileInput(f"{args.gmxdir}/topol.top", inplace=True, backup='.bak') as f:
         for line in f:
             if "Na" in line or "Cl" in line:
                 continue
-            print(line, end='')
+            print(line, end=" ")
 
     replacements = {
         "Na+": "Na",
@@ -185,19 +188,19 @@ def main():
     # Change ion names to gromacs standards on all .itp files in $gmxdir/toppar
     files = glob.glob(f"{args.gmxdir}/toppar/*.itp") + glob.glob(f"{args.gmxdir}/topol.top")
     for file in files:
-        print(f"Updating ion names in {file}...")
+        logger.debug(f"Updating ion names in {file}...")
         num_Na, num_Cl, num_Nasig, num_Clsig, num_WAT, num_water = count_lines(file, "Na", "Cl", "Na+", "Cl-", "WAT", "Water")
-        print(f"Before: Na+: {num_Nasig}, Cl-: {num_Clsig}, Na: {num_Na}, Cl: {num_Cl}, WAT: {num_WAT}, Water: {num_water}")
+        logger.debug(f"Before: Na+: {num_Nasig}, Cl-: {num_Clsig}, Na: {num_Na}, Cl: {num_Cl}, WAT: {num_WAT}, Water: {num_water}")
         with fileinput.FileInput(file, inplace=True, backup='.bak') as f:
             for line in f:
                 for old, new in replacements.items():
                     if old in line:
                         line = line.replace(old, new)
-                print(line, end='')
+                print(line, end=" ")
         num_Na, num_Cl, num_Nasig, num_Clsig, num_WAT, num_water = count_lines(file, "Na", "Cl", "Na+", "Cl-", "WAT", "Water")
-        print(f"After: Na+: {num_Nasig}, Cl-: {num_Clsig}, Na: {num_Na}, Cl: {num_Cl}, WAT: {num_WAT}, Water: {num_water}")
+        logger.debug(f"After: Na+: {num_Nasig}, Cl-: {num_Clsig}, Na: {num_Na}, Cl: {num_Cl}, WAT: {num_WAT}, Water: {num_water}")
         if num_Nasig > 0 or num_Clsig > 0 or num_WAT > 0:
-            warn(f"Substitution incomplete in {file}. This could result in clashing nomenclature later.")
+            logger.warning(f"Substitution incomplete in {file}. This could result in clashing nomenclature later.")
 
     # Create checkpoint file
     checkpoint_filename = f"{args.gmxdir}/check_04_removeamberions_{int(time.time())}.done"
