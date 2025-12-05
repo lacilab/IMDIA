@@ -145,7 +145,7 @@ def main():
 	parser.add_argument('--path-pdb', dest='path_pdb', help='Input pdb file path', required=True)
 	parser.add_argument('--dna', dest='with_dna', action='store_true', help='Use if the system contains DNA. Adds DNA.bsc1 force field.')
 	parser.add_argument('--phos', dest='with_phosphate', action='store_true', help='Use if the system contains phosphorylated residues. Adds phosaa19SB force field.')
-	parser.add_argument('--ffs', dest='ffs', help='Comma separated list of force fields to use from the list available in LEaP. Avoid using clashing force fields. Default: protein.ff19SB, water.opc')
+	parser.add_argument('--ffs', dest='ffs', help='Comma separated list of force fields to use from the list available in LEaP. Avoid using clashing force fields. Default: protein.ff19SB,water.opc')
 
 	# print help if no arguments are provided
 	if len(sys.argv) < 2:
