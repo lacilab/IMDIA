@@ -215,6 +215,7 @@ else:
            "-r", f"{args.gmxdir}/ions.gro",
            "-p", f"{args.gmxdir}/topol.top",
            "-o", f"{outdir}/em.tpr",
+           "-po", f"{outdir}/em_out.mdp",
            "-quiet", "-maxwarn", "1"]
     process = subprocess.run(cmd, check=True, capture_output=True, text=True)
     log_process_output(process, "gmx grompp EM")
@@ -308,6 +309,7 @@ else:
             "-r", f"{outdir}/em.gro",
             "-p", f"{args.gmxdir}/topol.top",
             "-o", f"{outdir}/nvt.tpr",
+            "-po", f"{outdir}/nvt_out.mdp",
             "-n", f"{outdir}/index.ndx", 
             "-quiet", "-maxwarn", "1"]
     process = subprocess.run(cmd, check=True, text=True, capture_output=True)
@@ -328,6 +330,7 @@ else:
            "-t", f"{outdir}/nvt.cpt",
            "-p", f"{args.gmxdir}/topol.top",
            "-o", f"{outdir}/npt.tpr",
+           "-po", f"{outdir}/npt_out.mdp",
            "-n", f"{outdir}/index.ndx",
            "-quiet", "-maxwarn", "1"]
     process = subprocess.run(cmd, check=True, text=True, capture_output=True)
@@ -359,6 +362,7 @@ else:
                "-t", f"{outdir}/npt.cpt",
                "-p", f"{args.gmxdir}/topol.top",
                "-o", f"{outdir}/md.tpr",
+                "-po", f"{outdir}/md_out.mdp",
                "-n", f"{outdir}/index.ndx",
                "-quiet", "-maxwarn", "1"]
         process = subprocess.run(cmd, check=True, text=True, capture_output=True)

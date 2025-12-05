@@ -60,6 +60,7 @@ def main():
            "-c", f"{args.gmxdir}/updated_gromacs.gro", 
            "-p", f"{args.gmxdir}/topol.top", 
            "-o", f"{args.gmxdir}/ions.tpr", 
+           "-po", f"{args.gmxdir}/ions_out.mdp",
            "-quiet", "-maxwarn", "1"]
     
     process = subprocess.run(cmd, check=True, capture_output=True, text=True)
@@ -93,18 +94,7 @@ def main():
         logger.debug(f"gmx genion output: {process.stdout}")
 
     ##### CHECKS #####
-    # Print last log line as check
-    #with open(logfile, "rb") as f:
-    #    lines = f.readlines()[::-1]
-    #    if len(lines) == 0:
-    #        logger.warning(f"Log file {logfile} is empty. There might have been an issue with the genion command.")
-    #    else:
-    #        for line in lines:
-    #            line = line.strip()
-    #            if line:
-    #                logger.debug(line)
-    #                break
-
+    
     # check if topol.top contains more than 1 Na and Cl ions
     with open(f"{args.gmxdir}/topol.top", "r") as f:
         num_Na = None
@@ -138,10 +128,6 @@ def main():
                 if old in line:
                     line = line.replace(old, new)
             print(line, end='')
-
-    # Move gmx log file to gmxdir
-    if os.path.isfile("mdout.mdp"):
-        shutil.move("mdout.mdp", f"{args.gmxdir}/mdout.mdp")
 
     # Create checkpoint file
     checkpoint_filename = f"{args.gmxdir}/check_06_addgmxirons_{int(time.time())}.done"
