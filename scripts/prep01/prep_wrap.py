@@ -1,5 +1,7 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from datetime import datetime
-import os
 import subprocess
 import sys
 from scripts.utils.helpers import gen_flags, setup_logger

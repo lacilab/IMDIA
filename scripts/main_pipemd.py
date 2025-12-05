@@ -5,6 +5,7 @@ import sys
 import yaml
 import scripts.prep01.prep_wrap as prep_wrap
 import scripts.md02.md_wrap as md_wrap
+import scripts.post03.post_wrap as post_wrap
 from scripts.utils.helpers import setup_logger
 
 
@@ -17,7 +18,8 @@ def pipeline(args: argparse.Namespace, datadir: str, filename: str, gmxdir: str,
             prep_wrap.main(datadir, filename, dna, phos, range_a, range_b, ffs)
         if args.md:
             md_wrap.main(datadir, gmxdir, repn, dna, phos, ntmpi, ntomp, ngpu, gpulist, em, nvt, npt, md)
-
+        if args.post:
+            post_wrap.main(datadir, gmxdir, dna, phos)
 
 
 def main():
@@ -25,6 +27,7 @@ def main():
     parser.add_argument('--params', dest='params', type=str, default='scripts/params.yml', help='Path to the YAML parameter file.')
     parser.add_argument('--prep', action='store_true', help='Run preparation step.')
     parser.add_argument('--md', action='store_true', help='Run MD simulation step.')
+    parser.add_argument('--post', action='store_true', help='Run post-processing step.')
     args = parser.parse_args()
 
     # Load parameters from YAML file
