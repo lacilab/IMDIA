@@ -1,8 +1,9 @@
 import os
 import subprocess
 import sys
-import datetime
-from scripts.utils.helpers import gen_flags
+from datetime import datetime
+from scripts.utils.helpers import gen_flags, setup_logger
+
 
 def main(datadir: str, gmxdir: str, repn: int, 
     dna = False, phos = False,
@@ -15,19 +16,20 @@ def main(datadir: str, gmxdir: str, repn: int,
     args.pop('gmxdir')
     flags = gen_flags(args)
     
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    LOGFILE = f"{datadir}/logs/step02_rep{repn}_md_{timestamp}.log"
+    logger = setup_logger("md", LOGFILE)
+
     cmd = [
         sys.executable,
         "-m",
         "scripts.md02.md",
+        "--logfile", LOGFILE,
         "--gmxdir", gmxdir
     ] + flags
 
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    LOGFILE = os.path.join(datadir, "logs/", f"rep{repn}_step02_md_{timestamp}.log")
-
-    print("Running command for md script:")
+    logger.debug("Running command for MD step.")
     # remove empty strings from cmd before joining
     cmd = [x for x in cmd if x.strip()]
-    with open(LOGFILE, "w") as log:
-        subprocess.run(cmd, stdout=log, stderr=log, check=True)
+    subprocess.run(cmd, check=True)
 
