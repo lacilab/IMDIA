@@ -22,7 +22,7 @@ def remove_hydrogens(dir, filename, logger_name, logfile):
 		logger.error(process.stderr)
 		return None  
 	else:
-		logger.info(f"Hydrogen processing complete. {process.stdout}")
+		logger.info(f"Hydrogen processing complete.\n {process.stdout}")
 	return f"{dir}/{filename}_reduced.pdb"
 
 
@@ -43,9 +43,9 @@ def add_hydrogens(file, logger_name, logfile, ffs=['water.opc', 'protein.ff19SB'
 	process = subprocess.run(['tleap', '-f', '-'], input=tleap_input, text=True, capture_output=True)
 	
 	if process.returncode != 0:
-		logger.error(f"tleap error: {process.stderr}")
+		logger.error(f"tleap error:\n {process.stderr}")
 	else:
-		logger.debug(f"tleap output: {process.stdout}")
+		logger.debug(f"tleap output:\n {process.stdout}")
 
 	return protonated_file
 
@@ -69,7 +69,7 @@ def gen_chains(complex_file, logger_name, logfile, ffs=['water.opc', 'protein.ff
 
 		# Check for errors
 		if process_chain.returncode != 0:
-			logger.error(f"Error occurred while generating receptor file: {process_chain.stderr}")
+			logger.error(f"Error occurred while generating receptor file:\n {process_chain.stderr}")
 			return None
 		else:
 			logger.info(f"Chain {chain} extraction complete.")
