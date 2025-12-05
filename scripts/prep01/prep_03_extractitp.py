@@ -104,13 +104,13 @@ def main():
     itps = glob.glob(f"{gmxdir}/toppar/*.itp")
     if len(itps) == expected_itps:
         logger.info(f"All expected .itp files have been generated successfully.")
-        # Create checkpoint file
-        checkpoint_filename = f"{gmxdir}/toppar/check_03_extractitp_{int(time.time())}.done"
-        with open(checkpoint_filename, 'w') as f:
-            f.write(".itp extraction completed successfully.\n")
     else:
         logger.warning(f"Expected {expected_itps} .itp files, but found {len(itps)}.")
         
+    # Create checkpoint file
+    checkpoint_filename = f"{gmxdir}/toppar/check_03_extractitp_{int(time.time())}.done"
+    with open(checkpoint_filename, 'w') as f:
+        f.write(".itp extraction completed successfully.\n")
 
 if __name__ == "__main__":
     main()
