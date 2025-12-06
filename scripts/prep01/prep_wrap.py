@@ -7,9 +7,9 @@ import sys
 from scripts.utils.helpers import gen_flags, setup_logger
 
 def main(datadir: str, filename: str,
-    dna = False, phos = False,
-    range_a = None, range_b = None,
-    ffs = None):
+    dna : bool = False, phos : bool = False,
+    range_a : str = None, range_b : str = None,
+    ffs : str = None):
 
     args = locals()
     args.pop('datadir', None)

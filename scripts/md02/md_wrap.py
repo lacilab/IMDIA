@@ -8,10 +8,10 @@ from scripts.utils.helpers import gen_flags, setup_logger
 
 
 def main(datadir: str, gmxdir: str, repn: int, 
-    dna = False, phos = False,
-    ntmpi = None, ntomp = None, nb = None, pme = None, npme = None,
-    ngpu = None, gpulist = None, 
-    em = None, nvt = None, npt = None, md = None, 
+    dna: bool = False, phos: bool = False,
+    ntmpi: int = None, ntomp: int = None, nb : str = None, pme :str = None, npme : int = None,
+    ngpu : int = None, gpulist : str = None, 
+    em : str = None, nvt : str = None, npt : str = None, md : str = None, 
     ):
 
     args = locals()
