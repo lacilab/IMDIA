@@ -298,6 +298,23 @@ cmd = [ "gmx", "make_ndx",
 process = subprocess.run(cmd, input=groups_input, text=True, capture_output=True, check=True)
 log_process_output(process, "gmx make_ndx")
 
+# Construct group name
+group = "Protein"
+if args.with_dna:
+    group += "_DNA"
+if args.with_phosphate:
+    group += "_P"
+
+# Substitute group name in nvt.mdp, npt.mdp, md.mdp
+if group != 'Protein':
+    for mdp_file in ['nvt.mdp', 'npt.mdp', 'md.mdp']:
+        mdp_path = os.path.join(outdir, mdp_file)
+        with open(mdp_path, 'r') as f:
+            contents = f.read()
+        contents = contents.replace("Protein", group)
+        with open(mdp_path, 'w') as f:
+            f.write(contents)
+
 ### 3. NVT Equilibration
 if check_finished("nvt", outdir):
     logger.warning("nvt.log indicates NVT equilibration already completed and nvt.gro exists. Skipping NVT equilibration.")

@@ -13,6 +13,4 @@ repn: "1"
 # gpu_nb: True
 # gpu_pme: True
 # npme: "1"
-nvt: 'scripts/md02/nvt_mod.mdp'
-npt: 'scripts/md02/npt_mod.mdp'
 md: 'scripts/md02/md_10ns.mdp'
