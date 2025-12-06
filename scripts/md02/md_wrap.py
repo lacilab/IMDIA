@@ -9,7 +9,8 @@ from scripts.utils.helpers import gen_flags, setup_logger
 
 def main(datadir: str, gmxdir: str, repn: int, 
     dna = False, phos = False,
-    ntmpi = None, ntomp = None, ngpu = None, gpulist = None, 
+    ntmpi = None, ntomp = None, nb = None, pme = None, npme = None,
+    ngpu = None, gpulist = None, 
     em = None, nvt = None, npt = None, md = None, 
     ):
 

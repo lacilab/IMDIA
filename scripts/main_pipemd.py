@@ -11,13 +11,13 @@ from scripts.utils.helpers import setup_logger
 
 def pipeline(args: argparse.Namespace, datadir: str, filename: str, gmxdir: str, repn: int,
         dna: bool = False, phos: bool = False, range_a: str = None, range_b: str = None, ffs: str = None,
-        ntmpi: int = None, ntomp: int = None, ngpu: int = None, gpulist: str = None, 
+        ntmpi: int = None, ntomp: int = None, nb: str = None, pme: str = None, npme: int = None, ngpu: int = None, gpulist: str = None, 
         em: str = None, nvt: str = None, npt: str = None, md: str = None):
 
         if args.prep:
             prep_wrap.main(datadir, filename, dna, phos, range_a, range_b, ffs)
         if args.md:
-            md_wrap.main(datadir, gmxdir, repn, dna, phos, ntmpi, ntomp, ngpu, gpulist, em, nvt, npt, md)
+            md_wrap.main(datadir, gmxdir, repn, dna, phos, ntmpi, ntomp, nb, pme, npme, ngpu, gpulist, em, nvt, npt, md)
         if args.post:
             post_wrap.main(datadir, gmxdir, dna, phos)
 

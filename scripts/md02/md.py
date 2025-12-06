@@ -20,6 +20,9 @@ parser.add_argument('--dna', dest='with_dna', action='store_true', help='Use if 
 parser.add_argument('--phos', dest='with_phosphate', action='store_true', help='Use if the system contains phosphorylated residues.')
 parser.add_argument('--ntmpi', dest='ntmpi', type=int, default=None, help='Number of MPI ranks (default: auto-detected)')
 parser.add_argument('--ntomp', dest='ntomp', type=int, default=None, help='Number of OpenMP threads per rank (default: auto-detected)')
+parser.add_argument('--nb', dest='nb', type=str, default='gpu', help='Calculate non-bonded interactions on: auto, cpu, gpu')
+parser.add_argument('--pme', dest='pme', type=str, default='gpu', help='Perform PME calculations on: auto, cpu, gpu')
+parser.add_argument('--npme', dest='npme', type=int, default=-1, help='Number of separate ranks to be used for PME, -1 is guess (let GROMACS decide)')
 parser.add_argument('--ngpu', dest='ngpu', type=int, default=None, help='Number of GPUs to use (default: auto-detected)')
 parser.add_argument('--gpulist', dest='gpulist', type=str, default=None, help='Sequence of GPU IDs to use i.e. 0011 (default: auto-detected)')
 parser.add_argument('--em', dest='em', type=str, default=None, help='Energy minimization parameter file (default: minim.mdp)')
@@ -166,8 +169,8 @@ GPULIST = ""
 
 # Assign flags based on resources
 if NGPUS > 0:
-    flag_nb_gpu = ["-nb", "gpu"]
-    flag_pme_gpu = ["-pme", "gpu", "-npme", "1"]
+    flag_nb_gpu = ["-nb", args.nb]
+    flag_pme_gpu = ["-pme", args.pme, "-npme", args.npme]
     if args.gpulist is not None:
         GPULIST = args.gpulist
         logger.debug(f"Using specified GPU list: {GPULIST}")

@@ -10,7 +10,7 @@ repn: "1"
 # ntomp: "16"
 # ngpu: "1"
 # gpulist: '01'
-# gpu_nb: True
-# gpu_pme: True
+# nb: gpu
+# pme: gpu
 # npme: "1"
 md: 'scripts/md02/md_10ns.mdp'
