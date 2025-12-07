@@ -19,7 +19,7 @@ def pipeline(args: argparse.Namespace, datadir: str, filename: str, gmxdir: str,
         if args.md:
             md_wrap.main(datadir, gmxdir, repn, dna, phos, ntmpi, ntomp, nb, pme, npme, ngpu, gpulist, em, nvt, npt, md)
         if args.post:
-            post_wrap.main(datadir, gmxdir, dna, phos)
+            post_wrap.main(datadir, repn, dna, phos)
 
 
 def main():
