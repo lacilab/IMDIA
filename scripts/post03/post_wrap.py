@@ -24,7 +24,7 @@ def main(datadir: str, repn: int,
 
     cmd = [sys.executable,
         "-m",
-        "scripts.post03.post_alt",
+        "scripts.post03.post",
         "--logfile", LOGFILE,
         "--repdir", repdir,
     ] + flags
