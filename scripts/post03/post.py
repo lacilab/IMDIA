@@ -46,8 +46,7 @@ def main():
             logger.debug(f"{step_name} output:\n {process.stdout}")  
 
     ##### POST-PROCESSING STEPS ######
-    # center molecule and put all atoms at the closest distance from center of the box
-    # TODO check manually with active and inactive structures, added -center from the previous version
+    # Remove PBC artifacts
     cmd = ["gmx", "trjconv", 
            "-s", f"{args.repdir}/md.tpr", 
            "-f", f"{args.repdir}/md.xtc", 
