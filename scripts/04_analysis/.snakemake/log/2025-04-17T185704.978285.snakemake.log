@@ -1,9 +1,0 @@
-host: Usopp
-Building DAG of jobs...
-MissingInputException in rule universe in file /home/irati/Thesis/main/scripts/04_analysis/Snakefile, line 135:
-Missing input files for rule universe:
-    output: ../../data/1bf5/T419R/rep0/analysis/000.raw/universe
-    wildcards: mut=T419R, sample=rep0
-    affected files:
-        ../../data/1bf5/T419R/rep0/gromacs/md_noPBC_mol_com_cluster_fit.xtc
-        ../../data/1bf5/T419R/rep0/gromacs/md_sys.pdb

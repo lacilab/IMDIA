@@ -11,6 +11,7 @@ import subprocess
 import shutil
 import argparse
 from scripts.utils.helpers import setup_logger
+from group_index import main as group_index
 
 parser = argparse.ArgumentParser(description="Perform MD simulation steps: minimization, NVT, NPT, and production MD.")
 parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
@@ -229,116 +230,7 @@ else:
     check_step("em", "Energy Minimization", outdir)
 
 ### 2. Create groups
-
-# Construct group name
-group = "Protein"
-if args.with_dna:
-    group += "_DNA"
-if args.with_phosphate:
-    group += "_P"
-
-# Substitute group name in nvt.mdp, npt.mdp, md.mdp
-if group != 'Protein':
-    for mdp_file in ['nvt.mdp', 'npt.mdp', 'md.mdp']:
-        mdp_path = os.path.join(outdir, mdp_file)
-        with open(mdp_path, 'r') as f:
-            contents = f.read()
-        contents = contents.replace("Protein", group)
-        with open(mdp_path, 'w') as f:
-            f.write(contents)
-
-# Check if an index file with the target groups already exists
-ndx_ready = False
-target_groups = [group, 'Water_Ions']
-if os.path.isfile(f"{outdir}/index.ndx"):
-    with open(f"{outdir}/index.ndx") as f:
-        ndx_groups = []
-        for line in f.readlines:
-            line = line.strip()
-            if line.startswith("[") and line.endswith("]"):
-                ndx_groups.append(line[1:-1].strip())
-    if set(target_groups).issubset(ndx_groups):
-        logger.warn(f'The index file {outdir}/index.ndx already exists and contains the target groups {target_groups}. Skipping index creation step.')
-        ndx_ready = True
-
-if not ndx_ready:
-    # Get groups in the index file
-    cmd = [
-        "gmx", "make_ndx",
-        "-f", f"{outdir}/em.gro",
-        "-o", f"{outdir}/index.ndx",
-        "-quiet"
-    ]
-
-    # Run gmx make_ndx and auto-quit with "q"
-    result = subprocess.run(
-        cmd,
-        input="q\n",
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True
-    )
-
-    index_output = result.stdout
-
-    # Regex to extract group names
-    group_pattern = re.compile(r"^\s*\d+\s+([A-Za-z0-9_+\-]+)\s*:", re.MULTILINE)
-    groups = group_pattern.findall(index_output)
-    group_n = len(groups)
-    logger.debug(f"Found {group_n} groups in index file: {',\n'.join(groups)}")
-
-    group_protein = groups.index("Protein")
-    group_water = groups.index("Water")
-    group_na = groups.index("Na")
-    group_cl = groups.index("Cl")
-    if args.with_dna:
-        group_dna = groups.index("DNA")
-    if args.with_phosphate:
-        group_phosphate = groups.index("Phosphate")
-
-    # Remove index file
-    os.remove(f"{outdir}/index.ndx")
-
-    # Run again to create index file with new groups
-    if args.with_dna and args.with_phosphate:
-        groups_input = f"""
-        r DA | r DC | r DT | r DG | r DC3 | r DC5 | r DG3 | r DG5
-        name {group_n} DNA
-        {group_protein} | {group_dna} | {group_phosphate}
-        name {group_n + 1} Protein_DNA_P
-        {group_protein} | {group_phosphate}
-        name {group_n + 2} Protein_P
-        {group_water} | {group_na} | {group_cl}
-        name {group_n + 3} Water_Ions
-        quit
-        """
-    elif args.with_dna:    
-        groups_input = f"""
-        r DA | r DC | r DT | r DG | r DC3 | r DC5 | r DG3 | r DG5
-        name {group_n} DNA
-        {group_protein} | {group_dna}
-        name {group_n + 1} Protein_DNA
-        {group_water} | {group_na} | {group_cl}
-        name {group_n + 2} Water_Ions
-        quit
-        """
-    else:
-        groups_input = f"""
-        {group_water} | {group_na} | {group_cl}
-        name {group_n} Water_Ions
-        quit
-        """
-
-    cmd = [ "gmx", "make_ndx", 
-        "-f", f"{outdir}/em.gro",
-        "-o", f"{outdir}/index.ndx",
-        "-quiet"
-        ]
-    process = subprocess.run(cmd, input=groups_input, text=True, capture_output=True, check=True)
-    log_process_output(process, "gmx make_ndx")
-    logger.info("Index file created with new groups")
-    ndx_ready = True
-
+group_index(gmxdir=args.gmxdir, logfile=args.logfile, logname='md', structurefile=f"{args.gmxdir}/em.gro", dna=args.with_dna, phos=args.with_phosphate)
 
 ### 3. NVT Equilibration
 if check_finished("nvt", outdir):

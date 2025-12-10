@@ -1,11 +1,11 @@
-datadir: './data/8RM6_bis'
-filename: '8RM6_mod.pdb'
-dna: True
+datadir: 'data/1YVL_noNTD/T385M'
+filename: 'T385M_QP.pdb'
+dna: False
 phos: False
-range_a: '2,-1'
-range_b: '2,-1'
-gmxdir: './data/8RM6_bis/gromacs_common'
-repn: "1"
+#range_a: '2,-1'
+#range_b: '2,-1'
+gmxdir: 'data/1YVL_noNTD/T385M/gromacs_common'
+repn: 3
 # ntmpi: "2"
 # ntomp: "16"
 # ngpu: "1"
@@ -14,3 +14,4 @@ repn: "1"
 # pme: gpu
 # npme: "1"
 md: 'scripts/md02/md_10ns.mdp'
+snakeconfig: 'scripts/config_1YVL.yml'
