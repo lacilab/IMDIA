@@ -84,10 +84,12 @@ def main(logfile : str = None, universe: str = None, outdir: str = None):
                     var_name="PC",
                     value_name="Value")
     g = sns.FacetGrid(melted, col="PC")
-    g.map(sns.lineplot,
-        "Time (ps)", # x-axis
-        "Value", # y-axis
-        errorbar=None) # no confidence interval
+    # g.map(sns.lineplot,
+    #     "Time (ps)", # x-axis
+    #     "Value", # y-axis
+    #     errorbar=None) # no confidence interval
+    g.map_dataframe(sns.lineplot, x="Time (ps)", y="Value")
+
     plt.savefig(pc_cosine)
     plt.close()
     logger.info(f"Cosine content plot saved to: {pc_cosine}")

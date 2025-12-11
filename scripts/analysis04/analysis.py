@@ -31,13 +31,13 @@ def main():
         logger.debug(f"Executing specific rules: {args.rules}")
     else:
         logger.debug("No rules were specified. Executing all rules in the Snakefile.")
-    value_rules = " ".join(args.rules) if args.rules is not None else ""
+    rule_groups = " ".join(args.rules) if args.rules is not None else ""
 
     cmd = ["snakemake",
         "--snakefile", "scripts/analysis04/Snakefile",
         "--cores", str(args.cores) if args.cores != "" else "all",
         "--configfile", args.configfile,
-        "--config", f"logfile={args.logfile}",
+        "--config", f"logfile={args.logfile}", f"rule_groups={rule_groups}",
         #value_rules,
     ]
 

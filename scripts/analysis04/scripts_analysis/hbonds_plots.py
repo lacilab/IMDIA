@@ -10,7 +10,7 @@ import argparse
 from scripts.utils.helpers import setup_logger
 
 
-def main(logfile : str =None, hbonds_ext : str =None, method : str =None, dna: bool=False, domains : list = [], outdir : str =None):
+def main(logfile : str =None, hbonds_ext : str =None, method : str =None, dna: bool=False, domains : list = [], outfiles : list = []):
     # Arguments
     # parser = argparse.ArgumentParser(description='Generate plots from extended hydrogen bonds data.')
     # parser.add_argument("-i", "--incsv", type=str, help='Path to the extended hydrogen bonds CSV file')
@@ -28,13 +28,6 @@ def main(logfile : str =None, hbonds_ext : str =None, method : str =None, dna: b
 
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)
-
-    # Output file paths
-    hbonds_prot_domains = f"{outdir}/hbonds_{method}_prot_domains.png"
-    hbonds_prot_monomer = f"{outdir}/hbonds_{method}_monomer.png"
-    hbonds_dna = f"{outdir}/hbonds_{method}_dna.png"
-    hbonds_dna_bb = f"{outdir}/hbonds_{method}_dna_bb.png"
-    hbonds_dna_base = f"{outdir}/hbonds_{method}_dna_base.png"
 
     hbonds_df = pd.read_csv(hbonds_ext)
 
@@ -62,9 +55,9 @@ def main(logfile : str =None, hbonds_ext : str =None, method : str =None, dna: b
             end = domain['end']
             plt.axvspan(start, end, zorder=0, alpha=0.2, color=domain['color'], label=domain['label'])
     plt.legend()
-    plt.savefig(hbonds_prot_domains)
+    plt.savefig(outfiles["hbonds_prot_domains"])
     plt.close()
-    logger.info(f"Plot of protein hydrogen bonds per domain saved as {hbonds_prot_domains}")
+    logger.info(f"Plot of protein hydrogen bonds per domain saved as {outfiles['hbonds_prot_domains']}")
 
 
     ##########  Protein acceptors and donors per chain
@@ -83,9 +76,9 @@ def main(logfile : str =None, hbonds_ext : str =None, method : str =None, dna: b
     plt.title('STAT1 Donor and Acceptor Residues')
     plt.grid(True, alpha=0.3)
     plt.legend()
-    plt.savefig(hbonds_prot_monomer)
+    plt.savefig(outfiles["hbonds_prot_monomer"])
     plt.close()
-    logger.info(f"Plot of protein hydrogen bonds per chain saved as {hbonds_prot_monomer}")
+    logger.info(f"Plot of protein hydrogen bonds per chain saved as {outfiles['hbonds_prot_monomer']}")
 
     if dna:
         ##########  dsDNA acceptors and donors 
@@ -108,9 +101,9 @@ def main(logfile : str =None, hbonds_ext : str =None, method : str =None, dna: b
         plt.title('DNA Donor and Acceptor Residues')
         plt.grid(True, alpha=0.3)
         plt.legend()
-        plt.savefig(hbonds_dna)
+        plt.savefig(outfiles["hbonds_dna"])
         plt.close()
-        logger.info(f"Plot of DNA hydrogen bonds saved as {hbonds_dna}")
+        logger.info(f"Plot of DNA hydrogen bonds saved as {outfiles['hbonds_dna']}")
 
 
         ##########  dsDNA backbone acceptors and donors
@@ -135,9 +128,9 @@ def main(logfile : str =None, hbonds_ext : str =None, method : str =None, dna: b
         plt.title('STAT1 Donor and Acceptor Residues (DNA Backbone Only)')
         plt.grid(True, alpha=0.3)
         plt.legend()
-        plt.savefig(hbonds_dna_bb)
+        plt.savefig(outfiles["hbonds_dna_bb"])
         plt.close()
-        logger.info(f"Plot of DNA backbone hydrogen bonds saved as {hbonds_dna_bb}")
+        logger.info(f"Plot of DNA backbone hydrogen bonds saved as {outfiles['hbonds_dna_bb']}")
 
 
         ##########  dsDNA bases acceptors and donors
@@ -162,9 +155,9 @@ def main(logfile : str =None, hbonds_ext : str =None, method : str =None, dna: b
         plt.title('STAT1 Donor and Acceptor Residues (DNA Bases Only)')
         plt.grid(True, alpha=0.3)
         plt.legend()
-        plt.savefig(hbonds_dna_base)
+        plt.savefig(outfiles["hbonds_dna_base"])
         plt.close()
-        logger.info(f"Plot of DNA base hydrogen bonds saved as {hbonds_dna_base}")
+        logger.info(f"Plot of DNA base hydrogen bonds saved as {outfiles['hbonds_dna_base']}")
 
 if __name__ == "__main__":
     main()

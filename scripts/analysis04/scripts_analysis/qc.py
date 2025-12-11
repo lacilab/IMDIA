@@ -33,7 +33,8 @@ def radgyr(atomgroup, masses, total_mass=None):
         # square root and return
         return np.sqrt(rog_sq)
 
-def main(logfile: str = None, universe: str = None, outdir: str = None, with_dna: bool = False, offset: int = 0, domains: list = []):
+def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles : dict = {}, 
+         with_dna: bool = False, offset: int = 0, domains: list = []):
     # Arguments
     # parser = argparse.ArgumentParser(description="Quality control analysis of MD simulation")
     # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
@@ -56,19 +57,6 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, with_dna
 
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)
-
-    # Output file paths
-    rmsd = f"{outdir}/rmsd.png"
-    rmsd_cats = f"{outdir}/rmsd_cats.png"
-    rmsd_bb = f"{outdir}/rmsd_bb.png"
-    radius_axis = f"{outdir}/radius_axis.png"
-    radius_rmsd = f"{outdir}/radius_rmsd.png"
-    rmsf_prot_domains = f"{outdir}/rmsf_prot_domains.png"
-    rmsf_dna_res = f"{outdir}/rmsf_dna_res.png"
-    rmsd_csv = f"{outdir}/rmsd.csv"
-    radius_axis_csv = f"{outdir}/radius_axis.csv"
-    rmsf_prot_csv = f"{outdir}/rmsf_prot.csv"
-    rmsf_dna_csv = f"{outdir}/rmsf_dna.csv"
 
     os.makedirs(outdir, exist_ok=True)
 
@@ -107,11 +95,11 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, with_dna
                     index=rmsd_analysis.results.rmsd[:, 1])
     rmsd_df.index.name = 'Time (ps)'
 
-    rmsd_df.to_csv(rmsd_csv)
+    rmsd_df.to_csv(outfiles['rmsd_csv'])
 
     rmsd_df.plot(title='RMSD')
     plt.ylabel('RMSD (Å)')
-    plt.savefig(rmsd)
+    plt.savefig(outfiles['rmsd'])
     plt.close()
 
     rmsd_df_bb = pd.DataFrame(rmsd_analysis.results.rmsd[:, 2],
@@ -134,12 +122,12 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, with_dna
     rmsd_df_ca.plot(title='RMSD C-alphas', ax=axes[1], legend=False, c='orange')
     rmsd_df_prot.plot(title='RMSD Protein', ax=axes[2], legend=False, c='green')
     plt.tight_layout()
-    plt.savefig(rmsd_cats)
+    plt.savefig(outfiles['rmsd_cats'])
     plt.close()
 
     rmsd_df_bb.plot(title='RMSD Backbone', legend=False)
     plt.ylabel('RMSD (Å)')
-    plt.savefig(rmsd_bb)
+    plt.savefig(outfiles['rmsd_bb'])
     plt.close()
 
     ########## Radius of gyration ##########
@@ -157,14 +145,14 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, with_dna
     # Save as CSV
     df = pd.DataFrame(result, index=labels, columns=np.arange(len(u.trajectory))).T
     df.index.name = "Frame"
-    df.to_csv(radius_axis_csv)
+    df.to_csv(outfiles['radius_axis_csv'])
 
     for col, label in zip(result, labels):
         plt.plot(col, label=label)
     plt.legend()
     plt.ylabel('Radius of gyration (Å)')
     plt.xlabel('Frame')
-    plt.savefig(radius_axis)
+    plt.savefig(outfiles['radius_axis'])
     plt.close()
 
     plt.figure(figsize=(8, 5))
@@ -173,7 +161,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, with_dna
     plt.ylabel("Radius of gyration (Å)")
     plt.title("RMSD vs Radius of gyration")
     plt.legend()
-    plt.savefig(radius_rmsd)
+    plt.savefig(outfiles['radius_rmsd'])
     plt.close()
 
     ########## RMSF ##########
@@ -196,7 +184,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, with_dna
         'RMSF_A': RA.results.rmsf,
         'RMSF_B': RB.results.rmsf
     })
-    rmsf_prot.to_csv(rmsf_prot_csv, index=False)
+    rmsf_prot.to_csv(outfiles['rmsf_prot_csv'], index=False)
 
     # Plot
     plt.plot(monoA_ca.resids + offset, RA.results.rmsf, label='RMSF Chain A')
@@ -210,7 +198,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, with_dna
     plt.xlabel('Residue number (adjusted)')
     plt.ylabel('RMSF (Å)')
     plt.legend()
-    plt.savefig(rmsf_prot_domains)
+    plt.savefig(outfiles['rmsf_prot_domains'])
     plt.close()
 
     ##### If the complex contains dsDNA #####
@@ -238,7 +226,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, with_dna
             'RMSF_C': RC.results.rmsf,
             'RMSF_D': RD.results.rmsf
         })
-        rmsf_dna.to_csv(rmsf_dna_csv, index=False)
+        rmsf_dna.to_csv(outfiles['rmsf_dna_csv'], index=False)
 
         # Plot
         plt.plot(dnaC_p.resids, RC.results.rmsf, label='RMSF DNA C')
@@ -246,28 +234,12 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, with_dna
         plt.xlabel('Residue number')
         plt.ylabel('RMSF (Å)')
         plt.legend()
-        plt.savefig(rmsf_dna_res)
+        plt.savefig(outfiles['rmsf_dna_res'])
         plt.close()
 
     logger.debug("\nChecking generated files.")
 
-    expected_files_prot = [
-        rmsd,
-        rmsd_cats,
-        rmsd_bb,
-        radius_axis,
-        radius_rmsd,
-        rmsf_prot_domains,
-        rmsd_csv,
-        radius_axis_csv,
-        rmsf_prot_csv
-    ]
-    expected_files_dna = [
-        rmsf_dna_res,
-        rmsf_dna_csv
-    ]
-
-    expected_files = (expected_files_prot + expected_files_dna, expected_files_prot)[with_dna]
+    expected_files = outfiles.values()
 
     missing = [p for p in expected_files if not os.path.isfile(p)]
     for file in expected_files:

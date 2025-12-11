@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
+import multiprocessing
 import os
 import shutil
 import subprocess
+from pathlib import Path
 from scripts.utils.helpers import setup_logger
 from scripts.md02.group_index import main as group_index
 
@@ -37,23 +39,37 @@ def main(logfile: str = None, scriptdir: str = None,
         sele2 = 'Chain_B'
         logger.info(f"Preparing MMPBSA index file for protein-protein system, with index groups: {sele1}, {sele2}")
 
+    tprfile_abs = Path(tprfile).resolve()
+    xtcfile_abs = Path(xtcfile).resolve()
+    topfile_abs = Path(topfile).resolve()
+    gmxdir_abs = Path(gmxdir).resolve()
+
+    # Auto-detect NTMPI and NTOMP if not provided
+    SLURM_NTASKS = os.environ.get('SLURM_NTASKS')
+    SLURM_CPUS_PER_TASK = os.environ.get('SLURM_CPUS_PER_TASK')
+    if SLURM_NTASKS and SLURM_CPUS_PER_TASK:
+        NP = int(SLURM_NTASKS)
+    else:
+        # fallback for local machine
+        NP = multiprocessing.cpu_count()
+
     # Run MMPBSA calculation
     cmd = ["mpirun", "--use-hwthread-cpus", 
-           "-np", "4", "gmx_MMPBSA", 
-           "-i", f"{outdir}/mmpbsa.in", 
-           "-cs", tprfile, 
-           "-ci", f"{gmxdir}/index.ndx", 
+           "-np", NP, "gmx_MMPBSA", 
+           "-i", "mmpbsa.in", 
+           "-cs", tprfile_abs, 
+           "-ci", f"{gmxdir_abs}/index.ndx", 
            "-cg", sele1, sele2,
-           "-ct", xtcfile, 
-           "-cp", topfile, 
+           "-ct", xtcfile_abs, 
+           "-cp", topfile_abs, 
            "-nogui", 
-           "-prefix", f"{outdir}/_GMXMMPBSA_",
-           "-o", f"{outdir}/FINAL_RESULTS_MMPBSA.dat",
-           "-do", f"{outdir}/FINAL_DECOMP_MMPBSA.dat",
-           "-eo", f"{outdir}/FINAL_ENERGY.csv", 
-           "-deo", f"{outdir}/FINAL_ENERGY_DECOMP.csv"
+           "-o", "FINAL_RESULTS_MMPBSA.dat",
+           "-do", "FINAL_DECOMP_MMPBSA.dat",
+           "-eo", "FINAL_ENERGY.csv", 
+           "-deo", "FINAL_ENERGY_DECOMP.csv"
            ]
-    subprocess.run(cmd, check=True, text=True)
+    
+    subprocess.run(cmd, cwd=outdir, check=True, text=True)
 
 if __name__ == "__main__":
     main()
