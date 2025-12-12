@@ -114,9 +114,9 @@ if "wb" in rule_groups or rule_groups == [""]:
 if "contacts" in rule_groups or rule_groups == [""]:
     all_input["timeseries_full_csv"] = expand(f"{PATH_CONTACTS}/timeseries_full.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["timeseries_full_png"] = expand(f"{PATH_CONTACTS}/timeseries_full.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["timeseries_dbd_csv"] = expand(f"{PATH_CONTACTS}/timeseries_dbd.csv", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["timeseries_dbd_png"] = expand(f"{PATH_CONTACTS}/timeseries_dbd.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["pairs_dbd_csv"] = expand(f"{PATH_CONTACTS}/pairs_dbd.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["timeseries_dbd_csv"] = expand(f"{PATH_CONTACTS}/timeseries_dbd.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["timeseries_dbd_png"] = expand(f"{PATH_CONTACTS}/timeseries_dbd.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["pairs_dbd_csv"] = expand(f"{PATH_CONTACTS}/pairs_dbd.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["pairs_full_csv"] = expand(f"{PATH_CONTACTS}/pairs_full.csv", struct=structures, mut=mutations, rep=reps, zip=True)
 if "pca" in rule_groups or rule_groups == [""]:
     all_input["pc_cumulative"] = expand(f"{PATH_PCA}/pc_cumulative.png", struct=structures, mut=mutations, rep=reps, zip=True)
@@ -399,10 +399,10 @@ rule contact_analysis:
         timeseries_full_csv = f"{PATH_CONTACTS}/timeseries_full.csv",
         timeseries_full_png = report(f"{PATH_CONTACTS}/timeseries_full.png",
                                 category="Contact analysis", labels={"sample": "{mut} {rep} Timeseries full protein"}),
-        timeseries_dbd_csv = f"{PATH_CONTACTS}/timeseries_dbd.csv",
-        timeseries_dbd_png = report(f"{PATH_CONTACTS}/timeseries_dbd.png",
-                                category="Contact analysis", labels={"sample": "{mut} {rep} Timeseries DBD"}),
-        pairs_dbd_csv = f"{PATH_CONTACTS}/pairs_dbd.csv",
+        # timeseries_dbd_csv = f"{PATH_CONTACTS}/timeseries_dbd.csv",
+        # timeseries_dbd_png = report(f"{PATH_CONTACTS}/timeseries_dbd.png",
+        #                        category="Contact analysis", labels={"sample": "{mut} {rep} Timeseries DBD"}),
+        # pairs_dbd_csv = f"{PATH_CONTACTS}/pairs_dbd.csv",
         pairs_full_csv = f"{PATH_CONTACTS}/pairs_full.csv",
     run:
         from scripts_analysis.contact_analysis import main
@@ -410,7 +410,8 @@ rule contact_analysis:
             logfile=logfile,
             universe=input.universe,
             outdir=params.outdir,
-            with_dna=DNA
+            with_dna=DNA,
+            outfiles=dict(output)
         )
     # shell: 
     #     """

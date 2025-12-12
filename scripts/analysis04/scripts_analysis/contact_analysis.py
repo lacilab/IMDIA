@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 ##### HELPER FUNCTIONS #####
 
 ##### Distance by residue pairs
-def contact_pairs(u, start_frame, stop_frame, cutoff, sel1, sel2):
+def contact_pairs(u, start_frame, stop_frame, cutoff, sel1, sel2) -> pd.DataFrame:
     # List to store contact data
     contact_data = []
 
@@ -49,7 +49,7 @@ def contact_pairs(u, start_frame, stop_frame, cutoff, sel1, sel2):
 ##### MAIN FUNCTION #####
 
 def main(logfile : str = None, universe: str = None, outdir : str = None,
-         with_dna : bool = False):
+         with_dna : bool = False, outfiles : list = []):
     # Arguments
     # parser = argparse.ArgumentParser(description="Perform contact analysis with MDAnalysis.")
     # parser.add_argument("-u", "--universe", help="Path to the Universe object")
@@ -65,12 +65,12 @@ def main(logfile : str = None, universe: str = None, outdir : str = None,
     # outdir = args.outdir
 
     # Output file paths
-    timeseries_full_csv = f"{outdir}/timeseries_full.csv"
-    timeseries_full_png = f"{outdir}/timeseries_full.png"
-    timeseries_dbd_csv = f"{outdir}/timeseries_dbd.csv"
-    timeseries_dbd_png = f"{outdir}/timeseries_dbd.png"
-    pairs_dbd_csv = f"{outdir}/pairs_dbd.csv"
-    pairs_full_csv = f"{outdir}/pairs_full.csv"
+    # timeseries_full_csv = f"{outdir}/timeseries_full.csv"
+    # timeseries_full_png = f"{outdir}/timeseries_full.png"
+    # timeseries_dbd_csv = f"{outdir}/timeseries_dbd.csv"
+    # timeseries_dbd_png = f"{outdir}/timeseries_dbd.png"
+    # pairs_dbd_csv = f"{outdir}/pairs_dbd.csv"
+    # pairs_full_csv = f"{outdir}/pairs_full.csv"
 
     # Parameters
     cutoff = 5.0  # Distance cutoff in Å
@@ -97,7 +97,7 @@ def main(logfile : str = None, universe: str = None, outdir : str = None,
     cont.run(start=start_frame, stop=stop_frame, verbose=True)
 
     df_timeseries = pd.DataFrame(cont.results.timeseries)
-    df_timeseries.to_csv(timeseries_full_csv, index=False)
+    df_timeseries.to_csv(outfiles["timeseries_full_csv"], index=False)
 
     average_contacts = np.mean(cont.results.timeseries[:, 1])
 
@@ -109,7 +109,7 @@ def main(logfile : str = None, universe: str = None, outdir : str = None,
     plt.ylabel('Fraction of Contacts')
     plt.title('Native Contacts, average = {:.2f}'.format(average_contacts))
     plt.legend()
-    plt.savefig(timeseries_full_png)
+    plt.savefig(outfiles["timeseries_full_png"])
     plt.close()
 
     # DBD
@@ -137,12 +137,12 @@ def main(logfile : str = None, universe: str = None, outdir : str = None,
     # Full protein
     # Create DataFrame
     contacts_df = contact_pairs(u, start_frame, stop_frame, cutoff, sel1, sel2)
-    contacts_df.to_csv(pairs_full_csv, index=False)
+    contacts_df.to_csv(outfiles["pairs_full_csv"], index=False)
 
     # DBD
     # if with_dna:
     #     contacts_df = contact_pairs(sel1_dbd, sel2)
-    #     contacts_df.to_csv(pairs_dbd_csv, index=False)
+    #     contacts_df.to_csv(outfiles["pairs_dbd_csv"], index=False)
 
 if __name__ == "__main__":
     main()
