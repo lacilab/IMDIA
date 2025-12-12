@@ -87,7 +87,7 @@ if DNA:
     in_hbond_plots_dna["hbonds_dna_base"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_dna_base.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
 
 all_input = {}
-if "qc" in rule_groups:
+if "qc" in rule_groups or rule_groups == [""]:
     all_input["rmsdpng"] = expand(f"{PATH_QC}/rmsd.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["rmsd_cats"] = expand(f"{PATH_QC}/rmsd_cats.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["rmsd_bb"] = expand(f"{PATH_QC}/rmsd_bb.png", struct=structures, mut=mutations, rep=reps, zip=True)
@@ -98,7 +98,7 @@ if "qc" in rule_groups:
     all_input["radius_axis_csv"] = expand(f"{PATH_QC}/radius_axis.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["rmsf_prot_csv"] = expand(f"{PATH_QC}/rmsf_prot.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input.update(in_rmsf_dna)
-if "hbonds" in rule_groups:
+if "hbonds" in rule_groups or rule_groups == [""]:
     all_input["hbonds_mda_parsed"] = expand(f"{PATH_HBONDS}/hbonds_mda_parsed.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["hbonds_gmx"] = expand(f"{PATH_HBONDS}/hbonds_gmx.ndx", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["hbonds_gmx_num"] = expand(f"{PATH_HBONDS}/hbonds_gmx_num.xvg", struct=structures, mut=mutations, rep=reps, zip=True)
@@ -109,23 +109,23 @@ if "hbonds" in rule_groups:
     all_input["hbonds_prot_monomer"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_monomer.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
     all_input.update(in_hbond_plots_dna)
     all_input["hbonds_pymol"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_pymol.txt", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
-if "wb" in rule_groups:
+if "wb" in rule_groups or rule_groups == [""]:
     all_input["water_bridges"] = expand(f"{PATH_HBONDS}/waterbridges.csv", struct=structures, mut=mutations, rep=reps, zip=True)
-if "contacts" in rule_groups:
+if "contacts" in rule_groups or rule_groups == [""]:
     all_input["timeseries_full_csv"] = expand(f"{PATH_CONTACTS}/timeseries_full.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["timeseries_full_png"] = expand(f"{PATH_CONTACTS}/timeseries_full.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["timeseries_dbd_csv"] = expand(f"{PATH_CONTACTS}/timeseries_dbd.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["timeseries_dbd_png"] = expand(f"{PATH_CONTACTS}/timeseries_dbd.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["pairs_dbd_csv"] = expand(f"{PATH_CONTACTS}/pairs_dbd.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["pairs_full_csv"] = expand(f"{PATH_CONTACTS}/pairs_full.csv", struct=structures, mut=mutations, rep=reps, zip=True)
-if "pca" in rule_groups:
+if "pca" in rule_groups or rule_groups == [""]:
     all_input["pc_cumulative"] = expand(f"{PATH_PCA}/pc_cumulative.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["pc_pairgrid"] = expand(f"{PATH_PCA}/pc_pairgrid.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["pc_cosine"] = expand(f"{PATH_PCA}/pc_cosine.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["proj_timescale"] = expand(f"{PATH_PCA}/2dproj_timescale.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["pca_2dproj"] = expand(f"{PATH_PCA}/2D_projection_1_2.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["porcupine"] = expand(f"{PATH_PCA}/porcupine.png", struct=structures, mut=mutations, rep=reps, zip=True)
-if "clust" in rule_groups:
+if "clust" in rule_groups or rule_groups == [""]:
     all_input["summary"] = expand(f"{PATH_CLUST}/analysis_summary.txt", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["hclust"] = expand(f"{PATH_CLUST}/hclust_labels.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["kmeans"] = expand(f"{PATH_CLUST}/kmeans_labels.csv", struct=structures, mut=mutations, rep=reps, zip=True)
@@ -139,14 +139,14 @@ if "clust" in rule_groups:
     all_input["pca_sk_kmeans"] = expand(f"{PATH_CLUST}/pca_sklearn_clusters_kmeans.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["pca_gmx_hclust"] = expand(f"{PATH_CLUST}/pca_gmx_clusters_hclust.jpg", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["pca_gmx_kmeans"] = expand(f"{PATH_CLUST}/pca_gmx_clusters_kmeans.jpg", struct=structures, mut=mutations, rep=reps, zip=True)
-if "clust_gromos" in rule_groups:
+if "clust_gromos" in rule_groups or rule_groups == [""]:
     all_input["gromos_xpm"] = expand(f"{PATH_CLUST}/gromos_clusters.xpm", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["gromos_log"] = expand(f"{PATH_CLUST}/gromos_clusters.log", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["pca_gromos"] = expand(f"{PATH_CLUST}/pca_gromos_clusters.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["pca_gromos_top10"] = expand(f"{PATH_CLUST}/pca_gromos_clusters_top10.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["gromos_clusters_freq"] = expand(f"{PATH_CLUST}/gromos_clusters_freq.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["gromos_clusters_freqcum"] = expand(f"{PATH_CLUST}/gromos_clusters_freq_cum.png", struct=structures, mut=mutations, rep=reps, zip=True)
-if "gbsa" in rule_groups:
+if "gbsa" in rule_groups or rule_groups == [""]:
     all_input["gbsa_info"] = expand(f"{PATH_GBSA}/_GMXMMPBSA_info", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["gbsa_final_results"] = expand(f"{PATH_GBSA}/FINAL_RESULTS_MMPBSA.dat", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["gbsa_final_decomp"] = expand(f"{PATH_GBSA}/FINAL_DECOMP_MMPBSA.dat", struct=structures, mut=mutations, rep=reps, zip=True)
