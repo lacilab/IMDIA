@@ -55,7 +55,7 @@ def main(logfile: str = None, scriptdir: str = None,
 
     # Run MMPBSA calculation
     cmd = ["mpirun", "--use-hwthread-cpus", 
-           "-np", NP, "gmx_MMPBSA", 
+           "-np", str(NP), "gmx_MMPBSA", 
            "-i", "mmpbsa.in", 
            "-cs", tprfile_abs, 
            "-ci", f"{gmxdir_abs}/index.ndx", 
