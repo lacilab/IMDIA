@@ -194,7 +194,7 @@ def main(logfile: str = None, pdbfile: str = None, universe: str = None,
     hbonds_grouped['donor_section'] = np.where(
         hbonds_grouped['donor_type'] == 'protein',
         hbonds_grouped.apply(
-        lambda row: get_section(row['donor_res_num'], prot_domains),
+        lambda row: get_section(row['donor_res_num_adjusted'], prot_domains),
         axis=1),
         np.where(hbonds_grouped['donor_atom_name'].apply(is_backbone_atom), 'backbone', 'base')
     )
@@ -203,7 +203,7 @@ def main(logfile: str = None, pdbfile: str = None, universe: str = None,
     hbonds_grouped['acceptor_section'] = np.where(
         hbonds_grouped['acceptor_type'] == 'protein',
         hbonds_grouped.apply(
-        lambda row: get_section(row['acceptor_res_num'], prot_domains),
+        lambda row: get_section(row['acceptor_res_num_adjusted'], prot_domains),
         axis=1),
         np.where(hbonds_grouped['acceptor_atom_name'].apply(is_backbone_atom), 'backbone', 'base')
     )
