@@ -1,0 +1,57 @@
+# Parameters to pass to the Snakefile
+
+# Hydrogen bond analysis methods
+methods_hbonds:
+  - gmx
+  - mda
+
+# Structures to analyze
+structure:
+  - 1YVL_noNTD
+
+# Mutations to analyze
+muts:
+  - WT
+  - T385M
+  - R274W_T385M
+
+# Replicates
+reps:
+  - rep1
+  - rep2
+  - rep3
+
+# data directory
+datadir: "data"
+
+# snakemake script directory
+scriptdir: "scripts/analysis04/scripts_analysis"
+
+# DNA in complex?
+dna: false
+
+# Phosphate groups in complex?
+phosphate: false
+
+# Offset for residue numbering (default: 0)
+offset: 133
+
+# Protein domain definitions
+domains:
+  - start: 134
+    end: 317
+    color: blue
+    label: CCD
+  - start: 318
+    end: 488
+    color: red
+    label: DBD
+  - start: 489
+    end: 576
+    color: green
+    label: LD
+  - start: 577
+    end: 683
+    color: yellow
+    label: SH2
+  

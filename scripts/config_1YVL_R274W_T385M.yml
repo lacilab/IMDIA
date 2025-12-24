@@ -11,10 +11,12 @@ structure:
 
 # Mutations to analyze
 muts:
-  - T385M
+  - R274W_T385M
 
 # Replicates
 reps:
+  - rep1
+  - rep2
   - rep3
 
 # data directory
