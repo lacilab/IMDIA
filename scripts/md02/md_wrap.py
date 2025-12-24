@@ -10,7 +10,7 @@ from scripts.utils.helpers import gen_flags, setup_logger
 def main(datadir: str, gmxdir: str, repn: int, 
     dna: bool = False, phos: bool = False,
     ntmpi: int = None, ntomp: int = None, nb : str = None, pme :str = None, npme : int = None,
-    ngpu : int = None, gpulist : str = None, 
+    ngpu : int = None, gputasks : str = None, 
     em : str = None, nvt : str = None, npt : str = None, md : str = None, 
     ):
 

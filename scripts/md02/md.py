@@ -11,7 +11,7 @@ import subprocess
 import shutil
 import argparse
 from scripts.utils.helpers import setup_logger
-from group_index import main as group_index
+from scripts.utils.group_index import group_index
 
 parser = argparse.ArgumentParser(description="Perform MD simulation steps: minimization, NVT, NPT, and production MD.")
 parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
@@ -25,7 +25,7 @@ parser.add_argument('--nb', dest='nb', type=str, default='gpu', help='Calculate 
 parser.add_argument('--pme', dest='pme', type=str, default='gpu', help='Perform PME calculations on: auto, cpu, gpu')
 parser.add_argument('--npme', dest='npme', type=int, default=-1, help='Number of separate ranks to be used for PME, -1 is guess (let GROMACS decide)')
 parser.add_argument('--ngpu', dest='ngpu', type=int, default=None, help='Number of GPUs to use (default: auto-detected)')
-parser.add_argument('--gpulist', dest='gpulist', type=str, default=None, help='Sequence of GPU IDs to use i.e. 0011 (default: auto-detected)')
+parser.add_argument('--gputasks', dest='gputasks', type=str, default=None, help='Sequence of GPU IDs to use i.e. 0011 (default: auto-detected)')
 parser.add_argument('--em', dest='em', type=str, default=None, help='Energy minimization parameter file (default: minim.mdp)')
 parser.add_argument('--nvt', dest='nvt', type=str, default=None, help='NVT equilibration parameter file (default: nvt.mdp)')    
 parser.add_argument('--npt', dest='npt', type=str, default=None, help='NPT equilibration parameter file (default: npt.mdp)')
@@ -166,22 +166,22 @@ logger.debug(f"Running {NTMPI} MPI ranks x {NTOMP} threads per rank, with {NGPUS
 flag_nb_gpu = []
 flag_pme_gpu = []
 flag_gpu_tasks = []
-GPULIST = ""
+GPUTASKS = ""
 
 # Assign flags based on resources
 if NGPUS > 0:
     flag_nb_gpu = ["-nb", args.nb]
-    flag_pme_gpu = ["-pme", args.pme, "-npme", args.npme]
-    if args.gpulist is not None:
-        GPULIST = args.gpulist
-        logger.debug(f"Using specified GPU list: {GPULIST}")
+    flag_pme_gpu = ["-pme", args.pme, "-npme", str(args.npme)]
+    if args.gputasks is not None:
+        GPUTASKS = args.gputasks
+        logger.debug(f"Using specified GPU list: {GPUTASKS}")
     else:
-        logger.debug("No GPU list specified. Generating GPU task list automatically.")
+        logger.debug("No GPU task list specified. Generating GPU task list automatically.")
         for i in range(1, NTMPI+1):
             gpu = i % NGPUS if NGPUS > 0 else 0
-            GPULIST += str(gpu)
-    flag_gpu_tasks = ["-gpu_tasks", GPULIST]
-    logger.debug(f"Using {NGPUS} GPU(s) with gputasks: {GPULIST}")
+            GPUTASKS += str(gpu)
+    flag_gpu_tasks = ["-gputasks", GPUTASKS]
+    logger.debug(f"Using {NGPUS} GPU(s) with gputasks: {GPUTASKS}")
 else:
     logger.debug("No GPUs detected or specified. Running on CPU only.")
 
@@ -230,7 +230,7 @@ else:
     check_step("em", "Energy Minimization", outdir)
 
 ### 2. Create groups
-group_index(gmxdir=args.gmxdir, logfile=args.logfile, logname='md', structurefile=f"{args.gmxdir}/em.gro", dna=args.with_dna, phos=args.with_phosphate)
+group_index(gmxdir=outdir, logfile=args.logfile, logname='md', structurefile=f"{outdir}/em.gro", dna=args.with_dna, phos=args.with_phosphate)
 
 ### 3. NVT Equilibration
 if check_finished("nvt", outdir):
@@ -303,6 +303,7 @@ else:
         log_process_output(process, "gmx grompp MD")
         cmd = ["gmx", "mdrun", "-ntmpi", str(NTMPI), "-ntomp", str(NTOMP)
                ] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + ["-v", "-deffnm", f"{outdir}/md", "-quiet"]
+        logger.debug(f"Production MD command: {cmd}")
         process = subprocess.run(cmd, capture_output=True, text=True, check=True)
         log_process_output(process, "gmx mdrun MD")
     check_step("md", "Production MD", outdir)

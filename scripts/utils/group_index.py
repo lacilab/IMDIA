@@ -6,7 +6,7 @@ import subprocess
 from scripts.utils.helpers import setup_logger
 
 
-def main(gmxdir: str = None, logfile: str = None, logname: str = 'log', structurefile: str = None, dna: bool = False, phos: bool = False):
+def group_index(gmxdir: str = None, logfile: str = None, logname: str = 'log', structurefile: str = None, dna: bool = False, phos: bool = False):
     
     def log_process_output(process, step_name):
         if process.returncode != 0:
@@ -38,7 +38,7 @@ def main(gmxdir: str = None, logfile: str = None, logname: str = 'log', structur
     ndx_ready = False
     target_groups = [group, 'Chain_A', 'Chain_B', 'Water_Ions']
     if os.path.isfile(f"{gmxdir}/index.ndx"):
-        logger.debug(f'Index file {gmxdir}/index.ndx already exists. Checking for target groups...')
+        logger.debug(f'Index file {gmxdir}/index.ndx already exists. Checking for target groups {target_groups}')
         with open(f"{gmxdir}/index.ndx") as f:
             ndx_groups = []
             for line in f:
@@ -80,46 +80,47 @@ def main(gmxdir: str = None, logfile: str = None, logname: str = 'log', structur
         group_water = groups.index("Water")
         group_na = groups.index("Na")
         group_cl = groups.index("Cl")
-        if dna:
-            group_dna = groups.index("DNA")
+        # if dna:
+        #     group_dna = groups.index("DNA")
         if phos:
-            group_phosphate = groups.index("Phosphate")
+            group_phosphate = groups.index("PTR")
 
         # Remove index file
         os.remove(f"{gmxdir}/temp.ndx")
         # Run again to create index file with new groups
-        groups_input = f"""
-        chain A
-        name {group_n} Chain_A
-        chain B
-        name {group_n + 1} Chain_B
-        """
+        # groups_input = f"""
+        # chain A
+        # name {group_n} Chain_A
+        # chain B
+        # name {group_n + 1} Chain_B
+        # """
+        groups_input = ""
         if dna and phos:
             groups_input += f"""
             r DA | r DC | r DT | r DG | r DC3 | r DC5 | r DG3 | r DG5
-            name {group_n + 2} DNA
-            {group_protein} | {group_dna} | {group_phosphate}
-            name {group_n + 3} Protein_DNA_P
+            name {group_n} DNA
+            {group_protein} | {group_n} | {group_phosphate}
+            name {group_n + 1} Protein_DNA_P
             {group_protein} | {group_phosphate}
-            name {group_n + 4} Protein_P
+            name {group_n + 2} Protein_P
             {group_water} | {group_na} | {group_cl}
-            name {group_n + 5} Water_Ions
+            name {group_n + 3} Water_Ions
             quit
             """
-        elif dna:    
+        elif dna and not phos:    
             groups_input += f"""
             r DA | r DC | r DT | r DG | r DC3 | r DC5 | r DG3 | r DG5
-            name {group_n + 2} DNA
-            {group_protein} | {group_dna}
-            name {group_n + 3} Protein_DNA
+            name {group_n} DNA
+            {group_protein} | {group_n}
+            name {group_n + 1} Protein_DNA
             {group_water} | {group_na} | {group_cl}
-            name {group_n + 4} Water_Ions
+            name {group_n + 2} Water_Ions
             quit
             """
         else:
             groups_input += f"""
             {group_water} | {group_na} | {group_cl}
-            name {group_n + 2} Water_Ions
+            name {group_n} Water_Ions
             quit
             """
 
@@ -138,7 +139,3 @@ def main(gmxdir: str = None, logfile: str = None, logname: str = 'log', structur
 
     return group
     
-
-
-if __name__ == "__main__":
-    main()
