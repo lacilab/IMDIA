@@ -1,6 +1,7 @@
 data/*
 .vscode/*
 discard/*
+logs/
 
 scripts/analysis04/.snakemake
 scripts/04_analysis/.snakemake
