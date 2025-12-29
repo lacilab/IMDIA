@@ -19,9 +19,9 @@ def main():
                         help="DNA chain A topology file (.itp)")
     parser.add_argument("--dna_b", dest="dna_b", type=str, default="./toppar/molecule_4.itp",
                         help="DNA chain B topology file (.itp)")
-    parser.add_argument("--range_a", dest="range_a", type=str, default="[0,-1]",
+    parser.add_argument("--range_a", dest="range_a", type=str, default="0,-1",
                         help="Range of residues to consider for DNA A. 1-indexed (e.g., [1,10]). Default: full length.")
-    parser.add_argument("--range_b", dest="range_b", type=str, default="[0,-1]",
+    parser.add_argument("--range_b", dest="range_b", type=str, default="0,-1",
                         help="Range of residues to consider for DNA B. 1-indexed (e.g., [1,10]). Default: full length.")
     parser.add_argument("--type", dest="type", type=int, default=1,
                         help="Restraint type. Default: 1")
@@ -114,12 +114,15 @@ def main():
                 dna_dicts[key].append(select_cols)
         seqs[key] = seq
 
+    for key, value in seqs.items():
+        logger.debug(f"Sequence for DNA {key.upper()}: {''.join(seqs[key])}")
+
     # Apply residue range filters if provided
     ranges  = {'a': args.range_a.split(','), 'b': args.range_b.split(',')}
     for key, value in ranges.items():
-        if value[0] != 0 or value[1] != -1:
+        if int(value[0]) != 0 or int(value[1]) != -1:
             logger.debug(f"Applying residue range filter for DNA {key.upper()}: {value}")
-            seqs[key] = seqs[key][int(value[0]):int(value[1])]
+            seqs[key] = seqs[key][int(value[0]) : int(value[1]) + 1]
             logger.debug(f"Filtered sequence for DNA {key.upper()}: {''.join(seqs[key])}")
 
     # Check equal lengths (in the selected ranges)
@@ -166,7 +169,7 @@ def main():
     with open(args.topol) as f:
         itps = []
         for line in f:
-            if line.startswith("#include") and "forcefield" not in line:
+            if line.strip().startswith("#include") and "forcefield" not in line:
                 filename = line.split("/")[-1].strip().strip('"') 
                 itps.append(filename)
     
