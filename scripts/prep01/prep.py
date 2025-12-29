@@ -178,13 +178,15 @@ if args.with_dna:
         logger.error(f"--dna flag provided but found {len(dna_files)} files containing DNA residues. Expected 2 files.")
         sys.exit(1)
     print("The complex includes DNA. Adding DNA H-bond restraints.")
+
+    flag_range_a = ["--range_a", args.range_a] if args.range_a else []
+    flag_range_b = ["--range_b", args.range_b] if args.range_b else []
+
     cmd = [sys.executable, "-m", "scripts.prep01.prep_05_restraindnahbonds", "--logfile", f"{args.logfile}", "--gmxdir", gmxdir,
         "--topol", f"{gmxdir}/topol.top",
         "--dna_a", dna_files[0],
-        "--dna_b", dna_files[1],
-        "--range_a", args.range_a,
-        "--range_b", args.range_b]
-    subprocess.run(cmd, check=True)
+        "--dna_b", dna_files[1]] + flag_range_a + flag_range_b
+    subprocess.run(cmd, check=True, text = True)
 else:
     print("The complex does not include DNA. Skipping DNA H-bond restraints. If this is incorrect, rerun with the --dna flag.")
 
