@@ -63,7 +63,7 @@ def main():
            "-po", f"{args.gmxdir}/ions_out.mdp",
            "-quiet", "-maxwarn", "1"]
     
-    process = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    process = subprocess.run(cmd, capture_output=True, text=True)
 
     if process.returncode != 0:
         logger.error(f"gmx grompp error: {process.stderr}")
@@ -85,13 +85,18 @@ def main():
             input="Water\nquit\n",   # interactive stdin
             text=True,
             capture_output=True,
-            check=True
         )
-    
+
     if process.returncode != 0:
         logger.error(f"gmx genion error: {process.stderr}")
     else:
         logger.debug(f"gmx genion output: {process.stdout}")
+        
+    with fileinput.FileInput(f"{args.gmxdir}/ions.gro", inplace=True) as f:
+            for line in f:
+                if "Water" in line:
+                    line = line.replace("Water", "WAT")
+                print(line, end=" ")
 
     ##### CHECKS #####
     
@@ -121,7 +126,7 @@ def main():
             logger.warning(f"The number of Cl ions added to the system is smaller or equal to 1. The system is likely not neutralized. Cl: {num_Cl}")
 
     # Unify nomenclature to avoid clashes
-    with fileinput.FileInput(f"{args.gmxdir}/topol.top", inplace=True, backup='.bak') as f:
+    with fileinput.FileInput(f"{args.gmxdir}/topol.top", inplace=True) as f:
         for line in f:
             replacements = {"Na+": "Na", "Cl-": "Cl"}
             for old, new in replacements.items():
