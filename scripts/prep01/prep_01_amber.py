@@ -78,7 +78,7 @@ def gen_chains(complex_file, logger_name, logfile, ffs=['water.opc', 'protein.ff
 		with open(chain_file, 'w') as f:
 			f.write(process_chain.stdout)
 
-		chain_file = add_hydrogens(chain_file, logger_name, ffs)
+		chain_file = add_hydrogens(chain_file, logger_name, logfile, ffs)
 		files.append(chain_file)
 
 	return tuple(files)
@@ -157,7 +157,7 @@ def main():
 	amberdir, pdb = os.path.split(args.path_pdb)
 	filename = os.path.splitext(pdb)[0]
 
-	ff_default = ['water.opc']
+	ff_default = ['water.opc', 'protein.ff19SB']
 
 	##### Initialize logger
 	logger_name = 'prep'
@@ -191,8 +191,8 @@ def main():
 	if args.with_phosphate:
 		logger.debug("Flag --phos used. This system contains phosphorylated residues.")
 		ff_default.append('phosaa19SB')
-	else:
-		ff_default.append('protein.ff19SB')
+	#else:
+	#	ff_default.append('protein.ff19SB')
 
 	if args.ffs:
 		logger.debug(f"Custom force fields provided: {args.ffs}")
