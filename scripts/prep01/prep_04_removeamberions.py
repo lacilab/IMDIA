@@ -173,16 +173,16 @@ def main():
         logger.warning(f"Found {num_Na_updated} Na and {num_Cl_updated} Cl lines in updated_gromacs.gro, but expected 0.")
 
     # remove Na and Cl from topol.top
-    with fileinput.FileInput(f"{args.gmxdir}/topol.top", inplace=True, backup='.bak') as f:
+    with fileinput.FileInput(f"{args.gmxdir}/topol.top", inplace=True) as f:
         for line in f:
             if "Na" in line or "Cl" in line:
                 continue
-            print(line, end=" ")
+            print(line, end="")
 
     replacements = {
         "Na+": "Na",
         "Cl-": "Cl",
-        #"WAT": "Water"
+        "WAT": "Water"
     }
 
     # Change ion names to gromacs standards on all .itp files in $gmxdir/toppar
@@ -191,12 +191,12 @@ def main():
         logger.debug(f"Updating ion names in {file}...")
         num_Na, num_Cl, num_Nasig, num_Clsig, num_WAT, num_water = count_lines(file, "Na", "Cl", "Na+", "Cl-", "WAT", "Water")
         logger.debug(f"Before: Na+: {num_Nasig}, Cl-: {num_Clsig}, Na: {num_Na}, Cl: {num_Cl}, WAT: {num_WAT}, Water: {num_water}")
-        with fileinput.FileInput(file, inplace=True, backup='.bak') as f:
+        with fileinput.FileInput(file, inplace=True) as f:
             for line in f:
                 for old, new in replacements.items():
                     if old in line:
                         line = line.replace(old, new)
-                print(line, end=" ")
+                print(line, end="")
         num_Na, num_Cl, num_Nasig, num_Clsig, num_WAT, num_water = count_lines(file, "Na", "Cl", "Na+", "Cl-", "WAT", "Water")
         logger.debug(f"After: Na+: {num_Nasig}, Cl-: {num_Clsig}, Na: {num_Na}, Cl: {num_Cl}, WAT: {num_WAT}, Water: {num_water}")
         if num_Nasig > 0 or num_Clsig > 0 or num_WAT > 0:
