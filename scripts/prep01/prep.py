@@ -132,6 +132,8 @@ cmd = [sys.executable, "-m", "scripts.prep01.prep_01_amber",
 cmd = [x for x in cmd if x.strip()]
 subprocess.run(cmd, check=True)
 
+logger.debug(f"The current directory is {os.getcwd()}")
+
 # Check that datadir/gromacs_common does not exist. If it exists, show a message and backup the old one (change the name)
 gmxdir = f"{datadir}/gromacs_common"
 if os.path.isdir(gmxdir):

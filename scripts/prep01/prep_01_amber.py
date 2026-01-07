@@ -11,11 +11,11 @@ import argparse
 from scripts.utils.helpers import setup_logger
 
 
-def remove_hydrogens(dir, filename, logger_name, logfile):
+def remove_hydrogens(filename, logger_name, logfile):
 	logger = setup_logger(logger_name, logfile)
 	cmd = f"""
-	pdb4amber -i {dir}/{filename}.pdb -o {dir}/{filename}_noH.pdb --nohyd --no-conect
-	pdb4amber -i {dir}/{filename}_noH.pdb -o {dir}/{filename}_reduced.pdb --reduce --no-conect
+	pdb4amber -i {filename}.pdb -o {filename}_noH.pdb --nohyd --no-conect
+	pdb4amber -i {filename}_noH.pdb -o {filename}_reduced.pdb --reduce --no-conect
     """
 	process = subprocess.run(cmd, shell=True, text=True, capture_output=True)
 	if process.returncode != 0:
@@ -23,7 +23,7 @@ def remove_hydrogens(dir, filename, logger_name, logfile):
 		return None  
 	else:
 		logger.info(f"Hydrogen processing complete.\n {process.stdout}")
-	return f"{dir}/{filename}_reduced.pdb"
+	return f"{filename}_reduced.pdb"
 
 
 def add_hydrogens(file, logger_name, logfile, ffs=['water.opc', 'protein.ff19SB']):
@@ -159,17 +159,21 @@ def main():
 
 	ff_default = ['water.opc', 'protein.ff19SB']
 
+	# Change to amberdir so fixed amber log files are stored here
+	cwd = os.getcwd() 
+	os.chdir(amberdir)
+
 	##### Initialize logger
 	logger_name = 'prep'
 	logger = setup_logger(logger_name, args.logfile)
 
 	##### Check for checkpoint files from previous runs #####
 	expected_files = [
-		f"{amberdir}/{filename}_protonated_solvated.inpcrd",
-		f"{amberdir}/{filename}_protonated_solvated.prmtop",
+		f"{filename}_protonated_solvated.inpcrd",
+		f"{filename}_protonated_solvated.prmtop",
 	]
 
-	checkpoint_files = glob.glob(f"{amberdir}/check_01_amber_*.done")
+	checkpoint_files = glob.glob(f"check_01_amber_*.done")
 	if checkpoint_files:
 		logger.warning(f"Checkpoint file(s) found: {', '.join(checkpoint_files)}")
 		# Check if expected output files exist
@@ -202,7 +206,7 @@ def main():
 		ffs = ff_default
 
 	# Prepare the complex (make sure the hydrogens naming matches amber)
-	noH_complex = remove_hydrogens(amberdir, filename, logger_name, args.logfile)
+	noH_complex = remove_hydrogens(filename, logger_name, args.logfile)
 	protonated_complex = add_hydrogens(noH_complex, logger_name, args.logfile, ffs)
 
 	# Generate the receptor & ligand (also match the hydrogens to amber specifics)
@@ -221,10 +225,10 @@ def main():
 	logger.debug(f"Total execution time: {elapsed_time:.2f} seconds")
 
 	# Move logs to amberdir
-	if os.path.isfile("leap.log"):
-		shutil.move("leap.log", f"{amberdir}/leap.log")
-	if os.path.isfile("reduce_info.log"):
-		shutil.move("reduce_info.log", f"{amberdir}/reduce_info.log")
+	# if os.path.isfile("leap.log"):
+	# 	shutil.move("leap.log", f"{amberdir}/leap.log")
+	# if os.path.isfile("reduce_info.log"):
+	# 	shutil.move("reduce_info.log", f"{amberdir}/reduce_info.log")
 
 	# Check output files
 	logger.debug("Checking generated files.")
@@ -238,13 +242,18 @@ def main():
 
 	if not missing:
 		logger.info("AmberTools preparation completed successfully.")
-		checkpoint_filename = f"{amberdir}/check_01_amber_{int(time.time())}.done"
+		checkpoint_filename = f"check_01_amber_{int(time.time())}.done"
 		with open(checkpoint_filename, 'w') as f:
 			f.write("AmberTools preparation completed successfully.\n")
 		sys.exit(0)
 	else:
 		logger.error("AmberTools preparation failed. There are missing files.")
 		sys.exit(1)
+
+	# Return to initial working directory
+	logger.debug(f"The current directory is {os.getcwd()}")
+	os.chdir(cwd)
+	logger.debug(f"Changed directory to {os.getcwd()}")
 
 
 if __name__ == "__main__":

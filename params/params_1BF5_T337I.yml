@@ -1,0 +1,17 @@
+datadir: '/staging/leuven/stg_00187/users/Irati/data/1BF5/T337I'
+filename: '1BF5_T337I_DP.pdb'
+dna: True
+phos: True
+#range_a: '2,-1'
+#range_b: '2,-1'
+gmxdir: '/staging/leuven/stg_00187/users/Irati/data/1BF5/T337I/gromacs_common'
+repn: 1
+# ntmpi: "2"
+# ntomp: "16"
+# ngpu: "1"
+# gputasks: '01'
+# nb: gpu
+# pme: gpu
+# npme: "1"
+# md: 'scripts/md02/md_rerun.mdp'
+# snakeconfig: 'scripts/config_1YVL_all.yml'

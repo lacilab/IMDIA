@@ -1,10 +1,10 @@
-datadir: 'data/1BF5/E411A'
-filename: '1BF5_E411A_DP.pdb'
+datadir: '/data/leuven/359/vsc35916/thesis_main/data/1BF5/N460H'
+filename: '1BF5_N460H_DP.pdb'
 dna: True
 phos: True
 #range_a: '2,-1'
 #range_b: '2,-1'
-gmxdir: 'data/1BF5/E411A/gromacs_common'
+gmxdir: '/data/leuven/359/vsc35916/thesis_main/data/1BF5/N460H/gromacs_common'
 repn: 1
 # ntmpi: "2"
 # ntomp: "16"
