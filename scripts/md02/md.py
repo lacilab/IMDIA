@@ -19,8 +19,8 @@ parser.add_argument('--gmxdir', '-g', dest='gmxdir', default='.', help='Director
 parser.add_argument('--repn', '-n', dest='repn', type=int, default=None, help='Replicate number (used to create output directory)')
 parser.add_argument('--dna', dest='with_dna', action='store_true', help='Use if the system contains DNA. Adds DNA.bsc1 force field.')
 parser.add_argument('--phos', dest='with_phosphate', action='store_true', help='Use if the system contains phosphorylated residues.')
-parser.add_argument('--ntmpi', dest='ntmpi', type=int, default=None, help='Number of MPI ranks (default: auto-detected)')
-parser.add_argument('--ntomp', dest='ntomp', type=int, default=None, help='Number of OpenMP threads per rank (default: auto-detected)')
+parser.add_argument('--ntmpi', dest='ntmpi', type=int, default=0, help='Number of MPI ranks (default: auto-detected)')
+parser.add_argument('--ntomp', dest='ntomp', type=int, default=0, help='Number of OpenMP threads per rank (default: auto-detected)')
 parser.add_argument('--nb', dest='nb', type=str, default='gpu', help='Calculate non-bonded interactions on: auto, cpu, gpu')
 parser.add_argument('--pme', dest='pme', type=str, default='gpu', help='Perform PME calculations on: auto, cpu, gpu')
 parser.add_argument('--npme', dest='npme', type=int, default=-1, help='Number of separate ranks to be used for PME, -1 is guess (let GROMACS decide)')
@@ -127,40 +127,41 @@ if glob.glob(f"{outdir}/check_02_md_*.done"):
     logger.debug(f"To rerun these steps, please remove the checkpoint file(s): {outdir}/check_02_md_*.done")
     sys.exit(0)
 
-
+# TODO Not necessary, let GROMACS detect it
 # Check number of GPUs if not provided
-if args.ngpu is None:
-    try:
-        # Check if 'nvidia-smi' command exists
-        subprocess.run(['nvidia-smi'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-        # Count the number of GPUs
-        result = subprocess.run(['nvidia-smi', '-L'], stdout=subprocess.PIPE, text=True)
-        NGPUS = len(result.stdout.strip().splitlines())
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        # nvidia-smi not found or failed
-        NGPUS = 0
-else:
-    NGPUS = args.ngpu
+# if args.ngpu is None:
+#     try:
+#         # Check if 'nvidia-smi' command exists
+#         subprocess.run(['nvidia-smi'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+#         # Count the number of GPUs
+#         result = subprocess.run(['nvidia-smi', '-L'], stdout=subprocess.PIPE, text=True)
+#         NGPUS = len(result.stdout.strip().splitlines())
+#     except (subprocess.CalledProcessError, FileNotFoundError):
+#         # nvidia-smi not found or failed
+#         NGPUS = 0
+# else:
+#     NGPUS = args.ngpu
 
+# TODO Not necessary, set default NTMPI = 0 and NTOMP = 0 in argparse and let GROMACS decide
 # Auto-detect NTMPI and NTOMP if not provided
-SLURM_NTASKS = os.environ.get('SLURM_NTASKS')
-SLURM_CPUS_PER_TASK = os.environ.get('SLURM_CPUS_PER_TASK')
-
-if SLURM_NTASKS and SLURM_CPUS_PER_TASK:
-    NTMPI = int(SLURM_NTASKS)
-    NTOMP = int(SLURM_CPUS_PER_TASK)
-else:
-    # fallback for local machine
-    NTOMP = multiprocessing.cpu_count()
-    NTMPI = 1
-
-if args.ntmpi is not None:
-    NTMPI = args.ntmpi
-if args.ntomp is not None:
-    NTOMP = args.ntomp
+# SLURM_NTASKS = os.environ.get('SLURM_NTASKS')
+# SLURM_CPUS_PER_TASK = os.environ.get('SLURM_CPUS_PER_TASK')
+# 
+# if SLURM_NTASKS and SLURM_CPUS_PER_TASK:
+#     NTMPI = int(SLURM_NTASKS)
+#     NTOMP = int(SLURM_CPUS_PER_TASK)
+# else:
+#     # fallback for local machine
+#     NTOMP = multiprocessing.cpu_count()
+#     NTMPI = 1
+# 
+# if args.ntmpi is not None:
+#     NTMPI = args.ntmpi
+# if args.ntomp is not None:
+#     NTOMP = args.ntomp
 
 ##### RESOURCE SETUP #####
-logger.debug(f"Running {NTMPI} MPI ranks x {NTOMP} threads per rank, with {NGPUS} GPUs")
+logger.debug(f"Running {args.ntmpi} MPI ranks x {args.ntomp} threads per rank.")
 
 # Initialize empty flags
 flag_nb_gpu = []
@@ -169,7 +170,7 @@ flag_gpu_tasks = []
 GPUTASKS = ""
 
 # Assign flags based on resources
-if NGPUS > 0:
+if args.ngpu is not None:
     flag_nb_gpu = ["-nb", args.nb]
     flag_pme_gpu = ["-pme", args.pme, "-npme", str(args.npme)]
     if args.gputasks is not None:
@@ -177,13 +178,13 @@ if NGPUS > 0:
         logger.debug(f"Using specified GPU list: {GPUTASKS}")
     else:
         logger.debug("No GPU task list specified. Generating GPU task list automatically.")
-        for i in range(1, NTMPI+1):
-            gpu = i % NGPUS if NGPUS > 0 else 0
+        for i in range(1, args.ntmpi+1):
+            gpu = i % args.ngpu if args.ngpu > 0 else 0
             GPUTASKS += str(gpu)
     flag_gpu_tasks = ["-gputasks", GPUTASKS]
-    logger.debug(f"Using {NGPUS} GPU(s) with gputasks: {GPUTASKS}")
+    logger.debug(f"Using {args.ngpu} GPU(s) with gputasks: {GPUTASKS}")
 else:
-    logger.debug("No GPUs detected or specified. Running on CPU only.")
+    logger.debug("No GPUs specified. Detecting available GPUs and assigning the default behavior.")
 
 
 ##### PARAMETER FILES SETUP #####
@@ -282,8 +283,8 @@ else:
     if os.path.isfile(f"{outdir}/md.cpt"):
         logger.debug(f"Resuming production MD from checkpoint {outdir}/md.cpt...")
         cmd = ["gmx", "mdrun", 
-            "-ntmpi", str(NTMPI), 
-            "-ntomp", str(NTOMP)] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + [
+            "-ntmpi", str(args.ntmpi), 
+            "-ntomp", str(args.ntomp)] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + [
                 "-cpi", f"{outdir}/md.cpt", "-append", "-v", "-deffnm", f"{outdir}/md", "-quiet"]
         process = subprocess.run(cmd, capture_output=True, text=True, check=True)
         log_process_output(process, "gmx mdrun MD (from checkpoint)")
@@ -301,7 +302,7 @@ else:
                "-quiet", "-maxwarn", "1"]
         process = subprocess.run(cmd, check=True, text=True, capture_output=True)
         log_process_output(process, "gmx grompp MD")
-        cmd = ["gmx", "mdrun", "-ntmpi", str(NTMPI), "-ntomp", str(NTOMP)
+        cmd = ["gmx", "mdrun", "-ntmpi", str(args.ntmpi), "-ntomp", str(args.ntomp)
                ] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + ["-v", "-deffnm", f"{outdir}/md", "-quiet"]
         logger.debug(f"Production MD command: {cmd}")
         process = subprocess.run(cmd, capture_output=True, text=True, check=True)
