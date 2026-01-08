@@ -182,7 +182,7 @@ def main():
     replacements = {
         "Na+": "Na",
         "Cl-": "Cl",
-        "WAT": "Water"
+        #"WAT": "Water"
     }
 
     # Change ion names to gromacs standards on all .itp files in $gmxdir/toppar

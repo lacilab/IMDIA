@@ -10,7 +10,7 @@ import sys
 import glob
 import shutil
 import time
-from scripts.utils.helpers import setup_logger
+from scripts.utils.helpers import count_lines, setup_logger
 
 def main():
     parser = argparse.ArgumentParser(description="Add GROMACS ions to the system to neutralize it and reach target concentration.")
@@ -70,6 +70,28 @@ def main():
     else:
         logger.info(f"gmx grompp output: {process.stdout}")
 
+    # # Change the name of the solvent from WAT to Water in .top so it can be selected as a group.
+    replacements = {
+        "WAT": "Water"
+    }
+
+    # Change ion names to gromacs standards on all .itp files in $gmxdir/toppar
+    topfiles = glob.glob(f"{args.gmxdir}/toppar/*.itp") + glob.glob(f"{args.gmxdir}/topol.top")
+    for file in topfiles:
+        logger.debug(f"Updating solvent names in {file}...")
+        num_WAT, num_water = count_lines(file, "WAT", "Water")
+        logger.debug(f"Before: WAT: {num_WAT}, Water: {num_water}")
+        with fileinput.FileInput(file, inplace=True) as f:
+            for line in f:
+                for old, new in replacements.items():
+                    if old in line:
+                        line = line.replace(old, new)
+                print(line, end="")
+        num_WAT, num_water = count_lines(file, "WAT", "Water")
+        logger.debug(f"After: WAT: {num_WAT}, Water: {num_water}")
+        if num_WAT > 0:
+            logger.warning(f"Substitution incomplete in {file}. This could result in clashing nomenclature later.")
+
     # There will be a warning because the system is not neutralized.
     cmd = ["gmx", "genion", 
            "-s", f"{args.gmxdir}/ions.tpr", 
@@ -92,11 +114,11 @@ def main():
     else:
         logger.debug(f"gmx genion output: {process.stdout}")
         
-    with fileinput.FileInput(f"{args.gmxdir}/ions.gro", inplace=True) as f:
-            for line in f:
-                if "Water" in line:
-                    line = line.replace("Water", "WAT")
-                print(line, end=" ")
+    # with fileinput.FileInput(f"{args.gmxdir}/ions.gro", inplace=True) as f:
+    #         for line in f:
+    #             if "Water" in line:
+    #                 line = line.replace("Water", "WAT  ")
+    #             print(line, end=" ")
 
     ##### CHECKS #####
     
@@ -126,13 +148,14 @@ def main():
             logger.warning(f"The number of Cl ions added to the system is smaller or equal to 1. The system is likely not neutralized. Cl: {num_Cl}")
 
     # Unify nomenclature to avoid clashes
-    with fileinput.FileInput(f"{args.gmxdir}/topol.top", inplace=True) as f:
-        for line in f:
-            replacements = {"Na+": "Na", "Cl-": "Cl"}
-            for old, new in replacements.items():
-                if old in line:
-                    line = line.replace(old, new)
-            print(line, end='')
+    for file in topfiles:
+        with fileinput.FileInput(file, inplace=True) as f:
+            for line in f:
+                replacements = {"Na+": "Na", "Cl-": "Cl", "Water": "WAT"}
+                for old, new in replacements.items():
+                    if old in line:
+                        line = line.replace(old, new)
+                print(line, end='')
 
     # Create checkpoint file
     checkpoint_filename = f"{args.gmxdir}/check_06_addgmxirons_{int(time.time())}.done"
