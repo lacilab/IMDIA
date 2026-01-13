@@ -50,10 +50,9 @@ def add_hydrogens(file, logger_name, logfile, ffs=['water.opc', 'protein.ff19SB'
 	return protonated_file
 
 
-def gen_chains(complex_file, logger_name, logfile, ffs=['water.opc', 'protein.ff19SB'], *chains):
-	"""Generate separate PDB files.
-		*chains takes a varible number of arguments for the chains to be separated, for example:
-		mono_a='A', mono_b='B', dna_a='C', dna_b='D'
+def gen_chains(complex_file, logger_name, logfile, chains, ffs=['water.opc', 'protein.ff19SB']):
+	"""
+		Generate separate PDB files.
 	"""
 	logger = setup_logger(logger_name, logfile)
 	complex_name = os.path.basename(complex_file)
@@ -81,10 +80,10 @@ def gen_chains(complex_file, logger_name, logfile, ffs=['water.opc', 'protein.ff
 		chain_file = add_hydrogens(chain_file, logger_name, logfile, ffs)
 		files.append(chain_file)
 
-	return tuple(files)
+	return list(files)
 
 
-def solvate_gen_parm(complex_file, ffs=['water.opc', 'protein.ff19SB'], *chains):
+def solvate_gen_parm(complex_file, chains, ffs=['water.opc', 'protein.ff19SB']):
 	"""Protonate and solvate the complex and chains using LEaP."""
 	complex_name = os.path.splitext(complex_file)[0]
 	complex_solvated_file = complex_name + '_solvated.pdb'
@@ -209,16 +208,32 @@ def main():
 	noH_complex = remove_hydrogens(filename, logger_name, args.logfile)
 	protonated_complex = add_hydrogens(noH_complex, logger_name, args.logfile, ffs)
 
-	# Generate the receptor & ligand (also match the hydrogens to amber specifics)
-	if args.with_dna:
-		mono_a_file, mono_b_file, dna_a_file, dna_b_file = gen_chains(noH_complex, logger_name, args.logfile, ffs,  'A', 'B', 'C', 'D')
-		solvate_gen_parm(protonated_complex, ffs, mono_a_file, mono_b_file, dna_a_file, dna_b_file)
-	else:
-		mono_a_file, mono_b_file = gen_chains(noH_complex, logger_name, args.logfile, ffs, 'A', 'B')	
-		solvate_gen_parm(protonated_complex, ffs, mono_a_file, mono_b_file)
+	# Extract chain ids from the PDB file
+	chains = set()
+	with open(pdb) as f:
+		for line in f:
+			if line.startswith(("ATOM  ", "HETATM")):
+				# PDB chain ID is column 22 (1-based), index 21 (0-based)
+				chain = line[21].strip()
+				if chain:
+					chains.add(chain)
 
-	solvated_complex_prmtop = protonated_complex.replace('.pdb', '_solvated.prmtop')
-	solvated_complex_pdb = protonated_complex.replace('.pdb', '_solvated.pdb')
+	chains = sorted(chains)
+	logger.debug(f"Chains found in PDB: {chains}")
+
+
+	# Generate the receptor & ligand (also match the hydrogens to amber specifics)
+	chain_files = gen_chains(noH_complex, logger_name, args.logfile, chains, ffs)
+	solvate_gen_parm(protonated_complex, chain_files, ffs)
+	# if args.with_dna:
+	# 	mono_a_file, mono_b_file, dna_a_file, dna_b_file = gen_chains(noH_complex, logger_name, args.logfile, ffs,  'A', 'B', 'C', 'D')
+	# 	solvate_gen_parm(protonated_complex, ffs, mono_a_file, mono_b_file, dna_a_file, dna_b_file)
+	# else:
+	# 	mono_a_file, mono_b_file = gen_chains(noH_complex, logger_name, args.logfile, ffs, 'A', 'B')	
+	# 	solvate_gen_parm(protonated_complex, ffs, mono_a_file, mono_b_file)
+
+	protonated_complex.replace('.pdb', '_solvated.prmtop')
+	protonated_complex.replace('.pdb', '_solvated.pdb')
 
 	end_time = time.time()
 	elapsed_time = end_time - start_time
