@@ -122,7 +122,7 @@ def main():
     for key, value in ranges.items():
         if int(value[0]) != 0 or int(value[1]) != -1:
             logger.debug(f"Applying residue range filter for DNA {key.upper()}: {value}")
-            seqs[key] = seqs[key][int(value[0]) : int(value[1]) + 1]
+            seqs[key] = seqs[key][int(value[0]) : int(value[1]) if int(value[1]) != -1 else None]
             logger.debug(f"Filtered sequence for DNA {key.upper()}: {''.join(seqs[key])}")
 
     # Check equal lengths (in the selected ranges)

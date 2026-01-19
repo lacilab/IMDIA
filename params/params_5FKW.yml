@@ -1,0 +1,8 @@
+datadir: 'data/5FKW'
+filename: '5FKW_mod.pdb'
+dna: True
+phos: False
+range_b: '1,-1'
+gmxdir: 'data/5FKW/gromacs_common'
+repn: '1'
+snakeconfig: 'scripts/config.yml'

@@ -1,10 +1,8 @@
-datadir: '/staging/leuven/stg_00187/users/Irati/data/1BF5/T337I'
+datadir: '/data/leuven/359/vsc35916/thesis_main/data/1BF5/T337I'
 filename: '1BF5_T337I_DP.pdb'
 dna: True
 phos: True
-#range_a: '2,-1'
-#range_b: '2,-1'
-gmxdir: '/staging/leuven/stg_00187/users/Irati/data/1BF5/T337I/gromacs_common'
+gmxdir: '/data/leuven/359/vsc35916/thesis_main/data/1BF5/T337I/gromacs_common'
 repn: 1
 # ntmpi: "2"
 # ntomp: "16"

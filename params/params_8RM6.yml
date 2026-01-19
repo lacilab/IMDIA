@@ -1,0 +1,9 @@
+datadir: 'data/8RM6'
+filename: '8RM6_mod.pdb'
+dna: True
+phos: False
+range_a: '2,-1'
+range_b: '2,-1'
+gmxdir: 'data/8RM6/gromacs_common'
+repn: '1'
+snakeconfig: 'scripts/config.yml'

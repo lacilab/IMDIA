@@ -1,0 +1,6 @@
+datadir: '/staging/leuven/stg_00187/users/Irati/data/1BF5/E411A'
+filename: '1BF5_E411A_DP.pdb'
+dna: True
+phos: True
+gmxdir: '/staging/leuven/stg_00187/users/Irati/data/1BF5/E411A/gromacs_common'
+repn: 1
