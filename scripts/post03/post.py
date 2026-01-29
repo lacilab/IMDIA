@@ -84,25 +84,28 @@ def main():
     os.remove(f"{args.repdir}/md_noPBC_mol_com.xtc")
     os.remove(f"{args.repdir}/md_noPBC_mol_com_cluster.xtc")
 
-    # Output .pdb files for original trajectory reference (t=0 of raw simulation)
+    # Rename post-processed trajectory
+    os.rename(f"{args.repdir}/md_noPBC_mol_com_cluster_fit.xtc", f"{args.repdir}/md_post.xtc")
+
+    # Output .pdb files at frame 10
     cmd = ["gmx", "trjconv", 
            "-s", f"{args.repdir}/md.tpr", 
-           "-f", f"{args.repdir}/md.xtc", 
+           "-f", f"{args.repdir}/md_post.xtc", 
            "-o", f"{args.repdir}/md_sys.pdb", 
-           "-pbc", "mol", 
-           "-ur", "compact", 
-           "-dump", "0", 
+           #"-pbc", "mol", 
+           #"-ur", "compact", 
+           "-dump", "10", 
            "-quiet", "-n", f"{args.repdir}/index.ndx"]
     process = subprocess.run(cmd, input="System\n", check=True, text=True, capture_output=True)
     log_process_output(process, "gmx trjconv - output pdb")
 
     cmd = ["gmx", "trjconv", 
            "-s", f"{args.repdir}/md.tpr", 
-           "-f", f"{args.repdir}/md.xtc", 
+           "-f", f"{args.repdir}/md_post.xtc", 
            "-o", f"{args.repdir}/md_prot.pdb", 
-           "-pbc", "mol", 
-           "-ur", "compact", 
-           "-dump", "0", 
+           #"-pbc", "mol", 
+           #"-ur", "compact", 
+           "-dump", "10", 
            "-quiet", "-n", f"{args.repdir}/index.ndx"]
     process = subprocess.run(cmd, input=f"{group}\n", check=True, text=True, capture_output=True)
     log_process_output(process, "gmx trjconv - output pdb protein complex")
