@@ -19,9 +19,11 @@ def pipeline(args: argparse.Namespace, datadir: str, filename: str, gmxdir: str,
         if args.prep:
             prep_wrap.main(datadir, filename, dna, phos, range_a, range_b, ffs)
         if args.md:
-            md_wrap.main(datadir, gmxdir, repn, dna, phos, ntmpi, ntomp, nb, pme, npme, ngpu, gputasks, em, nvt, npt, md)
+            for n in repn:
+                md_wrap.main(datadir, gmxdir, n, dna, phos, ntmpi, ntomp, nb, pme, npme, ngpu, gputasks, em, nvt, npt, md)
         if args.post:
-            post_wrap.main(datadir, repn, dna, phos)
+            for n in repn:
+                post_wrap.main(datadir, n, dna, phos)
         if args.analysis and args.rules is None:
             analysis_wrap.main(datadir, repn, snakeconfig, snakecores)
         elif args.analysis and args.rules is not None:
@@ -55,7 +57,7 @@ def main():
     elif not os.path.isdir(params["datadir"] + "/logs"):
         log_dir = os.path.join(params["datadir"], "logs")
         os.makedirs(log_dir, exist_ok=True)
-        
+
     pipeline(args, **params)
 
 
