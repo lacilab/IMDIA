@@ -437,8 +437,6 @@ rule hbonds_pymol:
     #     """
 
 rule contact_analysis:
-    params:
-        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/004_contacts"
     input: 
         universe = f"{PATH_RAW}/universe",
     output: 
@@ -455,8 +453,9 @@ rule contact_analysis:
         main(
             logfile=logfile,
             universe=input.universe,
-            outdir=params.outdir,
-            with_dna=DNA,
+            group1=GROUP1,
+            group2=GROUP2,
+            dna=DNA,
             outfiles=dict(output)
         )
     # shell: 
@@ -477,7 +476,9 @@ rule water_bridges:
             logfile=logfile,
             universe=input.universe,
             outcsv=output.water_bridges,
-            with_dna=DNA
+            group1=GROUP1,
+            group2=GROUP2,
+            dna=DNA
         )
     # shell: 
     #     """
