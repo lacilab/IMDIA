@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import re
 import pickle
 import argparse
 import MDAnalysis as mda
@@ -11,11 +12,13 @@ import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from scripts.utils.helpers import setup_logger
+
 
 ##### HELPER FUNCTIONS #####
 
 ##### Distance by residue pairs
-def contact_pairs(u, start_frame, stop_frame, cutoff, sel1, sel2) -> pd.DataFrame:
+def contact_pairs(u, start_frame, stop_frame, cutoff, sel1, sel2):
     # List to store contact data
     contact_data = []
 
@@ -48,8 +51,8 @@ def contact_pairs(u, start_frame, stop_frame, cutoff, sel1, sel2) -> pd.DataFram
 
 ##### MAIN FUNCTION #####
 
-def main(logfile : str = None, universe: str = None, outdir : str = None,
-         with_dna : bool = False, outfiles : list = []):
+def main(logfile : str = None, universe: str = None, group1 : str = None, group2 : str = None,
+         dna : bool = False, outfiles : list = []):
     # Arguments
     # parser = argparse.ArgumentParser(description="Perform contact analysis with MDAnalysis.")
     # parser.add_argument("-u", "--universe", help="Path to the Universe object")
@@ -72,6 +75,15 @@ def main(logfile : str = None, universe: str = None, outdir : str = None,
     # pairs_dbd_csv = f"{outdir}/pairs_dbd.csv"
     # pairs_full_csv = f"{outdir}/pairs_full.csv"
 
+    ##### Initialize logger
+    logger = setup_logger("analysis", logfile)
+    logger.debug("Starting contact analysis with MDAnalysis.")
+
+    # Check that group1 and group2 are provided
+    if group1 is None or group2 is None:
+        logger.error("Both group1 and group2 must be specified for interaction analysis.")
+        sys.exit(1)
+
     # Parameters
     cutoff = 5.0  # Distance cutoff in Å
     start_frame = 1000
@@ -81,15 +93,27 @@ def main(logfile : str = None, universe: str = None, outdir : str = None,
         u = pickle.load(f)
     u.trajectory[0]
 
-    # Group selection
-    if with_dna:
-        sel1 = u.select_atoms("protein or resname PTR")
-        # sel1_dbd = u.select_atoms("protein and resid 182:353")
-        sel2 = u.select_atoms("nucleic")
-    else:
-        sel1 = u.select_atoms("segid A")
-        #sel1_dbd = u.select_atoms("protein and resid 182:353")
-        sel2 = u.select_atoms("segid B")
+    # Define selections
+    selections = []
+    for group in [group1, group2]:
+        if re.match(r"^[A-Za-z]$", group):
+            logger.debug(f"MDA - contact analysis - Group {group} identified as chain.")
+            selections.append(u.select_atoms(f"segid {group}"))
+        elif group == "DNA" and dna:
+            logger.debug(f"MDA - contact analysis - Group {group} identified as DNA.")
+            selections.append(u.select_atoms("nucleic")) 
+        elif group == "Protein":
+            logger.debug(f"MDA - contact analysis - Group {group} identified as Protein.")
+            protein_sel = u.select_atoms("protein")
+            # Get segids of the protein, to avoid leaving out non-standard residues like PTR
+            prot_segids = [seg.segid for seg in protein_sel.segments]
+            logger.debug(f"Protein segids identified: {prot_segids}")
+            selections.append(u.select_atoms("segid " + " ".join(prot_segids)))
+
+    if len(selections) != 2:
+        logger.warning("Error in defining selections for contact analysis.")
+
+    sel1, sel2 = selections
 
     ##### Distance-based contact analysis
     # Full protein
