@@ -25,9 +25,9 @@ def pipeline(args: argparse.Namespace, datadir: str, filename: str, gmxdir: str,
             for n in repn:
                 post_wrap.main(datadir, n, dna, phos)
         if args.analysis and args.rules is None:
-            analysis_wrap.main(datadir, repn, snakeconfig, snakecores)
+            analysis_wrap.main(datadir, repn, snakeconfig, snakecores, ffs)
         elif args.analysis and args.rules is not None:
-            analysis_wrap.main(datadir, repn, snakeconfig, snakecores, args.rules)
+            analysis_wrap.main(datadir, repn, snakeconfig, snakecores, args.rules, ffs)
         
 
 

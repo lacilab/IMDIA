@@ -15,6 +15,8 @@ def main():
                         help='Number of cores to use for analysis. Default: all available CPUs.')
     parser.add_argument('--rules', dest='rules', nargs='+', default=None, 
                         help='Snakefile rules to be executed.')
+    parser.add_argument('--ffs', dest='ffs', type=str, default=None,
+                        help='Force fields used in GBSA.')
 
     # print help if required arguments are not provided
     if len(sys.argv) < 4:
@@ -31,14 +33,22 @@ def main():
         logger.debug(f"Executing specific rules: {args.rules}")
     else:
         logger.debug("No rules were specified. Executing all rules in the Snakefile.")
-    rule_groups = " ".join(args.rules) if args.rules is not None else ""
+        
+    config_args = [f"logfile={args.logfile}"]
 
-    cmd = ["snakemake",
+    if args.rules is not None:
+        config_args.append(f"rule_groups={' '.join(args.rules)}")
+
+    if args.ffs is not None:
+        config_args.append(f"ffs={' '.join(args.ffs)}")
+
+    cmd = [
+        "snakemake",
         "--snakefile", "scripts/analysis04/Snakefile",
-        "--cores", str(args.cores) if args.cores != "" else "all",
+        "--cores", str(args.cores) if args.cores else "all",
         "--configfile", args.configfile,
-        "--config", f"logfile={args.logfile}", f"rule_groups={rule_groups}",
-        #value_rules,
+        "--config",
+        *config_args
     ]
 
     # process = subprocess.run(cmd, text=True, check=True, capture_output=True)

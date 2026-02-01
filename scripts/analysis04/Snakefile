@@ -4,6 +4,9 @@
 
 logfile = config.get("logfile", None)
 rule_groups = config.get("rule_groups", "").split(' ')
+ffs = config.get("ffs", None)
+if ffs is not None:
+    ffs = ffs.split(' ')
 
 METHODS_HBONDS = config.get("methods_hbonds", ["gmx", "mda"])
 STRUCTURES     = config.get("structure", [])
@@ -672,17 +675,19 @@ rule clustering_pca_gmx:
     #        --outdir "{params.outdir}" \
     #    """
         
-# TODO path to GROMACS /bin as parameter to be added to mmpbsa.in
 rule gbsa:
     params:
-        scriptdir = SCRIPTDIR,
+        index_group1 = lambda wc, input: __import__("json").load(open(input.groups))["group1"],
+        index_group2 = lambda wc, input: __import__("json").load(open(input.groups))["group2"],
         gmxdir = lambda wc: f"{PATH_GMX_WC(wc)}",
-        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/006_gbsa"
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/006_gbsa_{GROUP1}_{GROUP2}",
+        scriptdir = SCRIPTDIR,
     input: 
         tpr = f"{PATH_GMX}/md.tpr",
         xtc = f"{PATH_GMX}/md_post.xtc",
         top = f"{PATH_MUT}/gromacs_common/topol.top",
-        index = f"{PATH_GMX}/index.ndx",
+        index = f"{PATH_GMX}/interaction_{GROUP1}_{GROUP2}.ndx",
+        groups = f"{PATH_GMX}/interaction_groups_{GROUP1}_{GROUP2}.json"
     output: 
         gbsa_info = f"{PATH_GBSA}/_GMXMMPBSA_info",
         gbsa_final_results = f"{PATH_GBSA}/FINAL_RESULTS_MMPBSA.dat",
@@ -696,11 +701,15 @@ rule gbsa:
             scriptdir=params.scriptdir,
             gmxdir=params.gmxdir,
             outdir=params.outdir,
+            index = input.index,
             tprfile=input.tpr,
             xtcfile=input.xtc,
             topfile=input.top,
-            dna = DNA,
-            phos = PHOS
+            index_group1=params.index_group1,
+            index_group2=params.index_group2,
+            dna=DNA,
+            phos=PHOS,
+            ffs = ffs
         )
     #shell: 
     #    """
