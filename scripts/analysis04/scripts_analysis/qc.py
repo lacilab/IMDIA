@@ -167,16 +167,25 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
     ########## RMSF ##########
     average = align.AverageStructure(u, u, select='protein and name CA',
                                 ref_frame=0).run()
+    logger.debug("Average structure calculated for RMSF analysis.")
     ref = average.results.universe
 
     aligner = align.AlignTraj(u, ref,
                         select='protein and name CA',
                         in_memory=True).run()
+    logger.debug("Trajectory aligned to average structure for RMSF analysis.")
 
     monoA_ca = monoA.select_atoms('name CA')
     RA = rms.RMSF(monoA_ca).run()
     monoB_ca = monoB.select_atoms('name CA')
     RB = rms.RMSF(monoB_ca).run()
+
+    for name, sele in [("monoA_ca", monoA_ca), ("monoB_ca", monoB_ca)]:
+            if sele.n_atoms == 0:
+                logger.error(f"Selection {name} is empty. Please check the chain ids.")
+                sys.exit(1)
+            else:
+                logger.debug(f"Selection {name} has {sele.n_atoms} atoms.")
 
     # Save Protein RMSF to CSV
     rmsf_prot = pd.DataFrame({
