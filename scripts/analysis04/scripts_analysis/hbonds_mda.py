@@ -2,6 +2,7 @@
 
 import sys
 import os
+import re
 import pickle
 import MDAnalysis as mda
 from MDAnalysis.analysis.hydrogenbonds.hbond_analysis import HydrogenBondAnalysis as HBA
@@ -13,7 +14,7 @@ from scripts.utils.helpers import setup_logger
 def main(logfile: str = None, universe: str = None, 
          tprfile: str = None, xtcfile: str = None, 
          outdir : str = None, hbonds_mda_parsed : str = None,
-         dna : bool = False):
+         group1: str = None, group2: str = None, dna : bool = False):
     # # Arguments
     # parser = argparse.ArgumentParser(description="Parse MDAnalysis hydrogen bonds output into a CSV file.")
     # parser.add_argument("-u", "--universe", help="MDAnalysis universe file.")
@@ -37,7 +38,16 @@ def main(logfile: str = None, universe: str = None,
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)
 
-    os.makedirs(outdir, exist_ok=True)
+    if not os.path.exists(outdir):
+        os.makedirs(outdir, exist_ok=True)
+        logger.info(f"Created output directory: {outdir}")
+    else:
+        logger.warning(f"Output directory already exists: {outdir}")
+
+    # Check that group1 and group2 are provided
+    if group1 is None or group2 is None:
+        logger.error("Both group1 and group2 must be specified for interaction analysis.")
+        sys.exit(1)
 
     with open(universe, 'rb') as f:
         u = pickle.load(f)
@@ -45,32 +55,32 @@ def main(logfile: str = None, universe: str = None,
 
     u_tpr = mda.Universe(tprfile,xtcfile)
 
-    # Define groups
-    if dna:
-        group_a = u.select_atoms("segid A B") 
-        group_b = u.select_atoms("segid C D")
-        logger.debug(f"Protein atoms, chains A and B: {len(group_a)}")
-        logger.debug(f"DNA atom, chains C and D: {len(group_b)}")
-    else:
-        group_a = u.select_atoms("segid A") 
-        group_b = u.select_atoms("segid B")
-        logger.debug(f"Protein chain A atoms: {len(group_a)}")
-        logger.debug(f"Protein chain B atoms: {len(group_b)}")
+    # Define selections
+    selections = []
+    for group in [group1, group2]:
+        if re.match(r"^[A-Za-z]$", group):
+            logger.debug(f"MDA - hbond analysis - Group {group} identified as chain.")
+            selections.append(u.select_atoms(f"segid {group}"))
+        elif group == "DNA" and dna:
+            logger.debug(f"Group {group} identified as DNA.")
+            selections.append(u.select_atoms("nucleic")) 
+        elif group == "Protein":
+            logger.debug(f"Group {group} identified as Protein.")
+            protein_sel = u.select_atoms("protein")
+            # Get segids of the protein, to avoid leaving out non-standard residues like PTR
+            prot_segids = [seg.segid for seg in protein_sel.segments]
+            logger.debug(f"Protein segids identified: {prot_segids}")
+            selections.append(u.select_atoms("segid " + " ".join(prot_segids)))
 
     # Convert AtomGroup indices to selection strings
-    group_a_indices = " ".join(map(str, group_a.indices))
-    group_b_indices = " ".join(map(str, group_b.indices))
-
-    # Create selection strings
-    group_a_sel = f"index {group_a_indices}"
-    group_b_sel = f"index {group_b_indices}"
+    sele_index = []
+    for sel in selections:
+        sele_index.append("index " + " ".join(map(str, sel.indices)))
 
     # Define hbond analysis parameters
     hbonds_group_a_to_group_b = HBA(
         universe=u_tpr,
-        between=[
-            [group_a_sel, group_b_sel], # for protein-water hbonds
-        ],
+        between=[sele_index],
         d_h_a_angle_cutoff=120,
         d_a_cutoff=3.5
     )

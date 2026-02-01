@@ -342,6 +342,8 @@ rule hbonds_mda:
             xtcfile=input.xtc,
             outdir=params.outdir,
             hbonds_mda_parsed=output.hbonds_mda_parsed,
+            group1=GROUP1,
+            group2=GROUP2,
             dna=DNA
         )
     #shell:
