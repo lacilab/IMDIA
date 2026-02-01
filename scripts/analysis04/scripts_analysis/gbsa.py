@@ -6,7 +6,7 @@ import shutil
 import subprocess
 from pathlib import Path
 from scripts.utils.helpers import setup_logger
-from scripts.utils.group_index import main as group_index
+from scripts.utils.group_index import group_index
 
 def main(logfile: str = None, scriptdir: str = None, 
          gmxdir: str = None, outdir: str = None, tprfile: str = None,
