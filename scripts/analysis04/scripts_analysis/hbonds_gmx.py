@@ -6,10 +6,12 @@ import warnings
 # suppress some MDAnalysis warnings about PSF files
 warnings.filterwarnings('ignore')
 import os
+import sys
 from scripts.utils.helpers import setup_logger
-from scripts.utils.group_index import main as group_index
+from scripts.utils.group_index import group_index_interactions
 
-def main(logfile: str =None, gmxdir : str = None, outdir : str =None, dna : bool = False, phos : bool = False):
+def main(logfile: str =None, gmxdir : str = None, outdir : str =None, indexfile : str = None,
+         group1: str = None, group2: str = None, dna : bool = False, phos : bool = False):
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)
 
@@ -18,31 +20,27 @@ def main(logfile: str =None, gmxdir : str = None, outdir : str =None, dna : bool
         logger.info(f"Created output directory: {outdir}")
     else:
         logger.warning(f"Output directory already exists: {outdir}")
-    
-    # Prepare index file
-    protein_group = group_index(gmxdir=gmxdir, logfile=logfile, logname='analysis', structurefile=f"{gmxdir}/md_sys.pdb", dna=dna, phos=phos)
+
+    # Check that group1 and group2 are provided
+    if group1 is None or group2 is None:
+        logger.error("Both group1 and group2 must be specified for interaction analysis.")
+        sys.exit(1)
 
     # Calculate hydrogen bonds between selections
     cmd = ["gmx", "hbond", 
-           "-f", f"{gmxdir}/md_noPBC_mol_com_cluster_fit.xtc", 
+           "-f", f"{gmxdir}/md_post.xtc", 
            "-s", f"{gmxdir}/md.tpr", 
-           "-n", f"{gmxdir}/index.ndx", 
+           "-n", indexfile, 
            "-b", "100000",
            "-o", f"{outdir}/hbonds_gmx.ndx", 
            "-pf", "yes", 
            "-num", f"{outdir}/hbonds_gmx_num.xvg"]
-    
-    if dna:
-        input_sele = f"""
-        {protein_group}
-        DNA
-        """
-    else:
-        input_sele = """
-        Chain_A
-        Chain_B
-        """
 
+    input_sele = f"""
+        {group1}
+        {group2}
+        """
+    logger.debug(f"Running gmx hydrogen bonds analysis between groups: {group1} and {group2}")
     subprocess.run(cmd, input=input_sele, text=True, check=True)
     logger.info(f"Hydrogen bonds analysis completed with GROMACS. Results saved in: {outdir}")
     

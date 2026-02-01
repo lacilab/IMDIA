@@ -15,6 +15,8 @@ DNA            = config.get("dna", False)
 PHOS           = config.get("phosphate", False)
 OFFSET         = int(config.get("offset", 0))
 DOMAINS        = config.get("domains", [])
+GROUP1         = config.get("group1", None)
+GROUP2         = config.get("group2", None)
 
 
 # ------------------------
@@ -58,11 +60,11 @@ PATH_GMX_WC = lambda wc: f"{DATADIR}/{wc.struct}/{wc.mut}/{wc.rep}/gromacs"
 PATH_GMX = f"{PATH_REP}" + "/gromacs"
 PATH_RAW = f"{PATH_ANALYSIS}" + "/000_raw"
 PATH_QC = f"{PATH_ANALYSIS}" + "/001_qc"
-PATH_HBONDS = f"{PATH_ANALYSIS}" + "/002_hbonds"
+PATH_HBONDS = f"{PATH_ANALYSIS}/002_hbonds_{GROUP1}_{GROUP2}" 
 PATH_PCA = f"{PATH_ANALYSIS}" + "/003_pca"
-PATH_CONTACTS = f"{PATH_ANALYSIS}" + "/004_contacts"
+PATH_CONTACTS = f"{PATH_ANALYSIS}/004_contacts_{GROUP1}_{GROUP2}"
 PATH_CLUST = f"{PATH_ANALYSIS}" + "/005_clustering"
-PATH_GBSA= f"{PATH_ANALYSIS}" + "/006_gbsa"
+PATH_GBSA= f"{PATH_ANALYSIS}/006_gbsa_{GROUP1}_{GROUP2}"
 
 ###### CONDITIONAL OUTPUT - RUN CERTAIN RULES BASED ON INPUT LIST ######
 # Conditional I/O files
@@ -99,10 +101,12 @@ if "qc" in rule_groups or rule_groups == [""]:
     all_input["rmsf_prot_csv"] = expand(f"{PATH_QC}/rmsf_prot.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input.update(in_rmsf_dna)
 if "hbonds" in rule_groups or rule_groups == [""]:
-    all_input["hbonds_mda_parsed"] = expand(f"{PATH_HBONDS}/hbonds_mda_parsed.csv", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["hbonds_gmx"] = expand(f"{PATH_HBONDS}/hbonds_gmx.ndx", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["hbonds_gmx_num"] = expand(f"{PATH_HBONDS}/hbonds_gmx_num.xvg", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["hbonds_gmx_parsed"] = expand(f"{PATH_HBONDS}/hbonds_gmx_parsed.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    if "gmx" in METHODS_HBONDS:
+        all_input["hbonds_gmx"] = expand(f"{PATH_HBONDS}/hbonds_gmx.ndx", struct=structures, mut=mutations, rep=reps, zip=True)
+        all_input["hbonds_gmx_num"] = expand(f"{PATH_HBONDS}/hbonds_gmx_num.xvg", struct=structures, mut=mutations, rep=reps, zip=True)
+        all_input["hbonds_gmx_parsed"] = expand(f"{PATH_HBONDS}/hbonds_gmx_parsed.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    if "mda" in METHODS_HBONDS:
+        all_input["hbonds_mda_parsed"] = expand(f"{PATH_HBONDS}/hbonds_mda_parsed.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["hbonds_perframe"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_perframe.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
     all_input["hbonds_ext"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_ext.csv", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
     all_input["hbonds_prot_domains"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_prot_domains.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
@@ -154,7 +158,6 @@ if "gbsa" in rule_groups or rule_groups == [""]:
     all_input["gbsa_energy_decomp"] = expand(f"{PATH_GBSA}/FINAL_ENERGY_DECOMP.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     
 
-
 ##### RULES #####
 rule all:
     input:
@@ -169,7 +172,7 @@ rule universe:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/000_raw"
     input:
         pdb = f"{PATH_GMX}/md_sys.pdb",
-        xtc = f"{PATH_GMX}/md_noPBC_mol_com_cluster_fit.xtc"
+        xtc = f"{PATH_GMX}/md_post.xtc"
     output:
         universe = f"{PATH_RAW}/universe"
     run:
@@ -220,6 +223,7 @@ rule qc:
             universe=input.universe,
             outdir=params.outdir,
             outfiles=dict(output),
+            with_dna=DNA,
             offset=OFFSET,
             domains=DOMAINS
         )
@@ -233,12 +237,43 @@ rule qc:
     #        --domains {DOMAINS} \
     #   """
 
+
+# Get interaction group names in the index file
+rule interaction_index:
+    params:
+        gmxdir = lambda wc: f"{PATH_GMX_WC(wc)}",
+    input:
+        pdb = f"{PATH_GMX}/md_sys.pdb",
+    output:
+        index = f"{PATH_GMX}/interaction_{GROUP1}_{GROUP2}.ndx",
+        groups = f"{PATH_GMX}/interaction_groups_{GROUP1}_{GROUP2}.json"
+    run:
+        from scripts.utils.group_index import group_index_interactions
+        import json
+
+        index_group1, index_group2 = group_index_interactions(gmxdir=params.gmxdir, logfile=logfile, logname='analysis', 
+                                                         structurefile=input.pdb, indexfile=output.index,
+                                                         group1=GROUP1, group2=GROUP2, dna=DNA, phos=PHOS)
+
+        with open(output.groups, "w") as f:
+            json.dump(
+                {
+                    "group1": index_group1,
+                    "group2": index_group2
+                },
+                f
+            )
+
 rule hbonds_gmx:
     params:
         gmxdir = lambda wc: f"{PATH_GMX_WC(wc)}",
-        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/002_hbonds"
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/002_hbonds_{GROUP1}_{GROUP2}",
+        index_group1 = lambda wc, input: __import__("json").load(open(input.groups))["group1"],
+        index_group2 = lambda wc, input: __import__("json").load(open(input.groups))["group2"]
     input:
-        universe = f"{PATH_RAW}/universe"
+        universe = f"{PATH_RAW}/universe",
+        index = f"{PATH_GMX}/interaction_{GROUP1}_{GROUP2}.ndx",
+        groups = f"{PATH_GMX}/interaction_groups_{GROUP1}_{GROUP2}.json"
     output:
         hbonds_gmx = f"{PATH_HBONDS}/hbonds_gmx.ndx",
         hbonds_gmx_num = f"{PATH_HBONDS}/hbonds_gmx_num.xvg"
@@ -248,6 +283,9 @@ rule hbonds_gmx:
             logfile=logfile,
             gmxdir=params.gmxdir,
             outdir=params.outdir,
+            indexfile=input.index,
+            group1=params.index_group1,
+            group2=params.index_group2,
             dna=DNA,
             phos=PHOS
         )
@@ -261,8 +299,12 @@ rule hbonds_gmx:
 
 
 rule hbonds_gmx_parse:
+    params:
+        index_group1 = lambda wc, input: __import__("json").load(open(input.groups))["group1"],
+        index_group2 = lambda wc, input: __import__("json").load(open(input.groups))["group2"]
     input:
-        hbonds_gmx = f"{PATH_HBONDS}/hbonds_gmx.ndx"
+        hbonds_gmx = f"{PATH_HBONDS}/hbonds_gmx.ndx",
+        groups = f"{PATH_GMX}/interaction_groups_{GROUP1}_{GROUP2}.json"
     output:
         hbonds_gmx_parsed = f"{PATH_HBONDS}/hbonds_gmx_parsed.csv"
     run:
@@ -270,7 +312,9 @@ rule hbonds_gmx_parse:
         main(
             logfile=logfile,
             hbonds_gmx=input.hbonds_gmx,
-            hbonds_gmx_parsed=output.hbonds_gmx_parsed
+            hbonds_gmx_parsed=output.hbonds_gmx_parsed,
+            group1=params.index_group1,
+            group2=params.index_group2
         )
     #shell:
     #   """
@@ -282,11 +326,11 @@ rule hbonds_gmx_parse:
 
 rule hbonds_mda:
     params:
-        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/002_hbonds"
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/002_hbonds_{GROUP1}_{GROUP2}"
     input: 
         universe = f"{PATH_RAW}/universe",
         tpr = f"{PATH_GMX}/md.tpr",
-        xtc = f"{PATH_GMX}/md_noPBC_mol_com_cluster_fit.xtc"
+        xtc = f"{PATH_GMX}/md_post.xtc"
     output: 
         hbonds_mda_parsed = f"{PATH_HBONDS}/hbonds_mda_parsed.csv"
     run:
@@ -344,7 +388,7 @@ rule hbonds_extend:
 
 rule hbonds_plots:
     params:
-        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/002_hbonds"
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/002_hbonds_{GROUP1}_{GROUP2}"
     input: 
         hbonds_ext = f"{PATH_HBONDS}/hbonds_{{method}}_ext.csv",
     output: 
@@ -468,7 +512,7 @@ rule pca_gmx:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/003_pca"
     input: 
         tpr = f"{PATH_GMX}/md.tpr",
-        xtc = f"{PATH_GMX}/md_noPBC_mol_com_cluster_fit.xtc"
+        xtc = f"{PATH_GMX}/md_post.xtc"
     output: 
         proj_timescale = f"{PATH_PCA}/2dproj_timescale.csv",
         eigenvec = f"{PATH_PCA}/eigenvec.trr",
@@ -489,7 +533,7 @@ rule pca_gmx_porcupine:
     input: 
         eigenvec = f"{PATH_PCA}/eigenvec.trr",
         tpr = f"{PATH_GMX}/md.tpr",
-        xtc = f"{PATH_GMX}/md_noPBC_mol_com_cluster_fit.xtc"
+        xtc = f"{PATH_GMX}/md_post.xtc"
     output: 
         porcupine = report(f"{PATH_PCA}/porcupine.png", category="PCA", labels={"sample": "{mut} {rep} Porcupine plot"}),
     run:
@@ -515,7 +559,7 @@ rule clustering_sklearn:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/005_clustering"
     input: 
         pdb = f"{PATH_GMX}/md_sys.pdb",
-        xtc = f"{PATH_GMX}/md_noPBC_mol_com_cluster_fit.xtc"
+        xtc = f"{PATH_GMX}/md_post.xtc"
     output: 
         summary = report(f"{PATH_CLUST}/analysis_summary.txt",  
                     category="Clustering", labels={"sample": "{mut} {rep} Summary"}),
@@ -549,7 +593,7 @@ rule clustering_gromos:
     input: 
         # proj_timescale = f"{PATH_PCA}/2dproj_timescale.csv",
         tpr = f"{PATH_GMX}/md.tpr",
-        xtc = f"{PATH_GMX}/md_noPBC_mol_com_cluster_fit.xtc"
+        xtc = f"{PATH_GMX}/md_post.xtc"
     output: 
         gromos_index = f"{PATH_CLUST}/gromos_clusters.ndx",
         gromos_xpm = f"{PATH_CLUST}/gromos_clusters.xpm",
@@ -633,7 +677,7 @@ rule gbsa:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/006_gbsa"
     input: 
         tpr = f"{PATH_GMX}/md.tpr",
-        xtc = f"{PATH_GMX}/md_noPBC_mol_com_cluster_fit.xtc",
+        xtc = f"{PATH_GMX}/md_post.xtc",
         top = f"{PATH_MUT}/gromacs_common/topol.top",
         index = f"{PATH_GMX}/index.ndx",
     output: 

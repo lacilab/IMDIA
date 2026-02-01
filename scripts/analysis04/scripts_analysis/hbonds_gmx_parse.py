@@ -3,7 +3,7 @@
 import pandas as pd
 from scripts.utils.helpers import setup_logger
 
-def main(logfile: str = None, hbonds_gmx: str = None, hbonds_gmx_parsed: str = None):
+def main(logfile: str = None, hbonds_gmx: str = None, hbonds_gmx_parsed: str = None, group1: str = None, group2: str = None):
     # # Arguments
     # parser = argparse.ArgumentParser(description="Parse GROMACS hydrogen bonds output into a CSV file.")
     # parser.add_argument("-i", "--ingmx", help="Input file, from the GROMACS hbond analysis.")
@@ -20,6 +20,11 @@ def main(logfile: str = None, hbonds_gmx: str = None, hbonds_gmx_parsed: str = N
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)
 
+    # Check that group1 and group2 are provided
+    if group1 is None or group2 is None:
+        logger.error("Both group1 and group2 must be specified to parse the gmx hbonds output.")
+        sys.exit(1)
+
     # Lists to store hydrogen bond data
     hbonds_data = []
     current_frame = None
@@ -33,18 +38,18 @@ def main(logfile: str = None, hbonds_gmx: str = None, hbonds_gmx_parsed: str = N
         line = line.strip()
         
         # Start parsing at [ hbonds_Chain_A-Chain_B_frame_0 ]
-        if '[ hbonds_Chain_A-Chain_B_frame_0 ]' in line:
+        if f'[ hbonds_{group1}-{group2}_frame_0 ]' in line:
             start_parsing = True
             current_frame = 0
             continue
         
-        # Stop parsing if we hit an unrelated section (optional, adjust if needed)
-        if start_parsing and line.startswith('[') and 'hbonds_Chain_A-Chain_B_frame' not in line:
+        # Stop parsing if hit an unrelated section
+        if start_parsing and line.startswith('[') and f'hbonds_{group1}-{group2}_frame' not in line:
             break
         
         if start_parsing:
             # Check if line is a new frame header
-            if line.startswith('[ hbonds_Chain_A-Chain_B_frame_'):
+            if line.startswith(f'[ hbonds_{group1}-{group2}_frame_'):
                 frame_num = int(line.split('_')[-1].replace(' ]', ''))
                 current_frame = frame_num
             # Process lines with atom indices
