@@ -476,9 +476,7 @@ rule water_bridges:
             logfile=logfile,
             universe=input.universe,
             outcsv=output.water_bridges,
-            group1=GROUP1,
-            group2=GROUP2,
-            dna=DNA
+            with_dna=DNA
         )
     # shell: 
     #     """
