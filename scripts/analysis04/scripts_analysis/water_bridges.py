@@ -14,7 +14,8 @@ from scripts.utils.helpers import setup_logger
 
 
 def main(logfile : str = None, universe : str = None, outcsv : str = None, 
-         group1: str = None, group2: str = None, dna : bool = False):
+         group1: str = None, group2: str = None, 
+         start: int = None, stop: int = None, dna : bool = False):
     # Arguments
     # parser = argparse.ArgumentParser(description="Analyze water bridges between protein and nucleic acids.")
     # parser.add_argument("-u", "--universe", help="Path to the Universe object")
@@ -79,7 +80,7 @@ def main(logfile : str = None, universe : str = None, outcsv : str = None,
 
 
     # Run the analysis over the trajectory
-    wba.run(start=1000, stop=2001, verbose=True)
+    wba.run(start=start, stop=stop, verbose=True)
 
     # Generate the table
     table = wba.generate_table()

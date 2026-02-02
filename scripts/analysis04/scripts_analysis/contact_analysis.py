@@ -51,7 +51,9 @@ def contact_pairs(u, start_frame, stop_frame, cutoff, sel1, sel2):
 
 ##### MAIN FUNCTION #####
 
-def main(logfile : str = None, universe: str = None, group1 : str = None, group2 : str = None,
+def main(logfile : str = None, universe: str = None, 
+         group1 : str = None, group2 : str = None,
+         start: int = None, stop: int = None,
          dna : bool = False, outfiles : list = []):
     # Arguments
     # parser = argparse.ArgumentParser(description="Perform contact analysis with MDAnalysis.")
@@ -86,8 +88,6 @@ def main(logfile : str = None, universe: str = None, group1 : str = None, group2
 
     # Parameters
     cutoff = 5.0  # Distance cutoff in Å
-    start_frame = 1000
-    stop_frame = 2001
 
     with open(universe, 'rb') as f:
         u = pickle.load(f)
@@ -118,7 +118,7 @@ def main(logfile : str = None, universe: str = None, group1 : str = None, group2
     ##### Distance-based contact analysis
     # Full protein
     cont = Contacts(u, select=(sel1, sel2), refgroup=(sel1, sel2), radius=cutoff)
-    cont.run(start=start_frame, stop=stop_frame, verbose=True)
+    cont.run(start=start, stop=stop, verbose=True)
 
     df_timeseries = pd.DataFrame(cont.results.timeseries)
     df_timeseries.to_csv(outfiles["timeseries_full_csv"], index=False)
@@ -160,7 +160,7 @@ def main(logfile : str = None, universe: str = None, group1 : str = None, group2
 
     # Full protein
     # Create DataFrame
-    contacts_df = contact_pairs(u, start_frame, stop_frame, cutoff, sel1, sel2)
+    contacts_df = contact_pairs(u, start, stop, cutoff, sel1, sel2)
     contacts_df.to_csv(outfiles["pairs_full_csv"], index=False)
 
     # DBD

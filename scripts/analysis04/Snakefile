@@ -20,6 +20,8 @@ OFFSET         = int(config.get("offset", 0))
 DOMAINS        = config.get("domains", [])
 GROUP1         = config.get("group1", None)
 GROUP2         = config.get("group2", None)
+START          = int(config.get("start_frame", None))     
+STOP           = int(config.get("stop_frame", None))
 
 
 # ------------------------
@@ -458,6 +460,8 @@ rule contact_analysis:
             universe=input.universe,
             group1=GROUP1,
             group2=GROUP2,
+            start=START,
+            stop=STOP,
             dna=DNA,
             outfiles=dict(output)
         )
@@ -481,6 +485,8 @@ rule water_bridges:
             outcsv=output.water_bridges,
             group1=GROUP1,
             group2=GROUP2,
+            start=START,
+            stop=STOP,
             dna=DNA
         )
     # shell: 
