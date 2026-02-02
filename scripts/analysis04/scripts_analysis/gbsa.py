@@ -11,7 +11,7 @@ from venv import logger
 from scripts.utils.helpers import setup_logger
 from scripts.utils.group_index import group_index
 
-def prep_mmpbsain(logger, infile, dna, phos, ffs):
+def prep_mmpbsain(logger, infile, start, stop, dna, phos, ffs):
     # get GROMACS path with which gmx. Take part before "bin"
     gmx_path = shutil.which("gmx").split("/gmx")[0]
     logger.debug(f"Detecting GROMACS path using 'which gmx' command: {gmx_path}")
@@ -41,13 +41,30 @@ def prep_mmpbsain(logger, infile, dna, phos, ffs):
                 ffs_import = ",".join(f"leaprc.{ff}" for ff in ffs)
                 lines[i] = f"  forcefields = \"{ffs_import}\"\n"
                 logger.debug(f"Inserted force fields into mmpbsa.in: {ffs_import}")
+            elif re.match(r"\s*startframe\s*=", line):
+                if start is not None:
+                    lines[i] = f"  startframe = {start}\n"  
+                    logger.debug(f"Set startframe to {start} in mmpbsa.in")
+                else:
+                    lines[i] = f"  startframe = 1\n"  
+                    logger.debug("No start frame provided; keeping default 1 in mmpbsa.in")
+            elif re.match(r"\s*endframe\s*=", line):
+                if stop is not None:
+                    lines[i] = f"  endframe = {stop}\n"  
+                    logger.debug(f"Set endframe to {stop} in mmpbsa.in")
+                else:
+                    lines[i] = f"  endframe = 9999999\n"  
+                    logger.debug("No stop frame provided; keeping default 9999999 in mmpbsa.in")
+        # write
         f.seek(0)
         f.writelines(lines)
         f.truncate()
 
 def main(logfile: str = None, scriptdir: str = None, gmxdir: str = None, outdir: str = None, 
          index:str = None, tprfile: str = None,
-         xtcfile: str = None, topfile: str = None, dna: bool = False, phos: bool = False,
+         xtcfile: str = None, topfile: str = None, 
+         start: int = None, stop: int = None, 
+         dna: bool = False, phos: bool = False,
          index_group1: str = None, index_group2: str = None, ffs: list = None):
     # Initialize logger
     logger = setup_logger("analysis", logfile)
@@ -65,7 +82,7 @@ def main(logfile: str = None, scriptdir: str = None, gmxdir: str = None, outdir:
     input_file_dst = os.path.join(outdir, "mmpbsa.in")
     shutil.copy(input_file_src, input_file_dst)
     logger.info(f"Copied GBSA input file from {input_file_src} to {input_file_dst}")
-    prep_mmpbsain(logger, input_file_dst, dna, phos, ffs)
+    prep_mmpbsain(logger, input_file_dst, start, stop, dna, phos, ffs)
     logger.debug(f"Prepared GBSA input file: {input_file_dst}")
     logger.debug(f"Computing GBSA with selections: {index_group1} and {index_group2}")
 

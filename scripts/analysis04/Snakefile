@@ -20,8 +20,8 @@ OFFSET         = int(config.get("offset", 0))
 DOMAINS        = config.get("domains", [])
 GROUP1         = config.get("group1", None)
 GROUP2         = config.get("group2", None)
-START          = int(config.get("start_frame", None))     
-STOP           = int(config.get("stop_frame", None))
+START          = config.get("start_frame", None)     
+STOP           = config.get("stop_frame", None)
 
 
 # ------------------------
@@ -713,6 +713,8 @@ rule gbsa:
             topfile=input.top,
             index_group1=params.index_group1,
             index_group2=params.index_group2,
+            start=START,
+            stop=STOP,
             dna=DNA,
             phos=PHOS,
             ffs = ffs
