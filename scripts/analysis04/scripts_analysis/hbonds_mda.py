@@ -9,11 +9,19 @@ from MDAnalysis.analysis.hydrogenbonds.hbond_analysis import HydrogenBondAnalysi
 import numpy as np
 import pandas as pd
 from scripts.utils.helpers import setup_logger
+from scripts.utils.parallel import an_perblock
+
+def hbond_factory(u, start, stop, sele_index, dha_angle, da_angle):
+    hbonds = HBA(universe=u, between=[sele_index], 
+                    d_h_a_angle_cutoff=dha_angle, d_a_cutoff=da_angle)
+    hbonds.run(start=start, stop=stop, verbose=True)
+    return hbonds.results.hbonds
 
 
 def main(logfile: str = None, universe: str = None, 
          tprfile: str = None, xtcfile: str = None, 
          outdir : str = None, hbonds_mda_parsed : str = None,
+         cores : int = 1,
          start: int = 0, stop: int = None,
          group1: str = None, group2: str = None, dna : bool = False):
     # # Arguments
@@ -79,17 +87,25 @@ def main(logfile: str = None, universe: str = None,
     for sel in selections:
         sele_index.append("index " + " ".join(map(str, sel.indices)))
 
-    # Define hbond analysis parameters
-    hbonds_group_a_to_group_b = HBA(
-        universe=u_tpr,
-        between=[sele_index],
-        d_h_a_angle_cutoff=120,
-        d_a_cutoff=3.5
-    )
-    # Run analysis, starting at frame 1000 until 2000 (end)
-    hbonds_group_a_to_group_b.run(start=start, stop=stop, verbose=True)
-    # Extract results
-    hbonds_array = hbonds_group_a_to_group_b.results.hbonds
+    # Define angle cutoffs
+    dha_angle, da_angle = 120, 3.5
+
+
+    if cores > 1:
+        logger.debug(f"MDA - hbond analysis - Running parallel Dask with {cores} cores")
+        hbonds_array = an_perblock(logger, tprfile, xtcfile, cores, hbond_factory, start, stop, sele_index, dha_angle, da_angle)
+    else:
+        logger.debug(f"MDA - hbond analysis - Running single-core analysis")
+        hbonds = HBA(
+            universe=u_tpr,
+            between=[sele_index],
+            d_h_a_angle_cutoff=dha_angle,
+            d_a_cutoff=da_angle
+        )
+        # Run analysis
+        hbonds.run(start=start, stop=stop, verbose=True)
+        # Extract results
+        hbonds_array = hbonds.results.hbonds
 
     # Name columns and save raw data
     df = pd.DataFrame(hbonds_array, columns=["frame", "donor", "hydrogen", "acceptor", "distance", "angle"])
