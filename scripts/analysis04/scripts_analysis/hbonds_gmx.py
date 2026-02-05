@@ -3,6 +3,7 @@
 import subprocess
 import MDAnalysis as mda
 import warnings
+import pickle
 # suppress some MDAnalysis warnings about PSF files
 warnings.filterwarnings('ignore')
 import os
@@ -10,8 +11,12 @@ import sys
 from scripts.utils.helpers import setup_logger
 from scripts.utils.group_index import group_index_interactions
 
-def main(logfile: str =None, gmxdir : str = None, outdir : str =None, indexfile : str = None,
-         group1: str = None, group2: str = None, dna : bool = False, phos : bool = False):
+def frame2ps(u, frame):
+    frame_dt_ps = u.trajectory.dt
+    return int(frame * frame_dt_ps)
+
+def main(logfile: str =None, universe: str = None, gmxdir : str = None, outdir : str =None, indexfile : str = None,
+         group1: str = None, group2: str = None, start: str = None, stop: str = None, dna : bool = False, phos : bool = False):
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)
 
@@ -26,12 +31,28 @@ def main(logfile: str =None, gmxdir : str = None, outdir : str =None, indexfile 
         logger.error("Both group1 and group2 must be specified for interaction analysis.")
         sys.exit(1)
 
+    if start is not None or stop is not None:
+        with open(universe, 'rb') as f:
+            u = pickle.load(f)
+            u.trajectory[0]
+    start_option = ["-b", str(frame2ps(u, start))] if start is not None else []
+    stop_option = ["-e", str(frame2ps(u, stop))] if stop is not None else []
+    if len(start_option) == 0:
+        logger.debug("gmx hbond: No start frame specified, using the beginning of the trajectory.")
+    else:
+        logger.debug(f"gmx hbond: Using start frame {start} corresponding to {start_option} ps")
+    if len(stop_option) == 0:
+        logger.debug("gmx hbond: No stop frame specified, using the end of the trajectory.")
+    else:
+        logger.debug(f"gmx hbond: Using stop frame {stop} corresponding to {stop_option} ps")
+
     # Calculate hydrogen bonds between selections
     cmd = ["gmx", "hbond", 
            "-f", f"{gmxdir}/md_post.xtc", 
            "-s", f"{gmxdir}/md.tpr", 
            "-n", indexfile, 
-           "-b", "100000",
+           *start_option,
+           *stop_option,
            "-o", f"{outdir}/hbonds_gmx.ndx", 
            "-pf", "yes", 
            "-num", f"{outdir}/hbonds_gmx_num.xvg"]

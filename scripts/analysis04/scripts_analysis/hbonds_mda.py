@@ -14,6 +14,7 @@ from scripts.utils.helpers import setup_logger
 def main(logfile: str = None, universe: str = None, 
          tprfile: str = None, xtcfile: str = None, 
          outdir : str = None, hbonds_mda_parsed : str = None,
+         start: int = 0, stop: int = None,
          group1: str = None, group2: str = None, dna : bool = False):
     # # Arguments
     # parser = argparse.ArgumentParser(description="Parse MDAnalysis hydrogen bonds output into a CSV file.")
@@ -37,6 +38,7 @@ def main(logfile: str = None, universe: str = None,
 
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)
+    logger.debug("Starting hydrogen bond analysis with MDAnalysis.")
 
     if not os.path.exists(outdir):
         os.makedirs(outdir, exist_ok=True)
@@ -62,10 +64,10 @@ def main(logfile: str = None, universe: str = None,
             logger.debug(f"MDA - hbond analysis - Group {group} identified as chain.")
             selections.append(u.select_atoms(f"segid {group}"))
         elif group == "DNA" and dna:
-            logger.debug(f"Group {group} identified as DNA.")
+            logger.debug(f"MDA - hbond analysis - Group {group} identified as DNA.")
             selections.append(u.select_atoms("nucleic")) 
         elif group == "Protein":
-            logger.debug(f"Group {group} identified as Protein.")
+            logger.debug(f"MDA - hbond analysis - Group {group} identified as Protein.")
             protein_sel = u.select_atoms("protein")
             # Get segids of the protein, to avoid leaving out non-standard residues like PTR
             prot_segids = [seg.segid for seg in protein_sel.segments]
@@ -85,7 +87,7 @@ def main(logfile: str = None, universe: str = None,
         d_a_cutoff=3.5
     )
     # Run analysis, starting at frame 1000 until 2000 (end)
-    hbonds_group_a_to_group_b.run(start=1000, stop=2001, verbose=True)
+    hbonds_group_a_to_group_b.run(start=start, stop=stop, verbose=True)
     # Extract results
     hbonds_array = hbonds_group_a_to_group_b.results.hbonds
 
