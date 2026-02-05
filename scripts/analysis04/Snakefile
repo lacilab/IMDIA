@@ -685,7 +685,8 @@ rule clustering_pca_gmx:
     #        --labels {input.kmeans} \
     #        --outdir "{params.outdir}" \
     #    """
-        
+  
+    
 rule gbsa:
     params:
         index_group1 = lambda wc, input: __import__("json").load(open(input.groups))["group1"],
@@ -693,6 +694,7 @@ rule gbsa:
         gmxdir = lambda wc: f"{PATH_GMX_WC(wc)}",
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/006_gbsa_{GROUP1}_{GROUP2}",
         scriptdir = SCRIPTDIR,
+    threads: workflow.cores * 0.95
     input: 
         tpr = f"{PATH_GMX}/md.tpr",
         xtc = f"{PATH_GMX}/md_post.xtc",
@@ -716,6 +718,7 @@ rule gbsa:
             tprfile=input.tpr,
             xtcfile=input.xtc,
             topfile=input.top,
+            cores=threads,
             index_group1=params.index_group1,
             index_group2=params.index_group2,
             start=START,
@@ -734,3 +737,4 @@ rule gbsa:
     #        --xtc {input.xtc} \
     #        --top {input.top} \
     #    """
+

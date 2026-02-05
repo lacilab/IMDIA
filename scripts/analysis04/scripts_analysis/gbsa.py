@@ -62,7 +62,7 @@ def prep_mmpbsain(logger, infile, start, stop, dna, phos, ffs):
 
 def main(logfile: str = None, scriptdir: str = None, gmxdir: str = None, outdir: str = None, 
          index:str = None, tprfile: str = None,
-         xtcfile: str = None, topfile: str = None, 
+         xtcfile: str = None, topfile: str = None, cores: int = 1,
          start: int = None, stop: int = None, 
          dna: bool = False, phos: bool = False,
          index_group1: str = None, index_group2: str = None, ffs: list = None):
@@ -86,18 +86,11 @@ def main(logfile: str = None, scriptdir: str = None, gmxdir: str = None, outdir:
     logger.debug(f"Prepared GBSA input file: {input_file_dst}")
     logger.debug(f"Computing GBSA with selections: {index_group1} and {index_group2}")
 
-    # Auto-detect NTMPI and NTOMP if not provided
-    SLURM_NTASKS = os.environ.get('SLURM_NTASKS')
-    SLURM_CPUS_PER_TASK = os.environ.get('SLURM_CPUS_PER_TASK')
-    if SLURM_NTASKS and SLURM_CPUS_PER_TASK:
-        NP = int(SLURM_NTASKS)
-    else:
-        # fallback for local machine
-        NP = multiprocessing.cpu_count()
 
     # Run MMPBSA calculation
     cmd = ["mpirun", "--use-hwthread-cpus", 
-           "-np", str(NP), "gmx_MMPBSA", 
+           "-np", str(cores),
+           "gmx_MMPBSA", 
            "-i", Path(input_file_dst).resolve(), 
            "-cs", Path(tprfile).resolve(), 
            "-ci", Path(index).resolve(), 

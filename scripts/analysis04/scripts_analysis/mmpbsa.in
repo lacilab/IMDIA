@@ -5,15 +5,13 @@ Be careful with the variables you modify, some can have severe consequences on t
 
 # In GROMACS 2023 use this command to update and avoid errors: python -m pip install git+https://github.com/Valdes-Tresanco-MS/gmx_MMPBSA.git -U
 
-# mpirun -np 120 gmx_MMPBSA MPI -i mmpbsa.in -cs md.tpr -ci index2.ndx -cg 20 12 -ct md_noPBC_whole_nojump_center_mol_com_fit.xtc -cp topol.top -cr md.pdb -nogui --clean
-
 # gmx_MMPBSA_ana -f . -r
 
 # General namelist variables
 &general
   sys_name             = ""                                             # System name
-  startframe           = 1000                                              # First frame to analyze
-  endframe             = 2001                                        # Last frame to analyze
+  startframe           =                                               # First frame to analyze
+  endframe             =                                         # Last frame to analyze
   interval             = 1                                              # Number of frames between adjacent frames analyzed
   forcefields          = ""                                              # Define the force field to build the Amber topology
   ions_parameters      = 10                                             # Define ions parameters to build the Amber topology   			
