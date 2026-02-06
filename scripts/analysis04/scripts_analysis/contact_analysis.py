@@ -13,6 +13,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from scripts.utils.helpers import setup_logger
+from scripts.utils.parallel import an_perblock
 
 
 ##### HELPER FUNCTIONS #####
@@ -35,23 +36,30 @@ def contact_pairs(u, start_frame, stop_frame, cutoff, sel1, sel2):
         for i, j in zip(close_pairs[0], close_pairs[1]):
             atom1 = sel1[i]
             atom2 = sel2[j]
-            contact = {
-                "frame": frame,
-                "sele1_resid": f"{atom1.resid}", 
-                "sele1_resnm": f"{atom1.resname}", 
-                "sele1_chain": f"{atom1.segid}",
-                "sele2_resid": f"{atom2.resid}", 
-                "sele2_resnm": f"{atom2.resname}",
-                "sele2_chain": f"{atom2.segid}",
-                "distance": dist_matrix[i, j]
-            }
+            contact = [frame,
+                f"{atom1.resid}", 
+                f"{atom1.resname}", 
+                f"{atom1.segid}",
+                f"{atom2.resid}", 
+                f"{atom2.resname}",
+                f"{atom2.segid}",
+                dist_matrix[i, j]
+            ]
             contact_data.append(contact)
-    return pd.DataFrame(contact_data)
+    return contact_data
+
+
+def contact_distance_factory(u, start, stop, sel1, sel2, cutoff):
+    cont = Contacts(u, select=(sel1, sel2), refgroup=(sel1, sel2), radius=cutoff)
+    cont.run(start=start, stop=stop, verbose=True)
+    return cont.results.timeseries
 
 
 ##### MAIN FUNCTION #####
 
 def main(logfile : str = None, universe: str = None, 
+         tprfile: str = None, xtcfile: str = None,
+         cores : int = 1,
          group1 : str = None, group2 : str = None,
          start: int = None, stop: int = None,
          dna : bool = False, outfiles : list = []):
@@ -117,17 +125,28 @@ def main(logfile : str = None, universe: str = None,
 
     ##### Distance-based contact analysis
     # Full protein
+    # if cores > 1:
+    #     logger.debug(f"MDA - contact analysis - Running parallel Dask with {cores} cores")
+    #     dist_results = an_perblock(logger, tprfile, xtcfile, cores, contact_distance_factory, start, stop, sel1, sel2, cutoff)
+    # else:
+    #     logger.debug(f"MDA - contact analysis - Running single-core analysis")
+    #     cont = Contacts(u, select=(sel1, sel2), refgroup=(sel1, sel2), radius=cutoff)
+    #     cont.run(start=start, stop=stop, verbose=True)
+    #     dist_results = cont.results.timeseries
+
+    logger.debug(f"MDA - contact analysis - Running single-core analysis")
     cont = Contacts(u, select=(sel1, sel2), refgroup=(sel1, sel2), radius=cutoff)
     cont.run(start=start, stop=stop, verbose=True)
+    dist_results = cont.results.timeseries
 
-    df_timeseries = pd.DataFrame(cont.results.timeseries)
+    df_timeseries = pd.DataFrame(dist_results)
     df_timeseries.to_csv(outfiles["timeseries_full_csv"], index=False)
 
-    average_contacts = np.mean(cont.results.timeseries[:, 1])
+    average_contacts = np.mean(dist_results[:, 1])
 
     # Timeseries plot
     plt.figure(figsize=(10, 6))
-    plt.plot(cont.results.timeseries[:, 0], cont.results.timeseries[:, 1], label='Contacts', color='blue')
+    plt.plot(dist_results[:, 0], dist_results[:, 1], label='Contacts', color='blue')
     plt.axhline(y=average_contacts, color='red', linestyle='--', label='Average Contacts')
     plt.xlabel('Frame')
     plt.ylabel('Fraction of Contacts')
@@ -160,7 +179,13 @@ def main(logfile : str = None, universe: str = None,
 
     # Full protein
     # Create DataFrame
-    contacts_df = contact_pairs(u, start, stop, cutoff, sel1, sel2)
+    if cores > 1:
+        logger.debug(f"MDA - contact analysis - Running parallel Dask for contact pairs with {cores} cores")
+        contacts_pairs = an_perblock(logger, tprfile, xtcfile, cores, contact_pairs, start, stop, cutoff, sel1, sel2)
+    else:
+        contacts_pairs = contact_pairs(u, start, stop, cutoff, sel1, sel2)
+    
+    contacts_df = pd.DataFrame(contacts_pairs, columns=["frame","sele1_resid","sele1_resnm","sele1_chain","sele2_resid","sele2_resnm","sele2_chain","distance"])
     contacts_df.to_csv(outfiles["pairs_full_csv"], index=False)
 
     # DBD

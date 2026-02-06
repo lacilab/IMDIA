@@ -451,6 +451,9 @@ rule hbonds_pymol:
 rule contact_analysis:
     input: 
         universe = f"{PATH_RAW}/universe",
+        tpr = f"{PATH_GMX}/md.tpr",
+        xtc = f"{PATH_GMX}/md_post.xtc"
+    threads: min(int(workflow.cores), 32)
     output: 
         timeseries_full_csv = f"{PATH_CONTACTS}/timeseries_full.csv",
         timeseries_full_png = report(f"{PATH_CONTACTS}/timeseries_full.png",
@@ -465,6 +468,9 @@ rule contact_analysis:
         main(
             logfile=logfile,
             universe=input.universe,
+            tprfile=input.tpr,
+            xtcfile=input.xtc,
+            cores=threads,
             group1=GROUP1,
             group2=GROUP2,
             start=START,
