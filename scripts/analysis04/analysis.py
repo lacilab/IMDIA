@@ -9,9 +9,10 @@ from scripts.utils.helpers import setup_logger
 def main():
     parser = argparse.ArgumentParser(description="Analyse MD simulation results.")
     parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
+    parser.add_argument('--datadir', '-d', dest='datadir', default=None, help='Path to the data directory.')
     parser.add_argument('--configfile', '-c', dest='configfile', type=str, default=None, 
                         help='Path to the YAML configuration file to be used in snakefile.')
-    parser.add_argument('--cores', '-n', dest='cores', default="", 
+    parser.add_argument('--cores', '-n', dest='cores', default="1", 
                         help='Number of cores to use for analysis. Default: all available CPUs.')
     parser.add_argument('--rules', dest='rules', nargs='+', default=None, 
                         help='Snakefile rules to be executed.')
@@ -19,7 +20,7 @@ def main():
                         help='Force fields used in GBSA.')
 
     # print help if required arguments are not provided
-    if len(sys.argv) < 4:
+    if len(sys.argv) < 5:
         parser.print_help()
         sys.exit(0)
 
@@ -34,7 +35,7 @@ def main():
     else:
         logger.debug("No rules were specified. Executing all rules in the Snakefile.")
         
-    config_args = [f"logfile={args.logfile}"]
+    config_args = [f"logfile={args.logfile}", f"datadir={args.datadir}"]
 
     if args.rules is not None:
         config_args.append(f"rule_groups={' '.join(args.rules)}")

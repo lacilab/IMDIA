@@ -8,14 +8,15 @@ ffs = config.get("ffs", None)
 if ffs is not None:
     ffs = ffs.split(' ')
 
+DATADIR        = config.get("datadir", "data")
+SCRIPTDIR      = os.path.join(os.path.dirname(workflow.snakefile), "scripts_analysis")
+
 METHODS_HBONDS = config.get("methods_hbonds", ["gmx", "mda"])
 STRUCTURES     = config.get("structure", [])
 MUTS           = config.get("muts", [])
-REPS           = config.get("reps", [])
-DATADIR        = config.get("datadir", "data")
-SCRIPTDIR     = config.get("scriptdir", "scripts/analysis04/scripts_analysis")
+REPS           = config.get("repn", [])
 DNA            = config.get("dna", False)
-PHOS           = config.get("phosphate", False)
+PHOS           = config.get("phos", False)
 OFFSET         = int(config.get("offset", 0))
 DOMAINS        = config.get("domains", [])
 GROUP1         = config.get("group1", None)
@@ -31,6 +32,7 @@ STOP           = config.get("stop_frame", None)
 combinations = []
 
 # Get first-level directories starting with rep for each mutation in MUTS
+print(f"Looking for replicates in the data directory {DATADIR} for structures {STRUCTURES} and mutations {MUTS}...")
 for structure in STRUCTURES:
     for mutation in MUTS:
         if len(REPS) < 1:
@@ -38,13 +40,17 @@ for structure in STRUCTURES:
                         if os.path.isdir(os.path.join(f"{DATADIR}/{structure}/{mutation}/", d)) 
                         and d.startswith("rep")]
         else:
-            reps = REPS
-            # TODO check if input rep directories exist
+            reps = []
+            for n in REPS:
+                if os.path.isdir(f"{DATADIR}/{structure}/{mutation}/rep{n}"):
+                    reps.append(f"rep{n}")
+        print(f"Found replicates for {structure} {mutation}: {reps}")
         for rep in reps:
-            combinations.append((structure, mutation, rep))
+            if os.path.isdir(f"{DATADIR}/{structure}/{mutation}/{rep}"):
+                combinations.append((structure, mutation, rep))
 
 # Print the pairs
-print ("Structure-Mutation-Sample combinations to be analyzed:")
+print("Structure-Mutation-Sample combinations to be analyzed:")
 for structure, mutation, rep in combinations:
     print(f"Structure: {structure}, Mutation: {mutation}, Replicate: {rep}")
 print("Hydrogen bonds analysis methods to be used:", METHODS_HBONDS)
@@ -335,7 +341,7 @@ rule hbonds_gmx_parse:
 rule hbonds_mda:
     params:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/002_hbonds_{GROUP1}_{GROUP2}"
-    threads: int(workflow.cores)
+    threads: min(int(workflow.cores), 64)
     input: 
         universe = f"{PATH_RAW}/universe",
         tpr = f"{PATH_GMX}/md.tpr",
@@ -701,7 +707,7 @@ rule gbsa:
         gmxdir = lambda wc: f"{PATH_GMX_WC(wc)}",
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/006_gbsa_{GROUP1}_{GROUP2}",
         scriptdir = SCRIPTDIR,
-    threads: workflow.cores * 0.95
+    threads: min(int(workflow.cores * 0.95), 64)
     input: 
         tpr = f"{PATH_GMX}/md.tpr",
         xtc = f"{PATH_GMX}/md_post.xtc",
