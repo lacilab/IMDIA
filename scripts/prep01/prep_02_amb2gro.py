@@ -8,33 +8,34 @@ import parmed as pmd
 import argparse
 from scripts.utils.helpers import setup_logger
 
-def main():
-    parser = argparse.ArgumentParser(description="Convert Amber files to GROMACS format.")
-    parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
-    parser.add_argument("--prmtop", "-p", dest="prmtop", type=str, required=True,
-                        help="Prmtop file")
-    parser.add_argument("--inpcrd", "-c", dest="inpcrd", type=str, required=True,
-                        help="Inpcrd file")
-    parser.add_argument("--top", "-t", dest="top", type=str, required=True,
-                        help="GROMACS top file")
-    parser.add_argument("--gro", "-g", dest="gro", type=str, required=True,
-                        help="GROMACS gro file")
-
-    # print help if no arguments are provided
-    if len(sys.argv) < 5:
-        parser.print_help()
-        sys.exit(0)
-
-    args = parser.parse_args()
-    amberdir = os.path.dirname(os.path.abspath(args.top))
+def main(logfile: str, prmtop: str, inpcrd: str, top: str, gro: str):
+    # parser = argparse.ArgumentParser(description="Convert Amber files to GROMACS format.")
+    # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
+    # parser.add_argument("--prmtop", "-p", dest="prmtop", type=str, required=True,
+    #                     help="Prmtop file")
+    # parser.add_argument("--inpcrd", "-c", dest="inpcrd", type=str, required=True,
+    #                     help="Inpcrd file")
+    # parser.add_argument("--top", "-t", dest="top", type=str, required=True,
+    #                     help="GROMACS top file")
+    # parser.add_argument("--gro", "-g", dest="gro", type=str, required=True,
+    #                     help="GROMACS gro file")
+ 
+    # # print help if no arguments are provided
+    # if len(sys.argv) < 5:
+    #     parser.print_help()
+    #     sys.exit(0)
+ 
+    # args = parser.parse_args()
+    amberdir = os.path.dirname(os.path.abspath(top))
 
     ##### Initialize logger
-    logger = setup_logger("prep", args.logfile)
+    logger = setup_logger("prep", logfile)
+    logger.debug(f"Starting Amber to GROMACS conversion with prmtop: {prmtop}, inpcrd: {inpcrd}, top: {top}, gro: {gro}")
 
     ##### Check for checkpoint files from previous runs #####
     expected_files = [
-        f"{args.top}",
-        f"{args.gro}"
+        f"{top}",
+        f"{gro}"
     ]
 
     checkpoint_files = glob.glob(f"{amberdir}/check_02_amb2gro_*.done")
@@ -44,10 +45,10 @@ def main():
         missing = [p for p in expected_files if not os.path.isfile(p)]
         if not missing:
             logger.warning("The expected output files are already present. Skipping Amber to GROMACS conversion.")
-            sys.exit(0)
+            return
 
     # If checkpoint files are not found, proceed with the conversion
-    amber = pmd.load_file(args.prmtop,args.inpcrd)
+    amber = pmd.load_file(prmtop, inpcrd)
 
     # Cmap correction, including PTR
     CX_dir = { 'ALA' : 'XC0', 'ARG' : 'XC1', 'ASH' : 'XC2', 'ASN' : 'XC3', 'ASP' : 'XC4', 'CYM' : 'XC5', 'CYS' : 'XC6', 
@@ -79,8 +80,8 @@ def main():
 
 
     # output 
-    amber.save(args.top, overwrite=True, format='gromacs')
-    amber.save(args.gro, overwrite=True, format='gro')
+    amber.save(top, overwrite=True, format='gromacs')
+    amber.save(gro, overwrite=True, format='gro')
 
     logger.debug("Checking generated files.")
 
@@ -96,7 +97,7 @@ def main():
         checkpoint_filename = f"{amberdir}/check_02_amb2gro_{int(time.time())}.done"
         with open(checkpoint_filename, 'w') as f:
             f.write("Amber to GROMACS conversion completed successfully.\n")
-        sys.exit(0)
+        return
     else:
         logger.error("Amber to GROMACS conversion failed. There are missing files.")
         sys.exit(1)

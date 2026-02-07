@@ -9,7 +9,12 @@ import subprocess
 import shutil
 import argparse
 from scripts.utils.helpers import setup_logger
+from scripts.prep01 import prep_01_amber as amber
+from scripts.prep01 import prep_02_amb2gro as amb2gro
+from scripts.prep01 import prep_03_extractitp as extractitp
+from scripts.prep01 import prep_04_removeamberions as removeamberions
 from scripts.prep01 import prep_05_restraindnahbonds as restraindnahbonds
+from scripts.prep01 import prep_06_addgmxions as addgmxions
 
 # parser = argparse.ArgumentParser(description="Prepare a PDB structure for MD simulations.")
 # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
@@ -128,15 +133,17 @@ def main(logfile: str, datadir: str, filename: str,
     ffs_flag = "--ffs " if ffs else ""
     ffs_val = ','.join([str(x) for x in ffs]) if ffs else ""
 
-    cmd = [sys.executable, "-m", "scripts.prep01.prep_01_amber", 
-            "--logfile", f"{logfile}",
-        "--path-pdb", f"{datadir}/amber/{file}_noconect.pdb",
-        dna_flag,
-        phos_flag,
-        ffs_flag, ffs_val,
-        ]
-    cmd = [x for x in cmd if x.strip()]
-    subprocess.run(cmd, check=True)
+    # cmd = [sys.executable, "-m", "scripts.prep01.prep_01_amber", 
+    #         "--logfile", f"{logfile}",
+    #     "--path-pdb", f"{datadir}/amber/{file}_noconect.pdb",
+    #     dna_flag,
+    #     phos_flag,
+    #     ffs_flag, ffs_val,
+    #     ]
+    # cmd = [x for x in cmd if x.strip()]
+    # subprocess.run(cmd, check=True)
+
+    amber.main(logfile=logfile, pdbpath=f"{datadir}/amber/{file}_noconect.pdb", dna=dna, phos=phos, ffs=ffs)
 
     logger.debug(f"The current directory is {os.getcwd()}")
 
@@ -154,26 +161,36 @@ def main(logfile: str, datadir: str, filename: str,
 
     ### 2. Conversion from Amber to GROMACS with parmed
 
-    cmd = [sys.executable, "-m", "scripts.prep01.prep_02_amb2gro", 
-            "--logfile", f"{logfile}",
-        "-p", f"{datadir}/amber/{file}_noconect_protonated_solvated.prmtop",
-            "-c", f"{datadir}/amber/{file}_noconect_protonated_solvated.inpcrd",
-            "-t", f"{gmxdir}/topol.top",
-            "-g", f"{gmxdir}/gromacs.gro"]
+    # cmd = [sys.executable, "-m", "scripts.prep01.prep_02_amb2gro", 
+    #         "--logfile", f"{logfile}",
+    #     "-p", f"{datadir}/amber/{file}_noconect_protonated_solvated.prmtop",
+    #         "-c", f"{datadir}/amber/{file}_noconect_protonated_solvated.inpcrd",
+    #         "-t", f"{gmxdir}/topol.top",
+    #         "-g", f"{gmxdir}/gromacs.gro"]
+ 
+    # subprocess.run(cmd, check=True)
 
-    subprocess.run(cmd, check=True)
+    amb2gro.main(logfile=logfile, prmtop=f"{datadir}/amber/{file}_noconect_protonated_solvated.prmtop",
+        inpcrd=f"{datadir}/amber/{file}_noconect_protonated_solvated.inpcrd",
+        top=f"{gmxdir}/topol.top",
+        gro=f"{gmxdir}/gromacs.gro")
 
     ### 3. Extract .itps from .top file
-    cmd = [sys.executable, "-m", "scripts.prep01.prep_03_extractitp",  "--logfile", f"{logfile}", "--top", f"{gmxdir}/topol.top", dna_flag]
-    subprocess.run(cmd, check=True)
+    # cmd = [sys.executable, "-m", "scripts.prep01.prep_03_extractitp",  "--logfile", f"{logfile}", "--top", f"{gmxdir}/topol.top", dna_flag]
+    # subprocess.run(cmd, check=True)
+    extractitp.main(logfile=logfile, top=f"{gmxdir}/topol.top", dna=dna)
 
     ### 4. Remove the 2 ions added with AmberTools from .gro files
-    cmd = [sys.executable, "-m", "scripts.prep01.prep_04_removeamberions", "--logfile", f"{logfile}","--gmxdir", f"{gmxdir}"]
-    subprocess.run(cmd, check=True)
+    # cmd = [sys.executable, "-m", "scripts.prep01.prep_04_removeamberions", "--logfile", f"{logfile}","--gmxdir", f"{gmxdir}"]
+    # subprocess.run(cmd, check=True)
+
+    removeamberions.main(logfile=logfile, gmxdir=gmxdir)
 
     ### 5. Add ions with GROMACS (neutralize and reach target concentration)
-    cmd = [sys.executable, "-m", "scripts.prep01.prep_06_addgmxions", "--logfile", f"{logfile}", "--gmxdir", f"{gmxdir}"]
-    subprocess.run(cmd, check=True)
+    # cmd = [sys.executable, "-m", "scripts.prep01.prep_06_addgmxions", "--logfile", f"{logfile}", "--gmxdir", f"{gmxdir}"]
+    # subprocess.run(cmd, check=True)
+
+    addgmxions.main(logfile=logfile, gmxdir=gmxdir)
 
     ### 6. Add DNA H-bonds restraints if DNA is present
     if dna:

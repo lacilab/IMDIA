@@ -63,7 +63,7 @@ def main(logfile: str, gmxdir: str, topol: str = "./topol.top",
             if "[ distance_restraints ]" in f.read():
                 logger.info(f"[ distance_restraints ] section found in {topol}.")
                 logger.warning("Skipping DNA H-bond restraints addition.")
-                sys.exit(0)
+                return
             else:
                 logger.warning(f"Checkpoint file found but [ distance_restraints ] section not found in {topol}. The previous run might have been incomplete. Proceeding with DNA H-bond restraints addition.")
 

@@ -12,55 +12,55 @@ import shutil
 import time
 from scripts.utils.helpers import count_lines, setup_logger
 
-def main():
-    parser = argparse.ArgumentParser(description="Add GROMACS ions to the system to neutralize it and reach target concentration.")
-    parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
-    parser.add_argument("--gmxdir", '-g', dest='gmxdir', type=str, required=True,
-                        help='Path to the GROMACS directory (containing gromacs.gro and topol.top)')
-    parser.add_argument("--ions", "-i", dest='ions', type=str, default="scripts/prep01/ions.mdp", help="Path to the GROMACS parameter file to add ions.")
-
-    if len(sys.argv) < 2:
-        parser.print_help()
-        sys.exit(0)
-
-    args = parser.parse_args()
+def main(logfile: str, gmxdir: str, ions: str = "scripts/prep01/ions.mdp"):
+    # parser = argparse.ArgumentParser(description="Add GROMACS ions to the system to neutralize it and reach target concentration.")
+    # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
+    # parser.add_argument("--gmxdir", '-g', dest='gmxdir', type=str, required=True,
+    #                     help='Path to the GROMACS directory (containing gromacs.gro and topol.top)')
+    # parser.add_argument("--ions", "-i", dest='ions', type=str, default="scripts/prep01/ions.mdp", help="Path to the GROMACS parameter file to add ions.")
+ 
+    # if len(sys.argv) < 2:
+    #     parser.print_help()
+    #     sys.exit(0)
+ 
+    # args = parser.parse_args()
 
     ##### Initialize logger
-    logger = setup_logger("prep", args.logfile)
+    logger = setup_logger("prep", logfile)
 
     # Check if checkpoint file from previous run exists
-    if glob.glob(f"{args.gmxdir}/toppar/check_06_addgmxions_*.done"):
+    if glob.glob(f"{gmxdir}/toppar/check_06_addgmxions_*.done"):
             logger.warning("Checkpoint file found.")
             # check if ions.gro exists
-            if os.path.isfile(f"{args.gmxdir}/ions.gro"):
-                logger.info(f"Updated topology file found at {args.gmxdir}/ions.gro.")
+            if os.path.isfile(f"{gmxdir}/ions.gro"):
+                logger.info(f"Updated topology file found at {gmxdir}/ions.gro.")
                 logger.warning("Skipping GROMACS ions addition.")
-                sys.exit(0)
+                return
             else:
-                logger.warning(f"Checkpoint file found but ions.gro not found at {args.gmxdir}. The previous run might have been incomplete. Proceeding with GROMACS ions addition.")
+                logger.warning(f"Checkpoint file found but ions.gro not found at {gmxdir}. The previous run might have been incomplete. Proceeding with GROMACS ions addition.")
 
     ##### CHECK INPUT FILES #####
-    if args.ions and (not os.path.isfile(args.ions) or not args.ions.endswith(".mdp")):
-        logger.error(f"Provided parameter file '{args.ions}' does not exist or is not an .mdp file.")
+    if ions and (not os.path.isfile(ions) or not ions.endswith(".mdp")):
+        logger.error(f"Provided parameter file '{ions}' does not exist or is not an .mdp file.")
         sys.exit(1)
 
     ##### COPY INPUT FILES #####
-    shutil.copy(args.ions, f"{args.gmxdir}/ions.mdp")
+    shutil.copy(ions, f"{gmxdir}/ions.mdp")
     # Check the ions.mdp is in the target folder
-    if os.path.isfile(f"{args.gmxdir}/ions.mdp"):
-        logger.info(f"Copied {args.ions} to {args.gmxdir}/ions.mdp.")
+    if os.path.isfile(f"{gmxdir}/ions.mdp"):
+        logger.info(f"Copied {ions} to {gmxdir}/ions.mdp.")
     else:
-        logger.error(f"Failed to copy {args.ions} to {args.gmxdir}/ions.mdp.")
+        logger.error(f"Failed to copy {ions} to {gmxdir}/ions.mdp.")
         sys.exit(1)
 
     ##### ADD IONS WITH GROMACS #####
     logger.debug("Adding ions to neutralize the system and reach the target concentration.")
     cmd = ["gmx", "grompp", 
-           "-f", f"{args.gmxdir}/ions.mdp", 
-           "-c", f"{args.gmxdir}/updated_gromacs.gro", 
-           "-p", f"{args.gmxdir}/topol.top", 
-           "-o", f"{args.gmxdir}/ions.tpr", 
-           "-po", f"{args.gmxdir}/ions_out.mdp",
+           "-f", f"{gmxdir}/ions.mdp", 
+           "-c", f"{gmxdir}/updated_gromacs.gro", 
+           "-p", f"{gmxdir}/topol.top", 
+           "-o", f"{gmxdir}/ions.tpr", 
+           "-po", f"{gmxdir}/ions_out.mdp",
            "-quiet", "-maxwarn", "1"]
     
     process = subprocess.run(cmd, capture_output=True, text=True)
@@ -76,7 +76,7 @@ def main():
     }
 
     # Change ion names to gromacs standards on all .itp files in $gmxdir/toppar
-    topfiles = glob.glob(f"{args.gmxdir}/toppar/*.itp") + glob.glob(f"{args.gmxdir}/topol.top")
+    topfiles = glob.glob(f"{gmxdir}/toppar/*.itp") + glob.glob(f"{gmxdir}/topol.top")
     for file in topfiles:
         logger.debug(f"Updating solvent names in {file}...")
         num_WAT, num_water = count_lines(file, "WAT", "Water")
@@ -94,9 +94,9 @@ def main():
 
     # There will be a warning because the system is not neutralized.
     cmd = ["gmx", "genion", 
-           "-s", f"{args.gmxdir}/ions.tpr", 
-           "-o", f"{args.gmxdir}/ions.gro", 
-           "-p", f"{args.gmxdir}/topol.top", 
+           "-s", f"{gmxdir}/ions.tpr", 
+           "-o", f"{gmxdir}/ions.gro", 
+           "-p", f"{gmxdir}/topol.top", 
            "-pname", "Na+", 
            "-nname", "Cl-", 
            "-neutral", "-conc", "0.15", 
@@ -123,7 +123,7 @@ def main():
     ##### CHECKS #####
     
     # check if topol.top contains more than 1 Na and Cl ions
-    with open(f"{args.gmxdir}/topol.top", "r") as f:
+    with open(f"{gmxdir}/topol.top", "r") as f:
         num_Na = None
         num_Cl = None
         pattern_Na = re.compile(r"^Na\+?\b")
@@ -158,7 +158,7 @@ def main():
                 print(line, end='')
 
     # Create checkpoint file
-    checkpoint_filename = f"{args.gmxdir}/check_06_addgmxirons_{int(time.time())}.done"
+    checkpoint_filename = f"{gmxdir}/check_06_addgmxirons_{int(time.time())}.done"
     with open(checkpoint_filename, 'w') as f:
         f.write("GROMACS ions addition completed successfully.\n")
 

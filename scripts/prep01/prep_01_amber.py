@@ -136,24 +136,25 @@ def solvate_gen_parm(complex_file, chains, ffs=['water.opc', 'protein.ff19SB']):
 
 ########## MAIN ##########
 
-def main():
+def main(logfile: str = None, pdbpath: str = None,
+	dna : bool = False, phos : bool = False, ffs: list = None):
 	start_time = time.time()
 
-	parser = argparse.ArgumentParser(description="Prepare system using AmberTools. Add solvent and ions, generate prmtop and inpcrd files based on force fields.")
-	parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
-	parser.add_argument('--path-pdb', dest='path_pdb', help='Input pdb file path', required=True)
-	parser.add_argument('--dna', dest='with_dna', action='store_true', help='Use if the system contains DNA. Adds DNA.bsc1 force field.')
-	parser.add_argument('--phos', dest='with_phosphate', action='store_true', help='Use if the system contains phosphorylated residues. Adds phosaa19SB force field.')
-	parser.add_argument('--ffs', dest='ffs', help='Comma separated list of force fields to use from the list available in LEaP. Avoid using clashing force fields. Default: protein.ff19SB,water.opc')
+	# parser = argparse.ArgumentParser(description="Prepare system using AmberTools. Add solvent and ions, generate prmtop and inpcrd files based on force fields.")
+	# parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
+	# parser.add_argument('--path-pdb', dest='path_pdb', help='Input pdb file path', required=True)
+	# parser.add_argument('--dna', dest='with_dna', action='store_true', help='Use if the system contains DNA. Adds DNA.bsc1 force field.')
+	# parser.add_argument('--phos', dest='with_phosphate', action='store_true', help='Use if the system contains phosphorylated residues. Adds phosaa19SB force field.')
+	# parser.add_argument('--ffs', dest='ffs', help='Comma separated list of force fields to use from the list available in LEaP. Avoid using clashing force fields. Default: protein.ff19SB,water.opc')
+ 
+	# # print help if no arguments are provided
+	# if len(sys.argv) < 2:
+	# 	parser.print_help()
+	# 	sys.exit(0)
+ 
+	# args = parser.parse_args()
 
-	# print help if no arguments are provided
-	if len(sys.argv) < 2:
-		parser.print_help()
-		sys.exit(0)
-
-	args = parser.parse_args()
-
-	amberdir, pdb = os.path.split(args.path_pdb)
+	amberdir, pdb = os.path.split(pdbpath)
 	filename = os.path.splitext(pdb)[0]
 
 	ff_default = ['water.opc', 'protein.ff19SB']
@@ -164,7 +165,7 @@ def main():
 
 	##### Initialize logger
 	logger_name = 'prep'
-	logger = setup_logger(logger_name, args.logfile)
+	logger = setup_logger(logger_name, logfile)
 
 	##### Check for checkpoint files from previous runs #####
 	expected_files = [
@@ -179,7 +180,8 @@ def main():
 		missing = [p for p in expected_files if not os.path.isfile(p)]
 		if not missing:
 			logger.warning("The expected output files are already present. Skipping AmberTools preparation.")
-			sys.exit(0)
+			os.chdir(cwd)
+			return
 
 
 	# Check if input file is a PDB file
@@ -187,26 +189,26 @@ def main():
 		logger.error("Input file must be a PDB file with .pdb extension.")
 		sys.exit(1)
 
-	if args.with_dna:
+	if dna:
 		logger.debug("Flag --dna used. This is a DNA-protein complex.")
 		ff_default.append('DNA.bsc1')
 
-	if args.with_phosphate:
+	if phos:
 		logger.debug("Flag --phos used. This system contains phosphorylated residues.")
 		ff_default.append('phosaa19SB')
 	#else:
 	#	ff_default.append('protein.ff19SB')
 
-	if args.ffs:
-		logger.debug(f"Custom force fields provided: {args.ffs}")
-		ffs = args.ffs.split(",")
+	if ffs:
+		logger.debug(f"Custom force fields provided: {ffs}")
+		# ffs = ffs.split(",")
 	else:
 		logger.debug(f"No custom force fields provided. Using default: {ff_default}")
 		ffs = ff_default
 
 	# Prepare the complex (make sure the hydrogens naming matches amber)
-	noH_complex = remove_hydrogens(filename, logger_name, args.logfile)
-	protonated_complex = add_hydrogens(noH_complex, logger_name, args.logfile, ffs)
+	noH_complex = remove_hydrogens(filename, logger_name, logfile)
+	protonated_complex = add_hydrogens(noH_complex, logger_name, logfile, ffs)
 
 	# Extract chain ids from the PDB file
 	chains = set()
@@ -223,7 +225,7 @@ def main():
 
 
 	# Generate the receptor & ligand (also match the hydrogens to amber specifics)
-	chain_files = gen_chains(noH_complex, logger_name, args.logfile, chains, ffs)
+	chain_files = gen_chains(noH_complex, logger_name, logfile, chains, ffs)
 	solvate_gen_parm(protonated_complex, chain_files, ffs)
 	# if args.with_dna:
 	# 	mono_a_file, mono_b_file, dna_a_file, dna_b_file = gen_chains(noH_complex, logger_name, args.logfile, ffs,  'A', 'B', 'C', 'D')
@@ -255,20 +257,22 @@ def main():
 		else:
 			logger.error(f"{file} not generated")
 
+			
+	# Return to initial working directory
+	logger.debug(f"The current directory is {os.getcwd()}")
+	os.chdir(cwd)
+	logger.debug(f"Changed directory to {os.getcwd()}")
+
 	if not missing:
 		logger.info("AmberTools preparation completed successfully.")
 		checkpoint_filename = f"check_01_amber_{int(time.time())}.done"
 		with open(checkpoint_filename, 'w') as f:
 			f.write("AmberTools preparation completed successfully.\n")
-		sys.exit(0)
+		return
 	else:
 		logger.error("AmberTools preparation failed. There are missing files.")
 		sys.exit(1)
 
-	# Return to initial working directory
-	logger.debug(f"The current directory is {os.getcwd()}")
-	os.chdir(cwd)
-	logger.debug(f"Changed directory to {os.getcwd()}")
 
 
 if __name__ == "__main__":
