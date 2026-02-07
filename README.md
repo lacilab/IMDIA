@@ -132,8 +132,8 @@ The following parameters are parsed from ```params.yml```:
 | offset         | int  | Residue id of the first residue in the starting PDB structure. | an |        | 0 | 135 |
 | start_frame    | int  | First frame to analyze in interaction analysis.                | an |        | 1 | 1000 |
 | stop_frame     | int  | Last frame to analyze in interaction analysis.                 | an |        | None | 2001 |
-| group1         | str  | First group of interest for interaction analysis, which studies the interaction between group1 and group2.  | an (hbonds, contacts, water bridges) | * | | Protein |
-| group2         | str  | Second group of interest for interaction analysis, which studies the interaction between group1 and group2. | an (hbonds, contacts, water bridges) | * | | DNA |
+| group1         | str  | First group of interest for interaction analysis, which studies the interaction between group1 and group2. Values: Protein, DNA, or chain IDs (A, B, C...)  | an (hbonds, contacts, water bridges) | * | | Protein |
+| group2         | str  | Second group of interest for interaction analysis, which studies the interaction between group1 and group2. Values: Protein, DNA, or a chain ID (A, B, C...) | an (hbonds, contacts, water bridges) | * | | DNA |
 | domains        | nested list | Domains or segments of the protein. These are used to color plots by domain. Each item in the list must contain: start (int), end (int), color (str), labe(str). | an | | [ ] | (See below) |
 
 Example 'domains' definition:
