@@ -1,6 +1,47 @@
-datadir: '/staging/leuven/stg_00187/users/Irati/data/1BF5/E411A'
-filename: '1BF5_E411A_DP.pdb'
+pdbpath: ../data/1BF5/E411A/1BF5_E411A_DP.pdb
 dna: True
 phos: True
-gmxdir: '/staging/leuven/stg_00187/users/Irati/data/1BF5/E411A/gromacs_common'
-repn: 1
+repn: [1]
+snakecores: 36
+
+# Parameters to pass to the Snakefile
+
+# Hydrogen bond analysis methods
+methods_hbonds: [mda]
+
+# Structures to analyze
+structure: [1BF5]
+
+# Mutations to analyze
+muts: [E411A]
+
+# Interaction groups for interaction analysis
+group1: Protein
+group2: DNA
+
+# Frames for interaction analysis
+start_frame: 1000
+# stop_frame: 2001
+
+# Offset for residue numbering (default: 0)
+offset: 135
+
+# Protein domain definitions
+domains:
+  - start: 134
+    end: 317
+    color: blue
+    label: CCD
+  - start: 318
+    end: 488
+    color: red
+    label: DBD
+  - start: 489
+    end: 576
+    color: green
+    label: LD
+  - start: 577
+    end: 683
+    color: yellow
+    label: SH2
+  

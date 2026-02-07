@@ -1,4 +1,9 @@
-data/*
+data/
+env/
+params/
+slurm/
+motif_analysis/
+mut_choice/
 .vscode/*
 discard/*
 logs/
@@ -20,13 +25,6 @@ motif_analysis/1h/model_agnostic/up_IFNg_vs_WT_IFNg/*/
 
 motif_analysis/4h/*/
 
-thesis_main/
-.snakemake/*
-COM.prmtop
-COMPACT_MMXSA_RESULTS.mmxsa
-COM_traj_0.xtc
-LIG.prmtop
-REC.prmtop
-gmx_MMPBSA.log
+.snakemake/
 
 

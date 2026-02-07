@@ -1,20 +1,20 @@
 #!/bin/bash
 
-#SBATCH --job-name=an_WT_wb_contacts
+#SBATCH --job-name=an_N460H_gbsa_rep1
 #SBATCH --account=lp_lacilab
 #SBATCH --cluster=wice
 #SBATCH --partition=batch
 #SBATCH --nodes=1
-#SBATCH --ntasks=3
-#SBATCH --cpus-per-task=12
-#SBATCH --time=24:00:00
-#SBATCH --output=logs/mdrun_WT_an_wb_contacts%j.out
-#SBATCH --error=logs/mdrun_WT_an_wb_contacts%j.err
+#SBATCH --ntasks=36
+#SBATCH --cpus-per-task=1
+#SBATCH --time=3:00:00
+#SBATCH --output=logs/mdrun_an_N460H_gbsa_rep1_%j.out
+#SBATCH --error=logs/mdrun_an_N460H_gbsa_rep1_%j.err
 
 module purge
 module load cluster/wice/batch
 module load GROMACS/2024.4-foss-2023b-CUDA-12.4.0
-export PATH=/lustre1/scratch/359/vsc35916/conda_envs/pipeanalysis/bin/:$PATH
+export PATH=/data/leuven/359/vsc35916/miniconda3/envs/pipemd_test2/bin/:$PATH
 
-cd /lustre1/scratch/359/vsc35916/thesis_main/
-python -m scripts.main --params scripts/params_WT.yml --analysis --rules wb contacts
+cd /staging/leuven/stg_00187/users/Irati/thesis_main/
+python -m scripts.main --params params/params_1BF5_N460H.yml --analysis --rules gbsa
