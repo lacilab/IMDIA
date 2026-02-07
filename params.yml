@@ -1,0 +1,68 @@
+pdbpath: '../data/1BF5/WT'
+dna: True
+phos: True
+repn: [1, 2]
+# ffs: []
+
+### DNA strand ranges
+# range_a: [2,-1]
+# range_b: [2,-1]
+
+### MD simulation parameters
+# em: 'myscripts/em.mdp'
+# nvt: 'myscripts/nvt.mdp'
+# npt: 'myscripts/npt.mdp'
+# md: 'myscripts/md.mdp'
+
+# ntmpi: "2"
+# ntomp: "16"
+# ngpu: "1"
+# gputasks: '01'
+# nb: gpu
+# pme: gpu
+# npme: "1"
+
+
+##### SNAKEMAKE ANALYSIS PARAMETERS #####
+
+snakecores: 36
+
+# Hydrogen bond analysis methods
+methods_hbonds: [mda, gmx]
+
+# Structures to analyze
+structure: [1BF5]
+
+# Mutations to analyze
+muts: [WT, E411A]
+
+# Interaction groups for interaction analysis
+group1: Protein
+group2: DNA
+
+# Frames for interaction analysis
+start_frame: 1000
+# stop_frame: 2001
+
+# Offset for residue numbering (default: 0)
+offset: 135
+
+# Protein domain definitions
+domains:
+  - start: 134
+    end: 317
+    color: blue
+    label: CCD
+  - start: 318
+    end: 488
+    color: red
+    label: DBD
+  - start: 489
+    end: 576
+    color: green
+    label: LD
+  - start: 577
+    end: 683
+    color: yellow
+    label: SH2
+  
