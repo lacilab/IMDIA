@@ -1,3 +1,15 @@
+# Table of contents
+- [Introduction](#introduction)
+- [Installation](#installation)
+  - [Dependencies](#dependencies)
+- [Directory system](#directory-system)
+- [Parameters](#parameter-file
+- [Modules](#modules)
+  - [1. System preparation](#1-system-preparation)
+  - [2. Molecular dynamics simulation](#2-molecular-dynamics-simulation)
+  - [3. Post-processing](#3-post-processing)
+  - [4. Analysis](#4-analysis)
+
 # Introduction
 
 This repository contains a pipeline to perform molecular dynamics (MD) simulations and analyze the results, with minimal setup and increased automation. It is particularly aimed at the study of protein-protein and protein-DNA systems and the effects of mutations, and specifically point mutations, on these complexes. Part of the analysis functionalities focus on these interactions; for example, looking at the interactions between protein chains or between the protein complex and the DNA.
@@ -85,13 +97,14 @@ From this initial directory system, the scripts generate the necessary directori
 │   │   │   │   └── gromacs
 ```
 
-# Parameter files
+# Parameter file
 
 The majority of the parameters are passed through a YAML file named ```params.yml``` by default.  
 
 A model of ```params.yml``` is provided to use as a template.
 
-## ```params.yml```
+The following parameters are parsed from ```params.yml```:
+
 | Parameter      | Type | Use                                                                                                         | Used in  | Compulsory |Default | Example        |
 | :--------------| :--- | :-------------------------------------------------                        | :------  | :------| :------ |:------------- |
 | pdbpath        | str  | Path of the starting .pdb file.                                           | prep, md, post, an | * |   
@@ -214,8 +227,8 @@ It is also possible to run one or more subsets of rules:
   - K-means clustering
 - GBSA predicted free binding energy (light blue): ```gbsa```
 
-<img src="img/snakemake.drawio.png" alt="Snakemake rule subsets" style="width:60%; height:auto;">
 
+![Snakemake rule subsets](img/snakemake.drawio.png)
 
 Examples:
 ```
