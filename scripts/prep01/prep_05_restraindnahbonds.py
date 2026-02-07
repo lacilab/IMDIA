@@ -8,84 +8,86 @@ import glob
 import time
 from scripts.utils.helpers import setup_logger
 
-def main():
-    parser = argparse.ArgumentParser(description="Calculate distance restraints for DNA H-bonds and append them to a topology file.")
-    parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
-    parser.add_argument("--gmxdir", '-g', dest='gmxdir', type=str, required=True,
-                        help='Directory containing GROMACS files')
-    parser.add_argument("--topol", "-t", dest="topol", type=str, default="./topol.top",
-                        help="Topology file to append restraints to")
-    parser.add_argument("--dna_a", dest="dna_a", type=str, default="./toppar/molecule_3.itp",
-                        help="DNA chain A topology file (.itp)")
-    parser.add_argument("--dna_b", dest="dna_b", type=str, default="./toppar/molecule_4.itp",
-                        help="DNA chain B topology file (.itp)")
-    parser.add_argument("--range_a", dest="range_a", type=str, default="0,-1",
-                        help="Range of residues to consider for DNA A. 1-indexed (e.g., [1,10]). Default: full length.")
-    parser.add_argument("--range_b", dest="range_b", type=str, default="0,-1",
-                        help="Range of residues to consider for DNA B. 1-indexed (e.g., [1,10]). Default: full length.")
-    parser.add_argument("--type", dest="type", type=int, default=1,
-                        help="Restraint type. Default: 1")
-    parser.add_argument("--type2", dest="type2", type=int, default=2,
-                        help="Secondary restraint type. Default: 2")
-    parser.add_argument("--low", dest="low", type=float, default=0.0,
-                        help="Lower bound distance (Å). Default: 0.0")
-    parser.add_argument("--up1", dest="up1", type=float, default=0.3,
-                        help="Upper bound distance 1 (Å). Default: 0.3")
-    parser.add_argument("--up2", dest="up2", type=float, default=0.4,
-                        help="Upper bound distance 2 (Å). Default: 0.4")
-    parser.add_argument("--fac", dest="fac", type=float, default=1.0,
-                        help="Force constant scaling factor. Default: 1.0")
-    
-    if len(sys.argv) < 2:
-        parser.print_help()
-        sys.exit(0)
-
-    args = parser.parse_args()
+def main(logfile: str, gmxdir: str, topol: str = "./topol.top", 
+         dna_a: str = "./toppar/molecule_3.itp", dna_b: str = "./toppar/molecule_4.itp", range_a: list = [0, -1], range_b: list = [0, -1],
+         type: int = 1, type2: int = 2, low: float = 0.0, up1: float = 0.3, up2: float = 0.4, fac: float = 1.0):
+    # parser = argparse.ArgumentParser(description="Calculate distance restraints for DNA H-bonds and append them to a topology file.")
+    # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
+    # parser.add_argument("--gmxdir", '-g', dest='gmxdir', type=str, required=True,
+    #                     help='Directory containing GROMACS files')
+    # parser.add_argument("--topol", "-t", dest="topol", type=str, default="./topol.top",
+    #                     help="Topology file to append restraints to")
+    # parser.add_argument("--dna_a", dest="dna_a", type=str, default="./toppar/molecule_3.itp",
+    #                     help="DNA chain A topology file (.itp)")
+    # parser.add_argument("--dna_b", dest="dna_b", type=str, default="./toppar/molecule_4.itp",
+    #                     help="DNA chain B topology file (.itp)")
+    # parser.add_argument("--range_a", dest="range_a", type=str, default="0,-1",
+    #                     help="Range of residues to consider for DNA A. 1-indexed (e.g., [1,10]). Default: full length.")
+    # parser.add_argument("--range_b", dest="range_b", type=str, default="0,-1",
+    #                     help="Range of residues to consider for DNA B. 1-indexed (e.g., [1,10]). Default: full length.")
+    # parser.add_argument("--type", dest="type", type=int, default=1,
+    #                     help="Restraint type. Default: 1")
+    # parser.add_argument("--type2", dest="type2", type=int, default=2,
+    #                     help="Secondary restraint type. Default: 2")
+    # parser.add_argument("--low", dest="low", type=float, default=0.0,
+    #                     help="Lower bound distance (Å). Default: 0.0")
+    # parser.add_argument("--up1", dest="up1", type=float, default=0.3,
+    #                     help="Upper bound distance 1 (Å). Default: 0.3")
+    # parser.add_argument("--up2", dest="up2", type=float, default=0.4,
+    #                     help="Upper bound distance 2 (Å). Default: 0.4")
+    # parser.add_argument("--fac", dest="fac", type=float, default=1.0,
+    #                     help="Force constant scaling factor. Default: 1.0")
+    # 
+    # if len(sys.argv) < 2:
+    #     parser.print_help()
+    #     sys.exit(0)
+# 
+    # args = parser.parse_args()
 
     ##### Initialize logger
-    logger = setup_logger("prep", args.logfile)
+    logger = setup_logger("prep", logfile)
 
     ##### CHECK INPUT #####
-    if not os.path.isdir(args.gmxdir):
-        logger.error(f"Directory {args.gmxdir} not found")
+    if not os.path.isdir(gmxdir):
+        logger.error(f"Directory {gmxdir} not found")
         sys.exit(1)
-    if not os.path.isfile(args.topol):
-        logger.error(f"Topology file {args.topol} not found.")
+    if not os.path.isfile(topol):
+        logger.error(f"Topology file {topol} not found.")
         sys.exit(1)
 
     # Check if checkpoint file from previous run exists
-    if glob.glob(f"{args.gmxdir}/check_05_restraindnahbonds_*.done"):
+    if glob.glob(f"{gmxdir}/check_05_restraindnahbonds_*.done"):
         logger.warning("Checkpoint file found.")
         # Check if topol file contains distance_restraints section
-        with open(args.topol, 'r') as f:
+        with open(topol, 'r') as f:
             if "[ distance_restraints ]" in f.read():
-                logger.info(f"[ distance_restraints ] section found in {args.topol}.")
+                logger.info(f"[ distance_restraints ] section found in {topol}.")
                 logger.warning("Skipping DNA H-bond restraints addition.")
                 sys.exit(0)
             else:
-                logger.warning(f"Checkpoint file found but [ distance_restraints ] section not found in {args.topol}. The previous run might have been incomplete. Proceeding with DNA H-bond restraints addition.")
+                logger.warning(f"Checkpoint file found but [ distance_restraints ] section not found in {topol}. The previous run might have been incomplete. Proceeding with DNA H-bond restraints addition.")
 
-    if not os.path.isfile(args.dna_a):
-        logger.error(f"DNA chain A topology file {args.dna_a} not found.")
+    if not os.path.isfile(dna_a):
+        logger.error(f"DNA chain A topology file {dna_a} not found.")
         sys.exit(1)
-    if not os.path.isfile(args.dna_b):
-        logger.error(f"DNA chain B topology file {args.dna_b} not found.")
+    if not os.path.isfile(dna_b):
+        logger.error(f"DNA chain B topology file {dna_b} not found.")
         sys.exit(1)
 
     # distance bounds order
-    if args.low > args.up1 or args.up1 > args.up2:
+    if low > up1 or up1 > up2:
         logger.error("Invalid distance bounds: ensure that low <= up1 <= up2.")
         sys.exit(1)
 
     # fac should be positive
-    if args.fac <= 0:
+    if fac <= 0:
         logger.error("Force constant scaling factor (fac) should be positive.")
         sys.exit(1)
 
     ##### CHECK DNA SEQUENCES #####
     # Extract lines between [atoms] and [bonds]
     seqs = {}
-    dna_files = {'a': args.dna_a, 'b': args.dna_b}
+    dna_files = {'a': dna_a, 'b': dna_b}
     dna_dicts = {'a': [], 'b': []}
     for key, dna_file in dna_files.items():
         with open(dna_file) as f:
@@ -118,11 +120,12 @@ def main():
         logger.debug(f"Sequence for DNA {key.upper()}: {''.join(seqs[key])}")
 
     # Apply residue range filters if provided
-    ranges  = {'a': args.range_a.split(','), 'b': args.range_b.split(',')}
-    for key, value in ranges.items():
-        if int(value[0]) != 0 or int(value[1]) != -1:
-            logger.debug(f"Applying residue range filter for DNA {key.upper()}: {value}")
-            seqs[key] = seqs[key][int(value[0]) : int(value[1]) if int(value[1]) != -1 else None]
+    ranges  = [range_a, range_b]
+    for i, r in enumerate(ranges):
+        if int(r[0]) != 0 or int(r[1]) != -1:
+            key = 'a' if i == 0 else 'b'
+            logger.debug(f"Applying residue range filter for DNA {key.upper()}: {r}")
+            seqs[key] = seqs[key][int(r[0]) : int(r[1]) if int(r[1]) != -1 else None]
             logger.debug(f"Filtered sequence for DNA {key.upper()}: {''.join(seqs[key])}")
 
     # Check equal lengths (in the selected ranges)
@@ -152,13 +155,13 @@ def main():
     logger.info("DNA sequences are complementary.")
 
     ##### CALCULATE DISTANCE RESTRAINTS #####
-    logger.debug(f"""Calculating distance restraints for h-bonds in {args.dna_a} and {args.dna_b}.\n
-        Restrains will be writen to {args.topol}.
+    logger.debug(f"""Calculating distance restraints for h-bonds in {dna_a} and {dna_b}.\n
+        Restrains will be writen to {topol}.
         Parameters: 
         type    index    type'    low    up1    up2    fac
-        {args.type}	i	 {args.type2}	  {args.low}	 {args.up1}	{args.up2}   {args.fac}""")
+        {type}	i	 {type2}	  {low}	 {up1}	{up2}   {fac}""")
     
-    with open(args.topol, 'a') as f:
+    with open(topol, 'a') as f:
         text = """
 [ intermolecular_interactions ]
 [ distance_restraints ]
@@ -166,7 +169,7 @@ def main():
         f.write(text)
 
     # Mapping local ids to global ids
-    with open(args.topol) as f:
+    with open(topol) as f:
         itps = []
         for line in f:
             if line.strip().startswith("#include") and "forcefield" not in line:
@@ -176,18 +179,18 @@ def main():
     global_id = 0
     global_a = 0
     global_b = 0
-    logger.debug(f"Found .itp files included in {args.topol} (excluding forcefield.itp):")
+    logger.debug(f"Found .itp files included in {topol} (excluding forcefield.itp):")
     for itp in itps:
         logger.debug(itp)
-        if os.path.basename(args.dna_a) in itp:
-            logger.debug(f"Match: {args.dna_a}, {itp}")
+        if os.path.basename(dna_a) in itp:
+            logger.debug(f"Match: {dna_a}, {itp}")
             global_a = global_id
-        elif os.path.basename(args.dna_b) in itp:
-            logger.debug(f"Match: {args.dna_b}, {itp}")
+        elif os.path.basename(dna_b) in itp:
+            logger.debug(f"Match: {dna_b}, {itp}")
             global_b = global_id
         n = None 
         inside = False
-        with open(f"{args.gmxdir}/toppar/{itp}") as f:
+        with open(f"{gmxdir}/toppar/{itp}") as f:
             last_value = None
             for line in f:
                 # Find [ atoms ] section
@@ -224,10 +227,10 @@ def main():
         atoms_a = nt_pairs['atoms_a']
         atoms_b = nt_pairs['atoms_b']
         comp = nt_pairs['comp']
-        with open(args.topol, "a") as out:
+        with open(topol, "a") as out:
             for idx, atom in enumerate(atoms_a):
-                i_val = i + 1 + int(args.range_a.split(',')[0]) # 1-indexed
-                comp_i = len_a - i
+                i_val = i + 1 + int(range_a[0])
+                comp_i = len_a - i + int(range_b[0])
 
                 for row in dna_dicts['a']:
                     if row[0] == str(i_val) and f"D{nt}" in row[1] and row[2] == atoms_a[idx]:
@@ -239,11 +242,11 @@ def main():
                         break
                 # Add atom pair to distance restrains table
                 out.write(
-                    f"{atom_a + global_a}    {atom_b + global_b}    {args.type}    {i + 1}    {args.type2}    {args.low}    {args.up1}    {args.up2}    {args.fac}\n")
+                    f"{atom_a + global_a}    {atom_b + global_b}    {type}    {i + 1}    {type2}    {low}    {up1}    {up2}    {fac}\n")
 
-    logger.info(f"Distance restraints for DNA H-bonds added to {args.topol}.")
+    logger.info(f"Distance restraints for DNA H-bonds added to {topol}.")
     # Create checkpoint file
-    checkpoint_filename = f"{args.gmxdir}/check_05_restraindnahbonds_{int(time.time())}.done"
+    checkpoint_filename = f"{gmxdir}/check_05_restraindnahbonds_{int(time.time())}.done"
     with open(checkpoint_filename, 'w') as f:
         f.write("Distance restraints for DNA H-bonds added successfully.\n")
 
