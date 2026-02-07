@@ -6,7 +6,7 @@ import subprocess
 import sys
 from scripts.utils.helpers import setup_logger
 
-def main(datadir: str, configfile: str, cores: int = None, rules: list = None, ffs: str = None):
+def main(datadir: str, configfile: str, cores: int = None, rules: list = None, ffs: str = None, unlock: bool = False):
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     LOGFILE = f"{datadir}/logs/step04_analysis_{timestamp}.log"
@@ -20,6 +20,7 @@ def main(datadir: str, configfile: str, cores: int = None, rules: list = None, f
 
     flag_ffs = "--ffs" if ffs is not None else ""
     value_ffs = ffs if ffs is not None else ""
+    flag_unlock = "--unlock" if unlock else ""
 
     cmd = [sys.executable,
         "-m",
@@ -29,7 +30,8 @@ def main(datadir: str, configfile: str, cores: int = None, rules: list = None, f
         "--configfile", configfile,
         flag_cores, value_cores,
         flag_rules, value_rules,
-        flag_ffs, value_ffs
+        flag_ffs, value_ffs,
+        flag_unlock
     ]
 
     logger.debug("Running analysis step.")

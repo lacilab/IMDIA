@@ -18,6 +18,7 @@ def main():
                         help='Snakefile rules to be executed.')
     parser.add_argument('--ffs', dest='ffs', type=str, default=None,
                         help='Force fields used in GBSA.')
+    parser.add_argument('--unlock', dest='unlock', action='store_false', help='Unlock snakemake workflow if it is locked.')
 
     # print help if required arguments are not provided
     if len(sys.argv) < 5:
@@ -43,14 +44,26 @@ def main():
     if args.ffs is not None:
         config_args.append(f"ffs={' '.join(args.ffs)}")
 
-    cmd = [
-        "snakemake",
-        "--snakefile", "scripts/analysis04/Snakefile",
-        "--cores", str(args.cores) if args.cores else "all",
-        "--configfile", args.configfile,
-        "--config",
-        *config_args
-    ]
+    if args.unlock:
+        logger.debug("Unlocking snakemake workflow.")
+        cmd = [
+            "snakemake",
+            "--snakefile", "scripts/analysis04/Snakefile",
+            "--cores", "1",
+            "--configfile", args.configfile,
+            "--config",
+            *config_args,
+            "--unlock"
+        ]
+    else:
+        cmd = [
+            "snakemake",
+            "--snakefile", "scripts/analysis04/Snakefile",
+            "--cores", str(args.cores) if args.cores else "all",
+            "--configfile", args.configfile,
+            "--config",
+            *config_args
+        ]
 
     # process = subprocess.run(cmd, text=True, check=True, capture_output=True)
     # if process.returncode != 0:

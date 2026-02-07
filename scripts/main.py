@@ -42,9 +42,9 @@ def pipeline(mutdir: str, datadir: str, pdbfile: str, gmxdir: str, args: argpars
             for n in repn:
                 post_wrap.main(mutdir, n, dna, phos)
         if args.analysis and args.rules is None:
-            analysis_wrap.main(datadir, args.params, snakecores, ffs)
+            analysis_wrap.main(datadir, args.params, snakecores, ffs, args.unlock)
         elif args.analysis and args.rules is not None:
-            analysis_wrap.main(datadir, args.params, snakecores, args.rules, ffs)
+            analysis_wrap.main(datadir, args.params, snakecores, args.rules, ffs, args.unlock)
         
 def get_dirs(pdbpath: str):
     if not os.path.isfile(pdbpath):
@@ -64,6 +64,7 @@ def main():
     parser.add_argument('--post', action='store_true', help='Run post-processing step.')
     parser.add_argument('--analysis', action='store_true', help='Run analysis step.')
     parser.add_argument('--rules', dest='rules', nargs='+', default=None, help='Snakefile rules to be used in analysis step.')
+    parser.add_argument('--unlock', dest='unlock', action='store_false', help='Unlock snakemake workflow if it is locked.')
     args = parser.parse_args()
 
     # Load parameters from YAML file
