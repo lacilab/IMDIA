@@ -3,7 +3,7 @@
 - [Installation](#installation)
   - [Dependencies](#dependencies)
 - [Directory system](#directory-system)
-- [Parameters](#parameter-file
+- [Parameters](#parameter-file)
 - [Modules](#modules)
   - [1. System preparation](#1-system-preparation)
   - [2. Molecular dynamics simulation](#2-molecular-dynamics-simulation)
