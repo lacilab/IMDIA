@@ -3,9 +3,6 @@
 import sys
 import re
 import pickle
-import argparse
-import MDAnalysis as mda
-from MDAnalysis.analysis.contacts import Contacts
 from MDAnalysis.lib.distances import distance_array
 import numpy as np
 import pandas as pd
@@ -49,12 +46,6 @@ def contact_pairs(u, start_frame, stop_frame, cutoff, sel1, sel2):
     return contact_data
 
 
-def contact_distance_factory(u, start, stop, sel1, sel2, cutoff):
-    cont = Contacts(u, select=(sel1, sel2), refgroup=(sel1, sel2), radius=cutoff)
-    cont.run(start=start, stop=stop, verbose=True)
-    return cont.results.timeseries
-
-
 ##### MAIN FUNCTION #####
 
 def main(logfile : str = None, universe: str = None, 
@@ -68,22 +59,6 @@ def main(logfile : str = None, universe: str = None,
     # parser.add_argument("-u", "--universe", help="Path to the Universe object")
     # parser.add_argument("--dna", action='store_true', dest='with_dna', help="DNA is present in the system")
     # parser.add_argument("-d", "--outdir", help="Output directory")
-# 
-    # if len(sys.argv)==1:
-    #     parser.print_help()
-    #     sys.exit(0)
-# 
-    # args = parser.parse_args()
-    # universe = args.universe
-    # outdir = args.outdir
-
-    # Output file paths
-    # timeseries_full_csv = f"{outdir}/timeseries_full.csv"
-    # timeseries_full_png = f"{outdir}/timeseries_full.png"
-    # timeseries_dbd_csv = f"{outdir}/timeseries_dbd.csv"
-    # timeseries_dbd_png = f"{outdir}/timeseries_dbd.png"
-    # pairs_dbd_csv = f"{outdir}/pairs_dbd.csv"
-    # pairs_full_csv = f"{outdir}/pairs_full.csv"
 
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)
@@ -123,75 +98,17 @@ def main(logfile : str = None, universe: str = None,
 
     sel1, sel2 = selections
 
-    ##### Distance-based contact analysis
-    # Full protein
-    # if cores > 1:
-    #     logger.debug(f"MDA - contact analysis - Running parallel Dask with {cores} cores")
-    #     dist_results = an_perblock(logger, tprfile, xtcfile, cores, contact_distance_factory, start, stop, sel1, sel2, cutoff)
-    # else:
-    #     logger.debug(f"MDA - contact analysis - Running single-core analysis")
-    #     cont = Contacts(u, select=(sel1, sel2), refgroup=(sel1, sel2), radius=cutoff)
-    #     cont.run(start=start, stop=stop, verbose=True)
-    #     dist_results = cont.results.timeseries
-
-    logger.debug(f"MDA - contact analysis - Running single-core analysis")
-    cont = Contacts(u, select=(sel1, sel2), refgroup=(sel1, sel2), radius=cutoff)
-    cont.run(start=start, stop=stop, verbose=True)
-    dist_results = cont.results.timeseries
-
-    df_timeseries = pd.DataFrame(dist_results)
-    df_timeseries.to_csv(outfiles["timeseries_full_csv"], index=False)
-
-    average_contacts = np.mean(dist_results[:, 1])
-
-    # Timeseries plot
-    plt.figure(figsize=(10, 6))
-    plt.plot(dist_results[:, 0], dist_results[:, 1], label='Contacts', color='blue')
-    plt.axhline(y=average_contacts, color='red', linestyle='--', label='Average Contacts')
-    plt.xlabel('Frame')
-    plt.ylabel('Fraction of Contacts')
-    plt.title('Native Contacts, average = {:.2f}'.format(average_contacts))
-    plt.legend()
-    plt.savefig(outfiles["timeseries_full_png"])
-    plt.close()
-
-    # DBD
-    # if with_dna:
-    #     cont = Contacts(u, select=(sel1_dbd, sel2), refgroup=(sel1_dbd, sel2), radius=cutoff)
-    #     cont.run(start=start_frame, stop=stop_frame, verbose=True)
- 
-    #     df_timeseries = pd.DataFrame(cont.results.timeseries)
-    #     df_timeseries.to_csv(timeseries_dbd_csv, index=False)
- 
-    #     average_contacts = np.mean(cont.results.timeseries[:, 1])
- 
-    #     # Timeseries plot
-    #     plt.figure(figsize=(10, 6))
-    #     plt.plot(cont.results.timeseries[:, 0], cont.results.timeseries[:, 1], label='Contacts', color='blue')
-    #     plt.axhline(y=average_contacts, color='red', linestyle='--', label='Average Contacts')
-    #     plt.xlabel('Frame')
-    #     plt.ylabel('Fraction of Contacts')
-    #     plt.title('Native Contacts, average = {:.2f}'.format(average_contacts))
-    #     plt.legend()
-    #     plt.savefig(timeseries_dbd_png)
-    #     plt.close()
-
-
-    # Full protein
-    # Create DataFrame
+    # Pairwise distance calculation within cutoff 5.0 Å 
     if cores > 1:
         logger.debug(f"MDA - contact analysis - Running parallel Dask for contact pairs with {cores} cores")
         contacts_pairs = an_perblock(logger, tprfile, xtcfile, cores, contact_pairs, start, stop, cutoff, sel1, sel2)
     else:
         contacts_pairs = contact_pairs(u, start, stop, cutoff, sel1, sel2)
     
-    contacts_df = pd.DataFrame(contacts_pairs, columns=["frame","sele1_resid","sele1_resnm","sele1_chain","sele2_resid","sele2_resnm","sele2_chain","distance"])
+    contacts_df = pd.DataFrame(contacts_pairs, 
+                               columns=["frame","sele1_resid","sele1_resnm","sele1_chain","sele2_resid","sele2_resnm","sele2_chain","distance"])
     contacts_df.to_csv(outfiles["pairs_full_csv"], index=False)
 
-    # DBD
-    # if with_dna:
-    #     contacts_df = contact_pairs(sel1_dbd, sel2)
-    #     contacts_df.to_csv(outfiles["pairs_dbd_csv"], index=False)
 
 if __name__ == "__main__":
     main()

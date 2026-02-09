@@ -454,23 +454,39 @@ rule hbonds_pymol:
     #         --outcmd {output.hbonds_pymol} \
     #     """
 
-rule contact_analysis:
+rule contact_ratio:
     input: 
         universe = f"{PATH_RAW}/universe",
         tpr = f"{PATH_GMX}/md.tpr",
         xtc = f"{PATH_GMX}/md_post.xtc"
-    threads: min(int(workflow.cores), 32)
     output: 
         timeseries_full_csv = f"{PATH_CONTACTS}/timeseries_full.csv",
         timeseries_full_png = report(f"{PATH_CONTACTS}/timeseries_full.png",
                                 category="Contact analysis", labels={"sample": "{mut} {rep} Timeseries full protein"}),
-        # timeseries_dbd_csv = f"{PATH_CONTACTS}/timeseries_dbd.csv",
-        # timeseries_dbd_png = report(f"{PATH_CONTACTS}/timeseries_dbd.png",
-        #                        category="Contact analysis", labels={"sample": "{mut} {rep} Timeseries DBD"}),
-        # pairs_dbd_csv = f"{PATH_CONTACTS}/pairs_dbd.csv",
+    run:
+        from scripts_analysis.contact_ratio import main
+        main(
+            logfile=logfile,
+            universe=input.universe,
+            group1=GROUP1,
+            group2=GROUP2,
+            start=START,
+            stop=STOP,
+            dna=DNA,
+            outfiles=dict(output)
+        )
+
+
+rule contact_pairwise:
+    input: 
+        universe = f"{PATH_RAW}/universe",
+        tpr = f"{PATH_GMX}/md.tpr",
+        xtc = f"{PATH_GMX}/md_post.xtc"
+    threads: min(int(workflow.cores), 34)
+    output: 
         pairs_full_csv = f"{PATH_CONTACTS}/pairs_full.csv",
     run:
-        from scripts_analysis.contact_analysis import main
+        from scripts_analysis.contacts_pairwise import main
         main(
             logfile=logfile,
             universe=input.universe,
@@ -484,12 +500,7 @@ rule contact_analysis:
             dna=DNA,
             outfiles=dict(output)
         )
-    # shell: 
-    #     """
-    #     {SCRIPTDIR}/contact_analysis.py \
-    #         --universe {input.universe} \
-    #         --outdir "{PATH_ANALYSIS_WC}/004_contacts" \
-    #     """ 
+
 
 rule water_bridges:
     input: 
