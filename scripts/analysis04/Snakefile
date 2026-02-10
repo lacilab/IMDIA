@@ -503,8 +503,11 @@ rule contact_pairwise:
 
 
 rule water_bridges:
+    threads: min(int(workflow.cores), 2)
     input: 
         universe = f"{PATH_RAW}/universe",
+        tpr = f"{PATH_GMX}/md.tpr",
+        xtc = f"{PATH_GMX}/md_post.xtc"
     output: 
         water_bridges = f"{PATH_HBONDS}/waterbridges.csv"
     run:
@@ -512,7 +515,10 @@ rule water_bridges:
         main(
             logfile=logfile,
             universe=input.universe,
+            tprfile=input.tpr,
+            xtcfile=input.xtc,
             outcsv=output.water_bridges,
+            cores=threads,
             group1=GROUP1,
             group2=GROUP2,
             start=START,
