@@ -13,23 +13,24 @@ from scripts.utils.helpers import setup_logger
 
 def remove_hydrogens(filename, logger_name, logfile):
 	logger = setup_logger(logger_name, logfile)
+
 	cmd = f"""
 	pdb4amber -i {filename}.pdb -o {filename}_noH.pdb --nohyd --no-conect
-	pdb4amber -i {filename}_noH.pdb -o {filename}_reduced.pdb --reduce --no-conect
     """
+
 	process = subprocess.run(cmd, shell=True, text=True, capture_output=True)
 	if process.returncode != 0:
 		logger.error(process.stderr)
 		return None  
 	else:
 		logger.info(f"Hydrogen processing complete.\n {process.stdout}")
-	return f"{filename}_reduced.pdb"
+	return f"{filename}_noH.pdb"
 
 
 def add_hydrogens(file, logger_name, logfile, ffs=['water.opc', 'protein.ff19SB']):
 	"""Add hydrogen atoms to a PDB file using tleap."""
 	logger = setup_logger(logger_name, logfile)
-	protonated_file = file.replace('_reduced.pdb', '_protonated.pdb')
+	protonated_file = file.replace('_noH.pdb', '_protonated.pdb')
 	# Build tleap input dynamically
 	ffs_import = "\n".join(f"source leaprc.{ff}" for ff in ffs)
 
