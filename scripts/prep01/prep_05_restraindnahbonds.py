@@ -84,6 +84,11 @@ def main(logfile: str, gmxdir: str, topol: str = "./topol.top",
         logger.error("Force constant scaling factor (fac) should be positive.")
         sys.exit(1)
 
+    if range_a is None:
+        range_a = [0, -1]
+    if range_b is None:
+        range_b = [0, -1]
+
     ##### CHECK DNA SEQUENCES #####
     # Extract lines between [atoms] and [bonds]
     seqs = {}
