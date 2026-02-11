@@ -199,7 +199,7 @@ def main(logfile: str, gmxdir: str):
                 print(line, end="")
         num_Na, num_Cl, num_Nasig, num_Clsig, num_WAT, num_water = count_lines(file, "Na", "Cl", "Na+", "Cl-", "WAT", "Water")
         logger.debug(f"After: Na+: {num_Nasig}, Cl-: {num_Clsig}, Na: {num_Na}, Cl: {num_Cl}, WAT: {num_WAT}, Water: {num_water}")
-        if num_Nasig > 0 or num_Clsig > 0 or num_WAT > 0:
+        if num_Nasig > 0 or num_Clsig > 0:
             logger.warning(f"Substitution incomplete in {file}. This could result in clashing nomenclature later.")
 
     # Create checkpoint file
