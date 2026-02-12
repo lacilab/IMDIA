@@ -8,12 +8,13 @@ def gen_flags(args):
     flags = []
 
     for name, value in args.items():
-        if value != False and value is not None:
+        if value is not None:
+            if isinstance(value, bool) and not value:
+                continue
             flag = "--" + name
             flags.append(flag)
-            if value != True:
+            if type(value) != bool:
                 flags.append(str(value))
-
     return flags
 
 def count_lines(file, *names):

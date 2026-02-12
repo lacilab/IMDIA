@@ -14,15 +14,16 @@ def main(datadir: str, gmxdir: str, repn: int,
     em : str = None, nvt : str = None, npt : str = None, md : str = None, 
     ):
 
-    args = locals()
-    args.pop('datadir')
-    args.pop('gmxdir')
-    flags = gen_flags(args)
-    
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     LOGFILE = f"{datadir}/logs/step02_rep{repn}_md_{timestamp}.log"
     logger = setup_logger("md", LOGFILE)
 
+    args = locals()
+    args.pop('datadir')
+    args.pop('gmxdir')
+    flags = gen_flags(args)
+    logger.debug(f"Running MD step with flags: {flags}")
+    
     cmd = [
         sys.executable,
         "-m",
@@ -31,7 +32,6 @@ def main(datadir: str, gmxdir: str, repn: int,
         "--gmxdir", gmxdir
     ] + flags
 
-    logger.debug("Running command for MD step.")
     # remove empty strings from cmd before joining
     cmd = [x for x in cmd if x.strip()]
     subprocess.run(cmd, check=True)
