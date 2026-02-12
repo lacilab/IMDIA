@@ -74,17 +74,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
         u = pickle.load(f)
     u.trajectory[0]
 
-    # Select atoms by chain
-    dimer = u.select_atoms("segid A B")  
-    monoA = u.select_atoms("segid A")   
-    monoB = u.select_atoms("segid B")
-
-    # Check if protein selections are empty
-    prot_sele = {"dimer": dimer, "monoA": monoA, "monoB": monoB}
-    for name, sele in prot_sele.items():
-        if sele.n_atoms == 0:
-            logger.error(f"Selection {name} is empty. Please check the chain ids.")
-            sys.exit(1)
+    protein_sel = u.select_atoms("protein")
 
     ########## RMSD ##########
     rmsd_analysis = rms.RMSD(u, select='backbone', groupselections=['name CA', 'protein'])
@@ -131,13 +121,11 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
     plt.close()
 
     ########## Radius of gyration ##########
-    
-
     result = []
     for frame in u.trajectory:
-        result.append(radgyr(atomgroup=dimer,
-                            masses=dimer.masses,
-                            total_mass=np.sum(dimer.masses)))
+        result.append(radgyr(atomgroup=protein_sel,
+                            masses=protein_sel.masses,
+                            total_mass=np.sum(protein_sel.masses)))
 
     result = np.asarray(result).T
     labels = ['all', 'x-axis', 'y-axis', 'z-axis']
@@ -152,6 +140,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
     plt.legend()
     plt.ylabel('Radius of gyration (Å)')
     plt.xlabel('Frame')
+    plt.title('Radius of gyration of the protein')
     plt.savefig(outfiles['radius_axis'])
     plt.close()
 
@@ -175,29 +164,38 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
                         in_memory=True).run()
     logger.debug("Trajectory aligned to average structure for RMSF analysis.")
 
-    monoA_ca = monoA.select_atoms('name CA')
-    RA = rms.RMSF(monoA_ca).run()
-    monoB_ca = monoB.select_atoms('name CA')
-    RB = rms.RMSF(monoB_ca).run()
+    # Get segids of the protein, to avoid leaving out non-standard residues like PTR
+    prot_segids = [seg.segid for seg in protein_sel.segments]
+    logger.debug(f"Protein segids identified: {prot_segids}")
 
-    for name, sele in [("monoA_ca", monoA_ca), ("monoB_ca", monoB_ca)]:
-            if sele.n_atoms == 0:
-                logger.error(f"Selection {name} is empty. Please check the chain ids.")
-                sys.exit(1)
-            else:
-                logger.debug(f"Selection {name} has {sele.n_atoms} atoms.")
+    prot_rmsf = {}
+    for segid in prot_segids:
+        prot_rmsf[segid] = {}
+        ca = u.select_atoms(f"segid {segid} and name CA")
+        prot_rmsf[segid]['resids'] = ca.resids
+        if ca.n_atoms == 0:
+            logger.warning(f"Selection for segid {segid} is empty. Please check the chain ids.")
+            continue
+        else:
+            logger.debug(f"Selection for segid {segid} has {ca.n_atoms} CA atoms.")
+            rmsf = rms.RMSF(ca).run()
+            prot_rmsf[segid]['rmsf'] = rmsf.results.rmsf
 
     # Save Protein RMSF to CSV
-    rmsf_prot = pd.DataFrame({
-        'Residue': monoA_ca.resids,
-        'RMSF_A': RA.results.rmsf,
-        'RMSF_B': RB.results.rmsf
-    })
+    rmsf_prot = pd.DataFrame()
+    for chain in prot_rmsf.keys():  
+        df_chain = pd.DataFrame({
+            'Residue': prot_rmsf[chain]['resids'] + offset,   
+            'Chain': chain,  
+            f'RMSF': prot_rmsf[chain]['rmsf']
+        })
+        rmsf_prot = pd.concat([rmsf_prot, df_chain], axis=1)
+    
     rmsf_prot.to_csv(outfiles['rmsf_prot_csv'], index=False)
 
     # Plot
-    plt.plot(monoA_ca.resids + offset, RA.results.rmsf, label='RMSF Chain A')
-    plt.plot(monoB_ca.resids + offset, RB.results.rmsf, label='RMSF Chain B')
+    for chain in prot_rmsf.keys():
+        plt.plot(prot_rmsf[chain]['resids'] + offset, prot_rmsf[chain]['rmsf'], label=f'Chain {chain}')
     # Color by protein domains
     if len(domains) > 0:
         for domain in domains:
@@ -206,42 +204,47 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
             plt.axvspan(start, end, zorder=0, alpha=0.2, color=domain['color'], label=domain['label'])
     plt.xlabel('Residue number (adjusted)')
     plt.ylabel('RMSF (Å)')
+    plt.title('RMSF of Protein Chains')
     plt.legend()
     plt.savefig(outfiles['rmsf_prot_domains'])
     plt.close()
 
     ##### If the complex contains dsDNA #####
     if with_dna:
-        dna = u.select_atoms("segid C D")   
-        dnaC = u.select_atoms("segid C") 
-        dnaD = u.select_atoms("segid D") 
+        dna_sel = u.select_atoms("nucleic") 
+        dna_segids = [seg.segid for seg in dna_sel.segments]
 
-        # Select P atoms to focus on backbone fluctuations
-        dnaC_p = dnaC.select_atoms('name P')
-        RC = rms.RMSF(dnaC_p).run()
-        dnaD_p = dnaD.select_atoms('name P')
-        RD = rms.RMSF(dnaD_p).run()
-
-        # Check if DNA selections are empty
-        dna_sele = {"dnaC_p": dnaC_p, "dnaD_p": dnaD_p}
-        for name, sele in dna_sele.items():
-            if sele.n_atoms == 0:
-                logger.error(f"Selection {name} is empty. Please check the chain ids.")
-                sys.exit(1)
+        dna_rmsf = {}
+        for segid in dna_segids:
+            dna_rmsf[segid] = {}
+            p = u.select_atoms(f"segid {segid} and name P")
+            dna_rmsf[segid]['resids'] = p.resids
+            if p.n_atoms == 0:
+                logger.warning(f"Selection for segid {segid} is empty. Please check the chain ids.")
+                continue
+            else:
+                logger.debug(f"Selection for segid {segid} has {p.n_atoms} P atoms.")
+                rmsf = rms.RMSF(p).run()
+                dna_rmsf[segid]['rmsf'] = rmsf.results.rmsf
 
         # Save DNA RMSF to CSV
-        rmsf_dna = pd.DataFrame({
-            'Residue': dnaC_p.resids,
-            'RMSF_C': RC.results.rmsf,
-            'RMSF_D': RD.results.rmsf
-        })
+        rmsf_dna = pd.DataFrame()
+        for chain in dna_rmsf.keys():  
+            df_chain = pd.DataFrame({
+                'Residue': dna_rmsf[chain]['resids'],   
+                'Chain': chain,  
+                f'RMSF': dna_rmsf[chain]['rmsf']
+            })
+            rmsf_dna = pd.concat([rmsf_dna, df_chain], axis=1)
+
         rmsf_dna.to_csv(outfiles['rmsf_dna_csv'], index=False)
 
         # Plot
-        plt.plot(dnaC_p.resids, RC.results.rmsf, label='RMSF DNA C')
-        plt.plot(dnaD_p.resids, RD.results.rmsf, label='RMSF DNA D')
+        for chain in dna_rmsf.keys():
+            plt.plot(dna_rmsf[chain]['resids'], dna_rmsf[chain]['rmsf'], label=f'DNA Chain {chain}')
         plt.xlabel('Residue number')
         plt.ylabel('RMSF (Å)')
+        plt.title('RMSF of DNA Chains')
         plt.legend()
         plt.savefig(outfiles['rmsf_dna_res'])
         plt.close()
