@@ -18,7 +18,7 @@ def main():
                         help='Snakefile rules to be executed.')
     parser.add_argument('--ffs', dest='ffs', type=str, default=None,
                         help='Force fields used in GBSA.')
-    parser.add_argument('--unlock', dest='unlock', action='store_false', help='Unlock snakemake workflow if it is locked.')
+    parser.add_argument('--unlock', dest='unlock', action='store_true', help='Unlock snakemake workflow if it is locked.')
 
     # print help if required arguments are not provided
     if len(sys.argv) < 5:

@@ -4,9 +4,6 @@
 
 logfile = config.get("logfile", None)
 rule_groups = config.get("rule_groups", "").split(' ')
-ffs = config.get("ffs", None)
-if ffs is not None:
-    ffs = ffs.split(' ')
 
 DATADIR        = config.get("datadir", "data")
 SCRIPTDIR      = os.path.join(os.path.dirname(workflow.snakefile), "scripts_analysis")
@@ -23,6 +20,7 @@ GROUP1         = config.get("group1", None)
 GROUP2         = config.get("group2", None)
 START          = config.get("start_frame", None)     
 STOP           = config.get("stop_frame", None)
+FFS            = config.get("ffs", None)
 
 
 # ------------------------
@@ -755,7 +753,7 @@ rule gbsa:
             stop=STOP,
             dna=DNA,
             phos=PHOS,
-            ffs = ffs
+            ffs=FFS
         )
     #shell: 
     #    """
