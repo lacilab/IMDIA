@@ -7,9 +7,10 @@ import sys
 import glob
 import time
 from scripts.utils.helpers import setup_logger
+from pathlib import Path
 
-def main(logfile: str, gmxdir: str, topol: str = "./topol.top", 
-         dna_a: str = "./toppar/molecule_3.itp", dna_b: str = "./toppar/molecule_4.itp", range_a: list = [0, -1], range_b: list = [0, -1],
+def main(logfile: Path, gmxdir: Path, topol: Path = Path("./topol.top"), 
+         dna_a: Path = Path("./toppar/molecule_3.itp"), dna_b: Path = Path("./toppar/molecule_4.itp"), range_a: list = [0, -1], range_b: list = [0, -1],
          type: int = 1, type2: int = 2, low: float = 0.0, up1: float = 0.3, up2: float = 0.4, fac: float = 1.0):
     # parser = argparse.ArgumentParser(description="Calculate distance restraints for DNA H-bonds and append them to a topology file.")
     # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
@@ -37,41 +38,36 @@ def main(logfile: str, gmxdir: str, topol: str = "./topol.top",
     #                     help="Upper bound distance 2 (Å). Default: 0.4")
     # parser.add_argument("--fac", dest="fac", type=float, default=1.0,
     #                     help="Force constant scaling factor. Default: 1.0")
-    # 
-    # if len(sys.argv) < 2:
-    #     parser.print_help()
-    #     sys.exit(0)
-# 
-    # args = parser.parse_args()
 
     ##### Initialize logger
     logger = setup_logger("prep", logfile)
 
     ##### CHECK INPUT #####
-    if not os.path.isdir(gmxdir):
-        logger.error(f"Directory {gmxdir} not found")
+    if not gmxdir.is_dir():
+        logger.error(f"Directory {str(gmxdir)} not found")
         sys.exit(1)
-    if not os.path.isfile(topol):
-        logger.error(f"Topology file {topol} not found.")
+    if not topol.is_file():
+        logger.error(f"Topology file {str(topol)} not found.")
         sys.exit(1)
 
     # Check if checkpoint file from previous run exists
-    if glob.glob(f"{gmxdir}/check_05_restraindnahbonds_*.done"):
+    checkpoint_files = list(gmxdir.glob(f"check_05_restraindnahbonds_*.done"))
+    if len(checkpoint_files) > 0:
         logger.warning("Checkpoint file found.")
         # Check if topol file contains distance_restraints section
         with open(topol, 'r') as f:
             if "[ distance_restraints ]" in f.read():
-                logger.info(f"[ distance_restraints ] section found in {topol}.")
+                logger.info(f"[ distance_restraints ] section found in {str(topol)}.")
                 logger.warning("Skipping DNA H-bond restraints addition.")
                 return
             else:
-                logger.warning(f"Checkpoint file found but [ distance_restraints ] section not found in {topol}. The previous run might have been incomplete. Proceeding with DNA H-bond restraints addition.")
+                logger.warning(f"Checkpoint file found but [ distance_restraints ] section not found in {str(topol)}. The previous run might have been incomplete. Proceeding with DNA H-bond restraints addition.")
 
-    if not os.path.isfile(dna_a):
-        logger.error(f"DNA chain A topology file {dna_a} not found.")
+    if not dna_a.is_file():
+        logger.error(f"DNA chain A topology file {str(dna_a)} not found.")
         sys.exit(1)
-    if not os.path.isfile(dna_b):
-        logger.error(f"DNA chain B topology file {dna_b} not found.")
+    if not dna_b.is_file():
+        logger.error(f"DNA chain B topology file {str(dna_b)} not found.")
         sys.exit(1)
 
     # distance bounds order
@@ -187,11 +183,11 @@ def main(logfile: str, gmxdir: str, topol: str = "./topol.top",
     logger.debug(f"Found .itp files included in {topol} (excluding forcefield.itp):")
     for itp in itps:
         logger.debug(itp)
-        if os.path.basename(dna_a) in itp:
-            logger.debug(f"Match: {dna_a}, {itp}")
+        if dna_a.name in itp:
+            logger.debug(f"Match: {dna_a.name}, {itp}")
             global_a = global_id
-        elif os.path.basename(dna_b) in itp:
-            logger.debug(f"Match: {dna_b}, {itp}")
+        elif dna_b.name in itp:
+            logger.debug(f"Match: {dna_b.name}, {itp}")
             global_b = global_id
         n = None 
         inside = False
@@ -251,7 +247,7 @@ def main(logfile: str, gmxdir: str, topol: str = "./topol.top",
 
     logger.info(f"Distance restraints for DNA H-bonds added to {topol}.")
     # Create checkpoint file
-    checkpoint_filename = f"{gmxdir}/check_05_restraindnahbonds_{int(time.time())}.done"
+    checkpoint_filename = gmxdir / f"check_05_restraindnahbonds_{int(time.time())}.done"
     with open(checkpoint_filename, 'w') as f:
         f.write("Distance restraints for DNA H-bonds added successfully.\n")
 

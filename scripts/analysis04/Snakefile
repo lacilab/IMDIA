@@ -5,9 +5,8 @@
 logfile = config.get("logfile", None)
 rule_groups = config.get("rule_groups", "").split(' ')
 
+SCRIPTDIR      = workflow.snakefile.parent / "scripts_analysis"
 DATADIR        = config.get("datadir", "data")
-SCRIPTDIR      = os.path.join(os.path.dirname(workflow.snakefile), "scripts_analysis")
-
 METHODS_HBONDS = config.get("methods_hbonds", ["gmx", "mda"])
 STRUCTURES     = config.get("structure", [])
 MUTS           = config.get("muts", [])

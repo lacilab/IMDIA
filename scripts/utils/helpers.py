@@ -1,7 +1,7 @@
 import logging
 import os
 import re
-
+from pathlib import Path
 
 # Generate command-line flags from argument dictionary
 def gen_flags(args):
@@ -32,18 +32,15 @@ def count_lines(file, *names):
 
     return [counts[name] for name in names]
 
-def setup_logger(name, logfile, level=logging.DEBUG):
-
+def setup_logger(name: str, logfile: Path, level=logging.DEBUG):
     logger = logging.getLogger(name)
 
     if logger.handlers:
         return logger
 
-    os.makedirs(os.path.dirname(logfile), exist_ok=True)
-
     logger.setLevel(level)
 
-    fh = logging.FileHandler(logfile, mode="a")
+    fh = logging.FileHandler(str(logfile), mode="a")
     ch = logging.StreamHandler()
 
     formatter = logging.Formatter(

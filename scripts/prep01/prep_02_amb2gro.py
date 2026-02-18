@@ -7,8 +7,9 @@ import time
 import parmed as pmd
 import argparse
 from scripts.utils.helpers import setup_logger
+from pathlib import Path
 
-def main(logfile: str, prmtop: str, inpcrd: str, top: str, gro: str):
+def main(logfile: Path, prmtop: Path, inpcrd: Path, top: Path, gro: Path):
     # parser = argparse.ArgumentParser(description="Convert Amber files to GROMACS format.")
     # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
     # parser.add_argument("--prmtop", "-p", dest="prmtop", type=str, required=True,
@@ -20,35 +21,26 @@ def main(logfile: str, prmtop: str, inpcrd: str, top: str, gro: str):
     # parser.add_argument("--gro", "-g", dest="gro", type=str, required=True,
     #                     help="GROMACS gro file")
  
-    # # print help if no arguments are provided
-    # if len(sys.argv) < 5:
-    #     parser.print_help()
-    #     sys.exit(0)
- 
-    # args = parser.parse_args()
-    amberdir = os.path.dirname(os.path.abspath(top))
+    gmxdir = top.parent
 
     ##### Initialize logger
     logger = setup_logger("prep", logfile)
-    logger.debug(f"Starting Amber to GROMACS conversion with prmtop: {prmtop}, inpcrd: {inpcrd}, top: {top}, gro: {gro}")
+    logger.debug(f"Starting Amber to GROMACS conversion with prmtop: {str(prmtop)}, inpcrd: {str(inpcrd)}, top: {str(top)}, gro: {str(gro)}")
 
     ##### Check for checkpoint files from previous runs #####
-    expected_files = [
-        f"{top}",
-        f"{gro}"
-    ]
+    expected_files = [ top, gro ]
 
-    checkpoint_files = glob.glob(f"{amberdir}/check_02_amb2gro_*.done")
-    if checkpoint_files:
-        logger.warning(f"Checkpoint file(s) found: {', '.join(checkpoint_files)}")
+    checkpoint_files = list(gmxdir.glob(f"check_02_amb2gro_*.done"))
+    if len(checkpoint_files) > 0:
+        logger.warning(f"Checkpoint file(s) found: {', '.join([str(f) for f in checkpoint_files])}")
         # Check if expected output files exist
-        missing = [p for p in expected_files if not os.path.isfile(p)]
+        missing = [p for p in expected_files if not p.is_file()]
         if not missing:
             logger.warning("The expected output files are already present. Skipping Amber to GROMACS conversion.")
             return
 
     # If checkpoint files are not found, proceed with the conversion
-    amber = pmd.load_file(prmtop, inpcrd)
+    amber = pmd.load_file(str(prmtop), str(inpcrd))
 
     # Cmap correction, including PTR
     CX_dir = { 'ALA' : 'XC0', 'ARG' : 'XC1', 'ASH' : 'XC2', 'ASN' : 'XC3', 'ASP' : 'XC4', 'CYM' : 'XC5', 'CYS' : 'XC6', 
@@ -80,12 +72,12 @@ def main(logfile: str, prmtop: str, inpcrd: str, top: str, gro: str):
 
 
     # output 
-    amber.save(top, overwrite=True, format='gromacs')
-    amber.save(gro, overwrite=True, format='gro')
+    amber.save(str(top), overwrite=True, format='gromacs')
+    amber.save(str(gro), overwrite=True, format='gro')
 
     logger.debug("Checking generated files.")
 
-    missing = [p for p in expected_files if not os.path.isfile(p)]
+    missing = [p for p in expected_files if not p.is_file()]
     for file in expected_files:
         if file not in missing:
             logger.info(f"generated {file}")
@@ -94,8 +86,9 @@ def main(logfile: str, prmtop: str, inpcrd: str, top: str, gro: str):
 
     if not missing:
         logger.info("Amber to GROMACS conversion completed successfully.")
-        checkpoint_filename = f"{amberdir}/check_02_amb2gro_{int(time.time())}.done"
-        with open(checkpoint_filename, 'w') as f:
+        checkpoint = gmxdir / f"check_02_amb2gro_{int(time.time())}.done"
+        checkpoint.parent.mkdir(exist_ok=True, parents=True)
+        with checkpoint.open('w') as f:
             f.write("Amber to GROMACS conversion completed successfully.\n")
         return
     else:

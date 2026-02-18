@@ -8,14 +8,18 @@ import sys
 import shutil
 import glob
 import argparse
+from pathlib import Path
+from venv import logger
 from scripts.utils.helpers import setup_logger
 
 
-def remove_hydrogens(filename, logger_name, logfile):
+def remove_hydrogens(filename: str, logger_name: str, logfile: Path):
 	logger = setup_logger(logger_name, logfile)
+	logger.debug(f"Removing hydrogens from {filename} using pdb4amber.")
+	outfile = filename.replace('.pdb', '_noH.pdb')
 
 	cmd = f"""
-	pdb4amber -i {filename}.pdb -o {filename}_noH.pdb --nohyd --no-conect
+	pdb4amber -i {filename} -o {outfile} --nohyd --no-conect
     """
 
 	process = subprocess.run(cmd, shell=True, text=True, capture_output=True)
@@ -24,20 +28,20 @@ def remove_hydrogens(filename, logger_name, logfile):
 		return None  
 	else:
 		logger.info(f"Hydrogen processing complete.\n {process.stdout}")
-	return f"{filename}_noH.pdb"
+	return outfile
 
 
-def add_hydrogens(file, logger_name, logfile, ffs=['water.opc', 'protein.ff19SB']):
+def add_hydrogens(file: str, logger_name: str, logfile: Path, ffs: list[str] = ['water.opc', 'protein.ff19SB']):
 	"""Add hydrogen atoms to a PDB file using tleap."""
 	logger = setup_logger(logger_name, logfile)
-	protonated_file = file.replace('_noH.pdb', '_protonated.pdb')
+	outfile = file.replace('_noH.pdb', '_protonated.pdb')
 	# Build tleap input dynamically
 	ffs_import = "\n".join(f"source leaprc.{ff}" for ff in ffs)
 
 	tleap_input = f"""
 		{ffs_import}
 		complex = loadPdb {file}
-		savePdb complex {protonated_file}
+		savePdb complex {outfile}
 		quit
 	"""
 	logger.debug(f"Running tleap with input:\n{tleap_input}")  # Debugging: Show tleap input
@@ -48,20 +52,22 @@ def add_hydrogens(file, logger_name, logfile, ffs=['water.opc', 'protein.ff19SB'
 	else:
 		logger.debug(f"tleap output:\n {process.stdout}")
 
-	return protonated_file
+	return outfile
 
 
-def gen_chains(complex_file, logger_name, logfile, chains, ffs=['water.opc', 'protein.ff19SB']):
+def gen_chains(complex_file: Path, logger_name: str, logfile: Path, chains: list[str], ffs: list[str] = ['water.opc', 'protein.ff19SB']):
 	"""
 		Generate separate PDB files.
 	"""
 	logger = setup_logger(logger_name, logfile)
-	complex_name = os.path.basename(complex_file)
+	complex_name = Path(complex_file).stem
 
 	files = []
 
 	for chain in chains:
-		chain_file = complex_file.replace(complex_name, f'{chain}_noH.pdb')
+		# chain_file = complex_file.replace(complex_name, f'{chain}_noH.pdb')
+
+		chain_file = complex_name + f'_{chain}_noH.pdb'
 
 		# Run pdb_selchain.py command for chain
 		cmd_chain = ['pdb_selchain', f'-{chain}', complex_file]
@@ -84,15 +90,14 @@ def gen_chains(complex_file, logger_name, logfile, chains, ffs=['water.opc', 'pr
 	return list(files)
 
 
-def solvate_gen_parm(complex_file, chains, ffs=['water.opc', 'protein.ff19SB']):
+def solvate_gen_parm(complex_file: Path, chains: list[str], ffs: list[str] = ['water.opc', 'protein.ff19SB']):
 	"""Protonate and solvate the complex and chains using LEaP."""
-	complex_name = os.path.splitext(complex_file)[0]
+	complex_name = Path(complex_file).stem
 	complex_solvated_file = complex_name + '_solvated.pdb'
 
 	filebases = []
 	for chain in chains:
 		filebases.append(chain[:-4])
-
 
 	# Build tleap input dynamically
 	ffs_import = "\n".join(f"source leaprc.{ff}" for ff in ffs)
@@ -137,7 +142,7 @@ def solvate_gen_parm(complex_file, chains, ffs=['water.opc', 'protein.ff19SB']):
 
 ########## MAIN ##########
 
-def main(logfile: str = None, pdbpath: str = None,
+def main(logfile: Path = None, pdbpath: Path = None,
 	dna : bool = False, phos : bool = False, ffs: list = None):
 	start_time = time.time()
 
@@ -147,46 +152,43 @@ def main(logfile: str = None, pdbpath: str = None,
 	# parser.add_argument('--dna', dest='with_dna', action='store_true', help='Use if the system contains DNA. Adds DNA.bsc1 force field.')
 	# parser.add_argument('--phos', dest='with_phosphate', action='store_true', help='Use if the system contains phosphorylated residues. Adds phosaa19SB force field.')
 	# parser.add_argument('--ffs', dest='ffs', help='Comma separated list of force fields to use from the list available in LEaP. Avoid using clashing force fields. Default: protein.ff19SB,water.opc')
- 
-	# # print help if no arguments are provided
-	# if len(sys.argv) < 2:
-	# 	parser.print_help()
-	# 	sys.exit(0)
- 
-	# args = parser.parse_args()
-
-	amberdir, pdb = os.path.split(pdbpath)
-	filename = os.path.splitext(pdb)[0]
-
-	ff_default = ['water.opc', 'protein.ff19SB']
-
-	# Change to amberdir so fixed amber log files are stored here
-	cwd = os.getcwd() 
-	os.chdir(amberdir)
-
+	
 	##### Initialize logger
 	logger_name = 'prep'
 	logger = setup_logger(logger_name, logfile)
 
+	amberdir = Path(pdbpath).parent
+	pdbfile = Path(pdbpath).name
+	structure = Path(pdbpath).stem
+
+	logger.debug(f"Extracted amberdir: {amberdir}, pdbfile: {pdbfile}, structure: {structure}")
+
+
+	ff_default = ['water.opc', 'protein.ff19SB']
+
+	# Change to amberdir so fixed amber log files are stored here
+	cwd = Path.cwd() 
+	os.chdir(amberdir)
+
+
 	##### Check for checkpoint files from previous runs #####
 	expected_files = [
-		f"{filename}_protonated_solvated.inpcrd",
-		f"{filename}_protonated_solvated.prmtop",
+		Path(f"{structure}_protonated_solvated.inpcrd"),
+		Path(f"{structure}_protonated_solvated.prmtop"),
 	]
 
-	checkpoint_files = glob.glob(f"check_01_amber_*.done")
-	if checkpoint_files:
-		logger.warning(f"Checkpoint file(s) found: {', '.join(checkpoint_files)}")
+	checkpoint_files = list(Path.cwd().glob("check_01_amber_*.done"))
+	if len(checkpoint_files) > 0:
+		logger.warning(f"Checkpoint file(s) found: {', '.join(f.name for f in checkpoint_files)}")
 		# Check if expected output files exist
-		missing = [p for p in expected_files if not os.path.isfile(p)]
+		missing = [p for p in expected_files if not p.exists()]
 		if not missing:
 			logger.warning("The expected output files are already present. Skipping AmberTools preparation.")
 			os.chdir(cwd)
 			return
 
-
 	# Check if input file is a PDB file
-	if not pdb.lower().endswith('.pdb'):
+	if not pdbpath.suffix.lower() == '.pdb':
 		logger.error("Input file must be a PDB file with .pdb extension.")
 		sys.exit(1)
 
@@ -208,12 +210,14 @@ def main(logfile: str = None, pdbpath: str = None,
 		ffs = ff_default
 
 	# Prepare the complex (make sure the hydrogens naming matches amber)
-	noH_complex = remove_hydrogens(filename, logger_name, logfile)
+
+	noH_complex = remove_hydrogens(pdbfile, logger_name, logfile)
+	logger.debug(f"Hydrogens removed from {pdbpath}, saved as {noH_complex}")
 	protonated_complex = add_hydrogens(noH_complex, logger_name, logfile, ffs)
 
 	# Extract chain ids from the PDB file
 	chains = set()
-	with open(pdb) as f:
+	with open(pdbfile) as f:
 		for line in f:
 			if line.startswith(("ATOM  ", "HETATM")):
 				# PDB chain ID is column 22 (1-based), index 21 (0-based)
@@ -228,12 +232,6 @@ def main(logfile: str = None, pdbpath: str = None,
 	# Generate the receptor & ligand (also match the hydrogens to amber specifics)
 	chain_files = gen_chains(noH_complex, logger_name, logfile, chains, ffs)
 	solvate_gen_parm(protonated_complex, chain_files, ffs)
-	# if args.with_dna:
-	# 	mono_a_file, mono_b_file, dna_a_file, dna_b_file = gen_chains(noH_complex, logger_name, args.logfile, ffs,  'A', 'B', 'C', 'D')
-	# 	solvate_gen_parm(protonated_complex, ffs, mono_a_file, mono_b_file, dna_a_file, dna_b_file)
-	# else:
-	# 	mono_a_file, mono_b_file = gen_chains(noH_complex, logger_name, args.logfile, ffs, 'A', 'B')	
-	# 	solvate_gen_parm(protonated_complex, ffs, mono_a_file, mono_b_file)
 
 	protonated_complex.replace('.pdb', '_solvated.prmtop')
 	protonated_complex.replace('.pdb', '_solvated.pdb')
@@ -242,38 +240,33 @@ def main(logfile: str = None, pdbpath: str = None,
 	elapsed_time = end_time - start_time
 	logger.debug(f"Total execution time: {elapsed_time:.2f} seconds")
 
-	# Move logs to amberdir
-	# if os.path.isfile("leap.log"):
-	# 	shutil.move("leap.log", f"{amberdir}/leap.log")
-	# if os.path.isfile("reduce_info.log"):
-	# 	shutil.move("reduce_info.log", f"{amberdir}/reduce_info.log")
-
 	# Check output files
 	logger.debug("Checking generated files.")
 
-	missing = [p for p in expected_files if not os.path.isfile(p)]
+	missing = [p for p in expected_files if not p.exists()]
 	for file in expected_files:
 		if file not in missing:
 			logger.info(f"generated {file}")
 		else:
 			logger.error(f"{file} not generated")
 
-			
-	# Return to initial working directory
-	logger.debug(f"The current directory is {os.getcwd()}")
-	os.chdir(cwd)
-	logger.debug(f"Changed directory to {os.getcwd()}")
-
 	if not missing:
-		logger.info("AmberTools preparation completed successfully.")
-		checkpoint_filename = f"check_01_amber_{int(time.time())}.done"
-		with open(checkpoint_filename, 'w') as f:
-			f.write("AmberTools preparation completed successfully.\n")
+		checkpoint  = Path(f"check_01_amber_{int(time.time())}.done")
+		checkpoint.parent.mkdir(exist_ok=True)
+		with checkpoint.open('w') as f:
+			msg = f"AmberTools preparation completed successfully for structure {structure}.\n"
+			f.write(msg)
+			logger.info(msg)
+			os.chdir(cwd)
 		return
 	else:
 		logger.error("AmberTools preparation failed. There are missing files.")
 		sys.exit(1)
-
+			
+	# Return to initial working directory
+	logger.debug(f"The current directory is {Path.cwd()}")
+	os.chdir(cwd)
+	logger.debug(f"Changed directory to {Path.cwd()}")
 
 
 if __name__ == "__main__":

@@ -2,37 +2,19 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime
-import subprocess
-import sys
 from scripts.utils.helpers import setup_logger
+from scripts.pipeconfig import Pipeline
+from scripts.analysis04 import analysis
 
-def main(datadir: str, configfile: str, cores: int = None, rules: list = None, unlock: bool = False):
+def main(pipe: Pipeline, rules: list[str] = None, unlock: bool = False):
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    LOGFILE = f"{datadir}/logs/step04_analysis_{timestamp}.log"
+    logdir = pipe.paths.mutdir / "logs"
+    logdir.mkdir(parents=True, exist_ok=True)  # Ensure dir exists
+    LOGFILE = logdir / f"step04_analysis_{timestamp}.log"
     logger = setup_logger("analysis", LOGFILE)
+    logger.debug(f"Running analysis step with rules: {rules} and unlock: {unlock}.")
 
-    flag_cores = "--cores" if cores is not None else ""
-    value_cores = str(cores) if cores is not None else ""
-
-    flag_rules = "--rules" if rules is not None else ""
-    value_rules = " ".join(rules) if rules is not None else ""
-
-    flag_unlock = "--unlock" if unlock else ""
-
-    cmd = [sys.executable,
-        "-m",
-        "scripts.analysis04.analysis",
-        "--logfile", LOGFILE,
-        "--datadir", datadir,
-        "--configfile", configfile,
-        flag_cores, value_cores,
-        flag_rules, value_rules,
-        flag_unlock
-    ]
-
-    logger.debug("Running analysis step.")
-    # remove empty strings from cmd before joining
-    cmd = [c for c in cmd if c != ""]
-    subprocess.run(cmd, check=True)
+    analysis.main(logfile=LOGFILE, datadir=pipe.paths.datadir, configfile=pipe.paths.configfile, 
+                  cores=pipe.run.cores, rules=rules, unlock=unlock)
 

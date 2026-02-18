@@ -1,21 +1,16 @@
 from dataclasses import dataclass
 from pathlib import Path
 import sys
-import os
 import yaml
 
-import scripts.prep01.prep_wrap as prep_wrap
-import scripts.md02.md_wrap as md_wrap
-import scripts.post03.post_wrap as post_wrap
-import scripts.analysis04.analysis_wrap as analysis_wrap
 
 @dataclass
 class Paths:
     datadir: Path
     mutdir: Path
-    pdbfile: Path
+    pdbfile: str
     gmxdir: Path
-    paramsfile: Path
+    paramspath: Path
 
 @dataclass
 class SystemConfig:
@@ -35,10 +30,10 @@ class RunConfig:
     npme: int
     ngpu: int
     gputasks: int
-    em: bool
-    nvt: bool
-    npt: bool
-    md: bool
+    em: Path
+    nvt: Path
+    npt: Path
+    md: Path
     snakecores: int
 
 class Pipeline:
@@ -53,17 +48,17 @@ class Pipeline:
     def _derive_paths(self) -> 'Paths':
         pdbpath = Path(self.pdbpath)
         self._validate_file(pdbpath, "PDB")
-        paramsfile = self.paramsfile
-        self._validate_file(paramsfile, "Parameter")
-        mutdir = pdbpath.parent
+        paramspath = Path(self.paramsfile)
+        self._validate_file(paramspath, "Parameter")
+        mutdir = Path(pdbpath.parent)
         self._validate_dir(mutdir, "Mutation directory")
-        datadir = mutdir.parent.parent
+        datadir = Path(mutdir.parent.parent)
         self._validate_dir(datadir, "Data directory")
         gmxdir = mutdir / "gromacs_common" # Don't validate, will be created during prep step
         pdbfile = pdbpath.name 
         self._validate_file(mutdir / pdbfile, "PDB in mutation directory")
         return Paths(mutdir=mutdir, datadir=datadir, pdbfile=pdbfile,
-                     gmxdir=gmxdir, paramsfile=paramsfile)
+                     gmxdir=gmxdir, paramspath=paramspath)
     
     def _validate_file(self, file, role) -> None:
         if not file.is_file():
@@ -71,6 +66,14 @@ class Pipeline:
             sys.exit(1)
         else:
             print(f"{role} file '{file}' found.")
+
+    def _to_path(self, value):
+        """Convert str/None to Path, or pass through existing Path."""
+        if value is None:
+            return None
+        if isinstance(value, Path):
+            return value
+        return Path(value)
 
     def _validate_dir(self, file, role) -> None:
         if not file.is_dir():
@@ -89,7 +92,7 @@ class Pipeline:
         with open(self.paramsfile) as f:
             params = yaml.safe_load(f)
 
-        pdbpath = params.get("pdbpath", None)
+        pdbpath = self._to_path(params.get("pdbpath"))
         if pdbpath is None:
             print("ERROR: 'pdbpath' not specified in parameter file.")
             sys.exit(1)
@@ -111,10 +114,10 @@ class Pipeline:
             npme=params.get("npme", None),
             ngpu=params.get("ngpu", None),
             gputasks=params.get("gputasks", None),
-            em=params.get("em", None),
-            nvt=params.get("nvt", None),
-            npt=params.get("npt", None),
-            md=params.get("md", None),
+            em=self._to_path(params.get("em")),
+            nvt=self._to_path(params.get("nvt")),
+            npt=self._to_path(params.get("npt")),
+            md=self._to_path(params.get("md")),
             snakecores=params.get("snakecores", None),
         )
 
@@ -122,55 +125,30 @@ class Pipeline:
 
     def setup(self) -> None:
         # Create log directory if it doesn't exist
-        logdir = self.paths.mutdir / "logs"
-        os.makedirs(logdir, exist_ok=True)
-        print(f"Log directory '{logdir}' is ready.")
+        # logdir = self.paths.mutdir / "logs"
+        # logdir.mkdir(exist_ok=True)
+        # print(f"Log directory '{logdir}' is ready.")
+        pass
 
     def prep(self) -> None:
-        prep_wrap.main(self.paths.mutdir, 
-                       self.paths.pdbfile, 
-                       self.system.dna, 
-                       self.system.phos, 
-                       self.system.range_a, 
-                       self.system.range_b, 
-                       self.system.ffs)
+        import scripts.prep01.prep_wrap as prep_wrap
+        prep_wrap.main(self)
 
     def md(self) -> None:
-        for n in self.system.repn:
-                md_wrap.main(self.paths.mutdir, 
-                             self.paths.gmxdir, 
-                             n, 
-                             self.system.dna, 
-                             self.system.phos, 
-                             self.run.ntmpi, 
-                             self.run.ntomp, 
-                             self.run.nb, 
-                             self.run.pme, 
-                             self.run.npme, 
-                             self.run.ngpu, 
-                             self.run.gputasks, 
-                             self.run.em, 
-                             self.run.nvt, 
-                             self.run.npt, 
-                             self.run.md)
+        import scripts.md02.md_wrap as md_wrap
+        md_wrap.main(self)
 
     def post(self) -> None:
-        for n in self.system.repn:
-            post_wrap.main(self.paths.mutdir, 
-                           n, 
-                           self.system.dna, 
-                           self.system.phos)
+        import scripts.post03.post_wrap as post_wrap
+        post_wrap.main(self)
 
     def analysis(self) -> None:
+        import scripts.analysis04.analysis_wrap as analysis_wrap
         if self.rules is None:
-            analysis_wrap.main(self.paths.datadir, 
-                               self.paths.paramsfile, 
-                               self.run.snakecores, 
+            analysis_wrap.main(self, 
                                self.unlock)
         else:
-            analysis_wrap.main(self.paths.datadir, 
-                               self.paths.paramsfile, 
-                               self.run.snakecores, 
+            analysis_wrap.main(self, 
                                self.rules, 
                                self.unlock)
 

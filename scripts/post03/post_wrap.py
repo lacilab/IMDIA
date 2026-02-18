@@ -2,34 +2,39 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime
+import re
 import subprocess
 import sys
 import os
 from scripts.utils.helpers import gen_flags, setup_logger
+from scripts.pipeconfig import Pipeline
+from scripts.post03 import post
 
-def main(datadir: str, repn: int,
-    dna : bool = False, phos : bool = False):
-
-    args = locals()
-    args.pop('datadir', None)
-    args.pop('repn', None)
-    flags = gen_flags(args)
+def main(pipe: Pipeline):
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    LOGFILE = f"{datadir}/logs/step03_rep{repn}_post_{timestamp}.log"
+    logdir = pipe.paths.mutdir / "logs"
+    logdir.mkdir(parents=True, exist_ok=True)  # Ensure dir exists
+    LOGFILE = logdir / f"step03_rep{pipe.system.repn[0]}_post_{timestamp}.log"
     logger = setup_logger("post", LOGFILE)
 
-    repdir = f"{datadir}/rep{repn}/gromacs"
-    logger.debug(f"Repdir: {repdir}")
-
-    cmd = [sys.executable,
-        "-m",
-        "scripts.post03.post",
-        "--logfile", LOGFILE,
-        "--repdir", repdir,
-    ] + flags
-
     logger.debug("Running post-processing step.")
-    # remove empty strings from cmd before joining
-    cmd = [c for c in cmd if c != ""]
-    subprocess.run(cmd, check=True)
+
+    if pipe.system.repn is None:
+        logger.warning("No replication numbers specified in configuration.")
+        parent_dir = pipe.paths.gmxdir.parent
+        rep_dirs = [
+            d for d in os.listdir(parent_dir)
+            if os.path.isdir(os.path.join(parent_dir, d)) and re.match(r'rep\d+', d)
+        ]
+        reps = [int(re.search(r'rep(\d+)', d).group(1)) for d in rep_dirs]
+        logger.debug(f"Found replication numbers: {reps}")
+    else:
+        logger.debug(f"Replication numbers for post-processing: {pipe.system.repn}")
+        reps = pipe.system.repn
+    
+    for n in reps:
+        repdir = pipe.paths.datadir / f"rep{n}" / "gromacs"
+        logger.debug(f"Repdir for post-processing: {repdir}")
+        post.main(logfile=LOGFILE, repdir=repdir, 
+                  dna=pipe.system.dna, phos=pipe.system.phos)

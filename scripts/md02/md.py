@@ -10,41 +10,65 @@ import multiprocessing
 import subprocess
 import shutil
 import argparse
+from pathlib import Path
 from scripts.utils.helpers import setup_logger
 from scripts.utils.group_index import group_index
 
-parser = argparse.ArgumentParser(description="Perform MD simulation steps: minimization, NVT, NPT, and production MD.")
-parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
-parser.add_argument('--gmxdir', '-g', dest='gmxdir', default='.', help='Directory containing GROMACS input files (ions.gro, topol.top, etc.)')
-parser.add_argument('--repn', '-n', dest='repn', type=int, default=None, help='Replicate number (used to create output directory)')
-parser.add_argument('--dna', dest='with_dna', action='store_true', help='Use if the system contains DNA. Adds DNA.bsc1 force field.')
-parser.add_argument('--phos', dest='with_phosphate', action='store_true', help='Use if the system contains phosphorylated residues.')
-parser.add_argument('--ntmpi', dest='ntmpi', type=int, default=0, help='Number of MPI ranks (default: auto-detected)')
-parser.add_argument('--ntomp', dest='ntomp', type=int, default=0, help='Number of OpenMP threads per rank (default: auto-detected)')
-parser.add_argument('--nb', dest='nb', type=str, default='gpu', help='Calculate non-bonded interactions on: auto, cpu, gpu')
-parser.add_argument('--pme', dest='pme', type=str, default='gpu', help='Perform PME calculations on: auto, cpu, gpu')
-parser.add_argument('--npme', dest='npme', type=int, default=-1, help='Number of separate ranks to be used for PME, -1 is guess (let GROMACS decide)')
-parser.add_argument('--ngpu', dest='ngpu', type=int, default=None, help='Number of GPUs to use (default: auto-detected)')
-parser.add_argument('--gputasks', dest='gputasks', type=str, default=None, help='Sequence of GPU IDs to use i.e. 0011 (default: auto-detected)')
-parser.add_argument('--em', dest='em', type=str, default=None, help='Energy minimization parameter file (default: minim.mdp)')
-parser.add_argument('--nvt', dest='nvt', type=str, default=None, help='NVT equilibration parameter file (default: nvt.mdp)')    
-parser.add_argument('--npt', dest='npt', type=str, default=None, help='NPT equilibration parameter file (default: npt.mdp)')
-parser.add_argument('--md', dest='md', type=str, default=None, help='Production MD parameter file (default: md.mdp)')
-
-
-# print help if no arguments are provided
-if len(sys.argv) == 1:
-    parser.print_help()
-    sys.exit(0)
-
-args = parser.parse_args()
-
-##### INITIALIZE LOG
-logger = setup_logger("md", args.logfile)
-
 ##### HELPER FUNCTIONS #####
 
-def get_scaling(tpr_file, stage, total_cores = None):
+def get_total_cores():
+    if 'SLURM_CPUS_PER_TASK' in os.environ:
+        return int(os.environ['SLURM_CPUS_PER_TASK'])
+    elif 'SLURM_NTASKS' in os.environ:
+        cpus_per_task = int(os.environ.get('SLURM_CPUS_PER_TASK', 1))
+        return int(os.environ['SLURM_NTASKS']) * cpus_per_task
+    
+    # Fallback: physical cores
+    return multiprocessing.cpu_count() // 2
+
+# helper to set parameter files. args: <custom_path_var> <filename>
+# if -em, --nvt, --npt, --md options are provided, copy those files instead of the default ones to $outdir. Else, copy the default files
+def param_mdp(logger, filename: str, outdir: Path, custom_path: Path = None):
+    if custom_path is not None:
+        if custom_path.is_file():
+            shutil.copy(custom_path, outdir / filename)
+            logger.info(f"Using custom parameter file {custom_path} for {filename}.")
+        else:
+            logger.warning(f"Custom parameter file {custom_path} not found. Using default {filename}.")
+            shutil.copy(Path(f"scripts/md02/{filename}"), outdir / filename)
+    else:
+        shutil.copy(Path(f"scripts/md02/{filename}"), outdir / filename)
+        logger.debug(f"No custom parameter file provided for {filename}. Using default.")
+
+# Helper to read last N lines of the file (adapted from GeeksforGeeks)
+def LastNlines(fname, N):
+    lines = []
+    with open(fname) as file:
+        for line in (file.readlines()[-N:]):
+            lines.append(line)
+    return lines
+
+def check_finished(step_short: str, outdir: Path):
+    if (outdir / f"{step_short}.gro").is_file() and (outdir / f"{step_short}.log").is_file() and "Finished mdrun" in " ".join(LastNlines(outdir / f"{step_short}.log", 20)):
+        return True
+    else:
+        return False
+    
+def log_process_output(process, step_name, logger):
+    if process.returncode != 0:
+        logger.error(f"{step_name} error:\n {process.stderr}")
+    elif process.stdout:
+        logger.debug(f"{step_name} output:\n {process.stdout}")   
+
+# to check the step outputs.
+def check_step(logger, step_short: str, step_name: str, outdir: Path):
+    if check_finished(step_short, outdir):
+        logger.info(f"{step_name} completed successfully.")
+    else:
+        logger.error(f"{step_name} failed. Check {outdir}/{step_short}.log for details.")
+        sys.exit(1)
+
+def get_scaling(logger, tpr_file: Path, stage: str, total_cores = None):
     if total_cores is None:
         total_cores = get_total_cores()
     logger.debug(f"Determining scaling for {stage} stage with total available cores: {total_cores}")
@@ -63,8 +87,8 @@ def get_scaling(tpr_file, stage, total_cores = None):
     if all([fourierspacing_match, fourier_nx_match, fourier_ny_match, fourier_nz_match]):
         spacing = float(fourierspacing_match.group(1))
         gridx, gridy, gridz = map(int, [fourier_nx_match.group(1), 
-                                       fourier_ny_match.group(1), 
-                                       fourier_nz_match.group(1)])
+                                    fourier_ny_match.group(1), 
+                                    fourier_nz_match.group(1)])
         box_nm = min(gridx, gridy, gridz) * spacing
         logger.debug(f"Parsed fourier grid: {gridx}x{gridy}x{gridz} with spacing {spacing} nm, resulting in box size {box_nm} nm.")
     else:
@@ -108,261 +132,212 @@ def get_scaling(tpr_file, stage, total_cores = None):
     
     return 0, 0
 
-def get_total_cores():
-    if 'SLURM_CPUS_PER_TASK' in os.environ:
-        return int(os.environ['SLURM_CPUS_PER_TASK'])
-    elif 'SLURM_NTASKS' in os.environ:
-        cpus_per_task = int(os.environ.get('SLURM_CPUS_PER_TASK', 1))
-        return int(os.environ['SLURM_NTASKS']) * cpus_per_task
-    
-    # Fallback: physical cores
-    return multiprocessing.cpu_count() // 2
 
-# helper to set parameter files. args: <custom_path_var> <filename>
-# if -em, --nvt, --npt, --md options are provided, copy those files instead of the default ones to $outdir. Else, copy the default files
-def param_mdp(filename, outdir, custom_path = None):
-    if custom_path is not None:
-        if os.path.isfile(custom_path):
-            shutil.copy(custom_path, f"{outdir}/{filename}")
-            logger.info(f"Using custom parameter file {custom_path} for {filename}.")
+# parser = argparse.ArgumentParser(description="Perform MD simulation steps: minimization, NVT, NPT, and production MD.")
+# parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
+# parser.add_argument('--gmxdir', '-g', dest='gmxdir', default='.', help='Directory containing GROMACS input files (ions.gro, topol.top, etc.)')
+# parser.add_argument('--repn', '-n', dest='repn', type=int, default=None, help='Replicate number (used to create output directory)')
+# parser.add_argument('--dna', dest='with_dna', action='store_true', help='Use if the system contains DNA. Adds DNA.bsc1 force field.')
+# parser.add_argument('--phos', dest='with_phosphate', action='store_true', help='Use if the system contains phosphorylated residues.')
+# parser.add_argument('--ntmpi', dest='ntmpi', type=int, default=0, help='Number of MPI ranks (default: auto-detected)')
+# parser.add_argument('--ntomp', dest='ntomp', type=int, default=0, help='Number of OpenMP threads per rank (default: auto-detected)')
+# parser.add_argument('--nb', dest='nb', type=str, default='gpu', help='Calculate non-bonded interactions on: auto, cpu, gpu')
+# parser.add_argument('--pme', dest='pme', type=str, default='gpu', help='Perform PME calculations on: auto, cpu, gpu')
+# parser.add_argument('--npme', dest='npme', type=int, default=-1, help='Number of separate ranks to be used for PME, -1 is guess (let GROMACS decide)')
+# parser.add_argument('--ngpu', dest='ngpu', type=int, default=None, help='Number of GPUs to use (default: auto-detected)')
+# parser.add_argument('--gputasks', dest='gputasks', type=str, default=None, help='Sequence of GPU IDs to use i.e. 0011 (default: auto-detected)')
+# parser.add_argument('--em', dest='em', type=str, default=None, help='Energy minimization parameter file (default: minim.mdp)')
+# parser.add_argument('--nvt', dest='nvt', type=str, default=None, help='NVT equilibration parameter file (default: nvt.mdp)')    
+# parser.add_argument('--npt', dest='npt', type=str, default=None, help='NPT equilibration parameter file (default: npt.mdp)')
+# parser.add_argument('--md', dest='md', type=str, default=None, help='Production MD parameter file (default: md.mdp)')
+
+def main(logfile: Path, gmxdir: Path, outdir: Path, repn: int, 
+         dna: bool, phos: bool, 
+         ntmpi: int, ntomp: int, nb: str, pme: str, npme: int, 
+         ngpu: int, gputasks: str, em: Path, nvt: Path, npt: Path, md: Path):
+
+    ##### INITIALIZE LOG
+    logger = setup_logger("md", logfile)
+
+    ##### PARAMETER CHECKS #####
+
+    logger.debug(f"Received positional argument gmxdir: {gmxdir} and replicate number: {repn}")
+
+    # check if outdir exists, if not create it
+    if not outdir.is_dir():
+        outdir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Created output directory: {outdir}")
+
+    # Check for checkpoint files
+    checkpoint_files = list(outdir.glob(f"check_02_md_*.done"))
+    if len(checkpoint_files) > 0:
+        logger.warning("Checkpoint file found. Skipping MD steps: minimization, NVT, NPT and production MD.")
+        logger.debug(f"To rerun these steps, please remove the checkpoint file(s): {outdir}/check_02_md_*.done")
+        sys.exit(0)
+
+
+    ##### RESOURCE SETUP #####
+    logger.debug(f"Running {ntmpi} MPI ranks x {ntomp} threads per rank.")
+
+    # Initialize empty flags
+    flag_nb_gpu = []
+    flag_pme_gpu = []
+    flag_gpu_tasks = []
+    GPUTASKS = ""
+
+    # Assign flags based on resources
+    if ngpu is not None:
+        flag_nb_gpu = ["-nb", nb]
+        flag_pme_gpu = ["-pme", pme, "-npme", str(npme)]
+        if gputasks is not None:
+            GPUTASKS = gputasks
+            logger.debug(f"Using specified GPU list: {GPUTASKS}")
         else:
-            logger.warning(f"Custom parameter file {custom_path} not found. Using default {filename}.")
-            shutil.copy(f"scripts/md02/{filename}", f"{outdir}/{filename}")
+            logger.debug("No GPU task list specified. Generating GPU task list automatically.")
+            for i in range(1, ntmpi+1):
+                gpu = i % ngpu if ngpu > 0 else 0
+                GPUTASKS += str(gpu)
+        flag_gpu_tasks = ["-gputasks", GPUTASKS]
+        logger.debug(f"Using {ngpu} GPU(s) with gputasks: {GPUTASKS}")
     else:
-        shutil.copy(f"scripts/md02/{filename}", f"{outdir}/{filename}")
-        logger.debug(f"No custom parameter file provided for {filename}. Using default.")
+        logger.debug("No GPUs specified. Detecting available GPUs and assigning the default behavior.")
 
-# Helper to read last N lines of the file (adapted from GeeksforGeeks)
-def LastNlines(fname, N):
-    lines = []
-    with open(fname) as file:
-        for line in (file.readlines()[-N:]):
-            lines.append(line)
-    return lines
 
-def check_finished(step_short, outdir):
-    if os.path.isfile(f"{outdir}/{step_short}.gro") and os.path.isfile(f"{outdir}/{step_short}.log") and "Finished mdrun" in " ".join(LastNlines(f"{outdir}/{step_short}.log", 20)):
-        return True
+    ##### PARAMETER FILES SETUP #####
+    # copy parameter files to outdir
+    # parameter files
+    param_mdp(logger, 'minim.mdp', outdir, em)
+    param_mdp(logger, 'nvt.mdp', outdir, nvt)
+    param_mdp(logger, 'npt.mdp', outdir, npt)
+    param_mdp(logger, 'md.mdp', outdir, md)
+
+    # check outdir contains minim.mdp, nvt.mdp, npt.mdp, md.mdp
+    for mdp_file in ['minim.mdp', 'nvt.mdp', 'npt.mdp', 'md.mdp']:
+        if not (outdir / mdp_file).is_file():
+            logger.error(f"Parameter file {mdp_file} not found in output directory {outdir}.")
+            sys.exit(1)
+
+    logger.debug(f"Working directory: {Path.cwd()}, gmxdir: {gmxdir}, outdir: {outdir}")
+
+    ##### MD STEPS #####
+
+    ### 1. Energy Minimization
+    if check_finished("em", outdir):
+        logger.warning("em.log indicates minimization already completed and em.gro exists. Skipping energy minimization.")
     else:
-        return False
-    
-def log_process_output(process, step_name):
-    if process.returncode != 0:
-        logger.error(f"{step_name} error:\n {process.stderr}")
-    elif process.stdout:
-        logger.debug(f"{step_name} output:\n {process.stdout}")   
-
-
-# helper to check the step outputs.
-def check_step(step_short, step_name, outdir):
-    if check_finished(step_short, outdir):
-        logger.info(f"{step_name} completed successfully.")
-    else:
-        logger.error(f"{step_name} failed. Check {outdir}/{step_short}.log for details.")
-        sys.exit(1)
-
-
-##### PARAMETER CHECKS #####
-
-logger.debug(f"Received positional argument gmxdir: {args.gmxdir} and replicate number: {args.repn}")
-
-if not os.path.isdir(args.gmxdir):
-    logger.error(f"GROMACS directory {args.gmxdir} does not exist.")
-    sys.exit(1)
-
-parent_dir = os.path.dirname(args.gmxdir)
-
-if args.repn == None:
-    # List all subdirectories in parent matching rep*
-    rep_dirs = [
-        d for d in os.listdir(parent_dir)
-        if os.path.isdir(os.path.join(parent_dir, d)) and re.match(r'rep\d+', d)
-    ]
-    # Extract numbers
-    rep_numbers = [int(re.search(r'rep(\d+)', d).group(1)) for d in rep_dirs]
-    # Sort numerically
-    rep_numbers.sort()
-    # Determine next replication number
-    if not rep_numbers:
-        n = 1
-    else:
-        n = rep_numbers[-1] + 1
-    logger.debug("Next rep number:", n)
-else:
-    n = args.repn
-
-outdir = f"{parent_dir}/rep{n}/gromacs"
-# check if outdir exists, if not create it
-if not os.path.isdir(outdir):
-    os.makedirs(outdir)
-    logger.info(f"Created output directory: {outdir}")
-
-# Check for checkpoint files
-if glob.glob(f"{outdir}/check_02_md_*.done"):
-    logger.warning("Checkpoint file found. Skipping MD steps: minimization, NVT, NPT and production MD.")
-    logger.debug(f"To rerun these steps, please remove the checkpoint file(s): {outdir}/check_02_md_*.done")
-    sys.exit(0)
-
-
-##### RESOURCE SETUP #####
-logger.debug(f"Running {args.ntmpi} MPI ranks x {args.ntomp} threads per rank.")
-
-# Initialize empty flags
-flag_nb_gpu = []
-flag_pme_gpu = []
-flag_gpu_tasks = []
-GPUTASKS = ""
-
-# Assign flags based on resources
-if args.ngpu is not None:
-    flag_nb_gpu = ["-nb", args.nb]
-    flag_pme_gpu = ["-pme", args.pme, "-npme", str(args.npme)]
-    if args.gputasks is not None:
-        GPUTASKS = args.gputasks
-        logger.debug(f"Using specified GPU list: {GPUTASKS}")
-    else:
-        logger.debug("No GPU task list specified. Generating GPU task list automatically.")
-        for i in range(1, args.ntmpi+1):
-            gpu = i % args.ngpu if args.ngpu > 0 else 0
-            GPUTASKS += str(gpu)
-    flag_gpu_tasks = ["-gputasks", GPUTASKS]
-    logger.debug(f"Using {args.ngpu} GPU(s) with gputasks: {GPUTASKS}")
-else:
-    logger.debug("No GPUs specified. Detecting available GPUs and assigning the default behavior.")
-
-
-##### PARAMETER FILES SETUP #####
-# copy parameter files to outdir
-# parameter files
-param_mdp('minim.mdp', outdir, args.em)
-param_mdp('nvt.mdp', outdir, args.nvt)
-param_mdp('npt.mdp', outdir, args.npt)
-param_mdp('md.mdp', outdir, args.md)
-
-# check outdir exists and contains minim.mdp, nvt.mdp, npt.mdp, md.mdp
-if not os.path.isdir(outdir):
-    logger.error(f"Output directory {outdir} does not exist.")
-    sys.exit(1)
-
-for mdp_file in ['minim.mdp', 'nvt.mdp', 'npt.mdp', 'md.mdp']:
-    if not os.path.isfile(f"{outdir}/{mdp_file}"):
-        logger.error(f"Parameter file {mdp_file} not found in output directory {outdir}.")
-        sys.exit(1)
-
-logger.debug(f"Working directory: {os.getcwd()}, gmxdir: {args.gmxdir}, outdir: {outdir}")
-
-##### MD STEPS #####
-
-### 1. Energy Minimization
-if check_finished("em", outdir):
-    logger.warning("em.log indicates minimization already completed and em.gro exists. Skipping energy minimization.")
-else:
-    logger.debug("Starting energy minimization...")
-    cmd = ["gmx", "grompp",
-           "-f", f"{outdir}/minim.mdp",
-           "-c", f"{args.gmxdir}/ions.gro",
-           "-r", f"{args.gmxdir}/ions.gro",
-           "-p", f"{args.gmxdir}/topol.top",
-           "-o", f"{outdir}/em.tpr",
-           "-po", f"{outdir}/em_out.mdp",
-           "-quiet", "-maxwarn", "1"]
-    subprocess.run(cmd, check=True, text=True)
-    # log_process_output(process, "gmx grompp EM")
-
-    # Calculate resource use
-    em_ntmpi, em_ntomp = get_scaling(f"{outdir}/em.tpr", 'em')
-    logger.debug(f"Running EM with: gmx mdrun -ntmpi {em_ntmpi} -ntomp {em_ntomp}")
-
-    cmd = ["gmx", "mdrun", "-v", "-deffnm", f"{outdir}/em", "-ntmpi", str(em_ntmpi), "-ntomp", str(em_ntomp), "-quiet"] + flag_nb_gpu
-    subprocess.run(cmd, check=True, text=True)
-    # log_process_output(process, "gmx mdrun EM")
-    check_step("em", "Energy Minimization", outdir)
-
-### 2. Create groups
-group_index(gmxdir=outdir, logfile=args.logfile, logname='md', structurefile=f"{outdir}/em.gro", dna=args.with_dna, phos=args.with_phosphate)
-
-### 3. NVT Equilibration
-if check_finished("nvt", outdir):
-    logger.warning("nvt.log indicates NVT equilibration already completed and nvt.gro exists. Skipping NVT equilibration.")
-else:
-    logger.debug("Starting NVT equilibration...")
-    cmd = ["gmx", "grompp",
-            "-f", f"{outdir}/nvt.mdp",
-            "-c", f"{outdir}/em.gro",
-            "-r", f"{outdir}/em.gro",
-            "-p", f"{args.gmxdir}/topol.top",
-            "-o", f"{outdir}/nvt.tpr",
-            "-po", f"{outdir}/nvt_out.mdp",
-            "-n", f"{outdir}/index.ndx", 
-            "-quiet", "-maxwarn", "1"]
-    subprocess.run(cmd, check=True, text=True)
-    # log_process_output(process, "gmx grompp NVT")
-    nvt_ntmpi, nvt_ntomp = get_scaling(f"{outdir}/nvt.tpr", 'nvt')
-    subprocess.run(["gmx", "mdrun", "-v", "-deffnm", f"{outdir}/nvt", "-ntmpi", str(nvt_ntmpi), "-ntomp", str(nvt_ntomp), "-quiet"] 
-                   + flag_nb_gpu, check=True, text=True)
-    # log_process_output(process, "gmx mdrun NVT")
-    check_step("nvt", "NVT Equilibration", outdir)
-
-### 4. NPT Equilibration
-if check_finished("npt", outdir):
-    logger.warning("npt.log indicates NPT equilibration already completed and npt.gro exists. Skipping NPT equilibration.")
-else:
-    logger.debug("Starting NPT equilibration...")
-    cmd = ["gmx", "grompp",
-           "-f", f"{outdir}/npt.mdp",
-           "-c", f"{outdir}/nvt.gro",
-           "-r", f"{outdir}/nvt.gro",
-           "-t", f"{outdir}/nvt.cpt",
-           "-p", f"{args.gmxdir}/topol.top",
-           "-o", f"{outdir}/npt.tpr",
-           "-po", f"{outdir}/npt_out.mdp",
-           "-n", f"{outdir}/index.ndx",
-           "-quiet", "-maxwarn", "1"]
-    subprocess.run(cmd, check=True, text=True)
-    # log_process_output(process, "gmx grompp NPT")
-    npt_ntmpi, npt_ntomp = get_scaling(f"{outdir}/npt.tpr", 'npt')
-    subprocess.run(["gmx", "mdrun", "-v", "-deffnm", f"{outdir}/npt", "-ntmpi", str(npt_ntmpi), "-ntomp", str(npt_ntomp), "-quiet"] 
-                   + flag_nb_gpu, check=True, text=True)
-    # log_process_output(process, "gmx mdrun NPT")
-    check_step("npt", "NPT Equilibration", outdir)
-
-### 5. Production MD
-if check_finished("md", outdir):
-    logger.warning("md.log indicates production MD already completed and md.gro exists. Skipping production MD.")
-else:
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    logfile = os.path.join(outdir, f"md_{timestamp}.log")
-    if os.path.isfile(f"{outdir}/md.cpt"):
-        logger.debug(f"Resuming production MD from checkpoint {outdir}/md.cpt...")
-        cmd = ["gmx", "mdrun", 
-            "-ntmpi", str(args.ntmpi), 
-            "-ntomp", str(args.ntomp)] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + [
-                "-cpi", f"{outdir}/md.cpt", "-append", "-v", "-deffnm", f"{outdir}/md", "-quiet"]
-        subprocess.run(cmd, check=True, text=True)
-        # log_process_output(process, "gmx mdrun MD (from checkpoint)")
-    else:
-        logger.debug("Starting production MD...")
+        logger.debug("Starting energy minimization...")
         cmd = ["gmx", "grompp",
-               "-f", f"{outdir}/md.mdp",
-               "-c", f"{outdir}/npt.gro",
-               "-r", f"{outdir}/npt.gro",
-               "-t", f"{outdir}/npt.cpt",
-               "-p", f"{args.gmxdir}/topol.top",
-               "-o", f"{outdir}/md.tpr",
-                "-po", f"{outdir}/md_out.mdp",
-               "-n", f"{outdir}/index.ndx",
-               "-quiet", "-maxwarn", "1"]
+            "-f", outdir / "minim.mdp",
+            "-c", gmxdir / "ions.gro",
+            "-r", gmxdir / "ions.gro",
+            "-p", gmxdir / "topol.top",
+            "-o", outdir / "em.tpr",
+            "-po", outdir / "em_out.mdp",
+            "-quiet", "-maxwarn", "1"]
         subprocess.run(cmd, check=True, text=True)
-        # log_process_output(process, "gmx grompp MD")
-        cmd = ["gmx", "mdrun", "-ntmpi", str(args.ntmpi), "-ntomp", str(args.ntomp)
-               ] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + ["-v", "-deffnm", f"{outdir}/md", "-quiet"]
-        logger.debug(f"Production MD command: {cmd}")
-        subprocess.run(cmd, check=True, text=True)
-        # log_process_output(process, "gmx mdrun MD")
-    check_step("md", "Production MD", outdir)
+        # log_process_output(process, "gmx grompp EM")
 
-# Create checkpoint file
-timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-checkpoint = os.path.join(outdir, f"check_02_md_{timestamp}.done")
-with open(checkpoint, 'a'):
-    os.utime(checkpoint, None)
+        # Calculate resource use
+        em_ntmpi, em_ntomp = get_scaling(logger, outdir / "em.tpr", 'em')
+        logger.debug(f"Running EM with: gmx mdrun -ntmpi {em_ntmpi} -ntomp {em_ntomp}")
+
+        cmd = ["gmx", "mdrun", "-v", "-deffnm", outdir / "em", "-ntmpi", str(em_ntmpi), "-ntomp", str(em_ntomp), "-quiet"] + flag_nb_gpu
+        subprocess.run(cmd, check=True, text=True)
+        # log_process_output(process, "gmx mdrun EM")
+        check_step(logger, "em", "Energy Minimization", outdir)
+
+    ### 2. Create groups
+    group_index(gmxdir=outdir, logfile=logfile, logname='md', structurefile=outdir / "em.gro", dna=dna, phos=phos)
+
+    ### 3. NVT Equilibration
+    if check_finished("nvt", outdir):
+        logger.warning("nvt.log indicates NVT equilibration already completed and nvt.gro exists. Skipping NVT equilibration.")
+    else:
+        logger.debug("Starting NVT equilibration...")
+        cmd = ["gmx", "grompp",
+                "-f", outdir / "nvt.mdp",
+                "-c", outdir / "em.gro",
+                "-r", outdir / "em.gro",
+                "-p", gmxdir / "topol.top",
+                "-o", outdir / "nvt.tpr",
+                "-po", outdir / "nvt_out.mdp",
+                "-n", outdir / "index.ndx", 
+                "-quiet", "-maxwarn", "1"]
+        subprocess.run(cmd, check=True, text=True)
+        # log_process_output(process, "gmx grompp NVT")
+        nvt_ntmpi, nvt_ntomp = get_scaling(logger, outdir / "nvt.tpr", 'nvt')
+        subprocess.run(["gmx", "mdrun", "-v", "-deffnm", outdir / "nvt", "-ntmpi", str(nvt_ntmpi), "-ntomp", str(nvt_ntomp), "-quiet"] 
+                    + flag_nb_gpu, check=True, text=True)
+        # log_process_output(process, "gmx mdrun NVT")
+        check_step(logger, "nvt", "NVT Equilibration", outdir)
+
+    ### 4. NPT Equilibration
+    if check_finished("npt", outdir):
+        logger.warning("npt.log indicates NPT equilibration already completed and npt.gro exists. Skipping NPT equilibration.")
+    else:
+        logger.debug("Starting NPT equilibration...")
+        cmd = ["gmx", "grompp",
+            "-f", outdir / "npt.mdp",
+            "-c", outdir / "nvt.gro",
+            "-r", outdir / "nvt.gro",
+            "-t", outdir / "nvt.cpt",
+            "-p", gmxdir / "topol.top",
+            "-o", outdir / "npt.tpr",
+            "-po", outdir / "npt_out.mdp",
+            "-n", outdir / "index.ndx",
+            "-quiet", "-maxwarn", "1"]
+        subprocess.run(cmd, check=True, text=True)
+        # log_process_output(process, "gmx grompp NPT")
+        npt_ntmpi, npt_ntomp = get_scaling(logger, outdir / "npt.tpr", 'npt')
+        subprocess.run(["gmx", "mdrun", "-v", "-deffnm", outdir / "npt", "-ntmpi", str(npt_ntmpi), "-ntomp", str(npt_ntomp), "-quiet"] 
+                    + flag_nb_gpu, check=True, text=True)
+        # log_process_output(process, "gmx mdrun NPT")
+        check_step(logger, "npt", "NPT Equilibration", outdir)
+
+    ### 5. Production MD
+    if check_finished("md", outdir):
+        logger.warning("md.log indicates production MD already completed and md.gro exists. Skipping production MD.")
+    else:
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        logfile = os.path.join(outdir, f"md_{timestamp}.log")
+        if os.path.isfile(f"{outdir}/md.cpt"):
+            logger.debug(f"Resuming production MD from checkpoint {outdir}/md.cpt...")
+            cmd = ["gmx", "mdrun", 
+                "-ntmpi", str(ntmpi), 
+                "-ntomp", str(ntomp)] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + [
+                    "-cpi", outdir / "md.cpt", "-append", "-v", "-deffnm", outdir / "md", "-quiet"]
+            subprocess.run(cmd, check=True, text=True)
+            # log_process_output(process, "gmx mdrun MD (from checkpoint)")
+        else:
+            logger.debug("Starting production MD...")
+            cmd = ["gmx", "grompp",
+                "-f", outdir / "md.mdp",
+                "-c", outdir / "npt.gro",
+                "-r", outdir / "npt.gro",
+                "-t", outdir / "npt.cpt",
+                "-p", gmxdir / "topol.top",
+                "-o", outdir / "md.tpr",
+                    "-po", outdir / "md_out.mdp",
+                "-n", outdir / "index.ndx",
+                "-quiet", "-maxwarn", "1"]
+            subprocess.run(cmd, check=True, text=True)
+            # log_process_output(process, "gmx grompp MD")
+            cmd = ["gmx", "mdrun", "-ntmpi", str(ntmpi), "-ntomp", str(ntomp)
+                ] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + ["-v", "-deffnm", outdir / "md", "-quiet"]
+            logger.debug(f"Production MD command: {cmd}")
+            subprocess.run(cmd, check=True, text=True)
+            # log_process_output(process, "gmx mdrun MD")
+        check_step(logger, "md", "Production MD", outdir)
+
+    # Create checkpoint file
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    checkpoint = outdir / f"check_02_md_{timestamp}.done"
+    checkpoint.parent.mkdir(exist_ok=True, parents=True)
+    with checkpoint.open('w') as f:
+        f.write("MD completed successfully.\n")
+        logger.info("MD steps completed successfully. Checkpoint created: " + str(checkpoint))
+        return
+
+
+if __name__ == "__main__":
+    main()
