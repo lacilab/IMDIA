@@ -357,7 +357,7 @@ def main(logfile: Path, gmxdir: Path, outdir: Path, repn: int,
                 "-o", outdir / "md.tpr",
                     "-po", outdir / "md_out.mdp",
                 "-n", outdir / "index.ndx",
-                "-quiet", "-maxwarn", "1"]
+                "-quiet", "-v", "-maxwarn", "1"]
             subprocess.run(cmd, check=True, text=True)
             # log_process_output(process, "gmx grompp MD")
             if ntmpi == 0 or ntomp == 0:
