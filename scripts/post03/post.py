@@ -1,14 +1,10 @@
-
-import argparse
 from datetime import datetime
-import glob
 import os
 from pathlib import Path
 import subprocess
 import sys
 from scripts.utils.helpers import setup_logger
-
-
+from scripts.utils.group_index import group_index
 
 def main(logfile: Path, repdir: Path, dna: bool = False, phos: bool = False):
     # parser = argparse.ArgumentParser(description="Perform MD simulation steps: minimization, NVT, NPT, and production MD.")
@@ -20,24 +16,20 @@ def main(logfile: Path, repdir: Path, dna: bool = False, phos: bool = False):
     # Initialize logger
     logger = setup_logger("post", logfile)
 
+    def log_process_output(process, step_name):
+        if process.returncode != 0:
+            logger.error(f"{step_name} error:\n {process.stderr}")
+        elif process.stdout:
+            logger.debug(f"{step_name} output:\n {process.stdout}")  
+
     checkpoint_files = list(repdir.glob("check_02_post_*.done"))
     if len(checkpoint_files) > 0:
         logger.warning("Checkpoint file found. Skipping post-processing.")
         logger.warning(f"To rerun these steps, please remove the checkpoint file(s): {repdir}/check_02_post_*.done")
         sys.exit(0)
 
-    # Construct group name
-    group = "Protein"
-    if dna:
-        group += "_DNA"
-    if phos:
-        group += "_P"
-
-    def log_process_output(process, step_name):
-        if process.returncode != 0:
-            logger.error(f"{step_name} error:\n {process.stderr}")
-        elif process.stdout:
-            logger.debug(f"{step_name} output:\n {process.stdout}")  
+    # Get main group name
+    group = group_index(gmxdir=repdir, logfile=logfile, logname='post', structurefile=repdir / "md.gro", dna=dna, phos=phos)
 
     ##### POST-PROCESSING STEPS ######
     # Remove PBC artifacts
