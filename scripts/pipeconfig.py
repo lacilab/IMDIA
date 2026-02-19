@@ -107,11 +107,11 @@ class Pipeline:
         )
 
         run = RunConfig(
-            ntmpi=params.get("ntmpi", None),
-            ntomp=params.get("ntomp", None),
-            nb=params.get("nb", None),
-            pme=params.get("pme", None),
-            npme=params.get("npme", None),
+            ntmpi=params.get("ntmpi", 0),
+            ntomp=params.get("ntomp", 0),
+            nb=params.get("nb", "auto"),
+            pme=params.get("pme", "auto"),
+            npme=params.get("npme", -1),
             ngpu=params.get("ngpu", None),
             gputasks=params.get("gputasks", None),
             em=self._to_path(params.get("em")),

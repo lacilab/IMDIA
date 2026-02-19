@@ -4,12 +4,10 @@
 import datetime
 import sys
 import os
-import glob
 import re
 import multiprocessing
 import subprocess
 import shutil
-import argparse
 from pathlib import Path
 from scripts.utils.helpers import setup_logger
 from scripts.utils.group_index import group_index
@@ -68,16 +66,7 @@ def check_step(logger, step_short: str, step_name: str, outdir: Path):
         logger.error(f"{step_name} failed. Check {outdir}/{step_short}.log for details.")
         sys.exit(1)
 
-def get_scaling(logger, tpr_file: Path, stage: str, total_cores = None):
-    if total_cores is None:
-        total_cores = get_total_cores()
-    logger.debug(f"Determining scaling for {stage} stage with total available cores: {total_cores}")
-    # Parse tpr with gmx dump
-    dump = subprocess.check_output(['gmx', 'dump', '-s', tpr_file, '-nonr', '-quiet'], text=True)
-
-    with open('dumptest.log', 'w') as log:
-        log.write(f"Parsed tpr dump for {stage} stage:\n{dump}\n")
-    
+def get_grid_size(logger, stage:str, dump):    
     # Parse separate fourier variables (your format)
     fourierspacing_match = re.search(r'fourierspacing\s*=\s*([\d.]+)', dump)
     fourier_nx_match = re.search(r'fourier-nx\s*=\s*(\d+)', dump)
@@ -100,19 +89,70 @@ def get_scaling(logger, tpr_file: Path, stage: str, total_cores = None):
         else:
             box_nm = 10.0  # Default
         logger.debug(f"Parsed fourier grid (fallback): {gridx}x{gridy}x{gridz} with spacing {spacing} nm, resulting in box size {box_nm} nm.")
-    
-    # natoms 
+    return box_nm
+
+def get_natoms(logger, dump):
     natoms_match = re.search(r'natoms\s*=\s*(\d+)', dump)
     natoms = int(natoms_match.group(1)) if natoms_match else 10000
     logger.debug(f"Parsed number of atoms: {natoms}")
+    return natoms
+
+def get_mincellsize(logger, logfile: Path):
+    """Extract minimum cell size from EM log"""
+
+    if not logfile.is_file():
+        logger.warning(f"EM log file '{logfile}' not found. Cannot extract minimum cell size for scaling decisions.")
+        return None
+
+    with logfile.open('r') as f:
+        content = f.read()
     
-    if stage == 'em':
+    # Look for the DD info line (appears even with ntmpi=1)
+    min_bonded = re.search(r'Minimum cell size due to bonded interactions: ([\d.]+)', content)
+    min_disp = re.search(r'Minimum cell size due to atom displacement: ([\d.]+)', content)
+    # Safe extraction with fallbacks
+    bonded_size = float(min_bonded.group(1)) if min_bonded else None
+    disp_size = float(min_disp.group(1)) if min_disp else None
+    # Take max of available values
+    available_sizes = [s for s in [bonded_size, disp_size] if s is not None]
+    if available_sizes:
+        mincellsize = max(available_sizes)
+        logger.debug(f"Extracted minimum cell size from log: {mincellsize} nm")
+        return mincellsize
+    
+    # Fallback patterns
+    fallback_matches = [
+        r'cell size limit.*?([\d.]+)',
+        r'domain decomposition.*?([\d.]+)'
+    ]
+    for pattern in fallback_matches:
+        match = re.search(pattern, content)
+        if match:
+            logger.debug(f"Extracted minimum cell size from fallback pattern: {match.group(1)} nm")
+            return float(match.group(1))
+    
+    return None
+
+def get_scaling(logger, tpr_file: Path, stage: str, total_cores = None):
+    if total_cores is None:
+        total_cores = get_total_cores()
+    logger.debug(f"Determining scaling for {stage} stage with total available cores: {total_cores}")
+
+    # Parse tpr with gmx dump
+    dump = subprocess.check_output(['gmx', 'dump', '-s', tpr_file, '-nonr', '-quiet'], text=True)
+    box_nm = get_grid_size(logger, stage, dump)
+    natoms = get_natoms(logger, dump)
+    mincellsize = get_mincellsize(logger, tpr_file.parent / "em.log")
+
+    # For EM, run with conservative defaults to avoid decomposition errors
+    if stage == "em" or mincellsize is None:
+        logger.debug(f"Minimum cell size not found. Using safe defaults for scaling based on box size and number of atoms for step {stage}.")
         # Safe defaults based on box size
-        if box_nm < 12:  
+        if box_nm < 16:  
             ntmpi = 1      # Small box
-        elif box_nm < 16:
-            ntmpi = 2      # Medium box
         elif box_nm < 20:
+            ntmpi = 2      # Medium box
+        elif box_nm < 24:
             ntmpi = 4      # Medium box
         else:
             ntmpi = 8      # Large box
@@ -124,14 +164,12 @@ def get_scaling(logger, tpr_file: Path, stage: str, total_cores = None):
         else:
             ntomp = min(total_cores // ntmpi, 64)
         return max(1, ntmpi), max(1, ntomp)
-    
-    elif stage in ['nvt', 'npt']:
-        ntmpi = min(32, total_cores // 8)   
-        ntomp = total_cores // ntmpi // 2 
-        return max(1, ntmpi), max(1, ntomp)
-    
-    return 0, 0
-
+    # If minimum cell size is available, use it to calculate safe scaling with better resource use
+    else:
+       logger.debug(f"Minimum cell size found: {mincellsize} nm. Calculating scaling based on box size and minimum cell size for step {stage}.")
+       ntmpi = max(1, int(box_nm // mincellsize))
+       ntomp = max(1, total_cores // ntmpi)
+       return ntmpi, ntomp
 
 # parser = argparse.ArgumentParser(description="Perform MD simulation steps: minimization, NVT, NPT, and production MD.")
 # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
@@ -322,6 +360,10 @@ def main(logfile: Path, gmxdir: Path, outdir: Path, repn: int,
                 "-quiet", "-maxwarn", "1"]
             subprocess.run(cmd, check=True, text=True)
             # log_process_output(process, "gmx grompp MD")
+            if ntmpi == 0 or ntomp == 0:
+                logger.warning("ntmpi or ntomp is set to 0. Calculating safe defaults based on system size and available resources.")
+                ntmpi, ntomp = get_scaling(logger, outdir / "md.tpr", 'md')
+                logger.debug(f"Calculated scaling for production MD: ntmpi={ntmpi}, ntomp={ntomp}")
             cmd = ["gmx", "mdrun", "-ntmpi", str(ntmpi), "-ntomp", str(ntomp)
                 ] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + ["-v", "-deffnm", outdir / "md", "-quiet"]
             logger.debug(f"Production MD command: {cmd}")
