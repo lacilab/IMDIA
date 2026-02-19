@@ -30,7 +30,7 @@ def main(logfile: Path, datadir: Path, configfile: Path, cores: int = None, rule
         
     config_args = [f"logfile={str(logfile)}"]
 
-    if rules is not None:
+    if rules:
         config_args.append(f"rule_groups={' '.join(rules)}")
 
     if unlock:

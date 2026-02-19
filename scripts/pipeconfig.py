@@ -144,15 +144,8 @@ class Pipeline:
 
     def analysis(self) -> None:
         import scripts.analysis04.analysis_wrap as analysis_wrap
-        if self.rules is None:
-            analysis_wrap.main(self, 
-                               self.unlock)
-        else:
-            analysis_wrap.main(self, 
-                               self.rules, 
-                               self.unlock)
-
-
+        analysis_wrap.main(self)
+        
     def run_all(self) -> None:
         self.setup()
         print(f"Running pipeline with steps: {self.steps}")
