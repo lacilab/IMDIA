@@ -34,7 +34,7 @@ def main(pipe: Pipeline):
         reps = pipe.system.repn
     
     for n in reps:
-        repdir = pipe.paths.datadir / f"rep{n}" / "gromacs"
+        repdir = pipe.paths.mutdir / f"rep{n}" / "gromacs"
         logger.debug(f"Repdir for post-processing: {repdir}")
         post.main(logfile=LOGFILE, repdir=repdir, 
                   dna=pipe.system.dna, phos=pipe.system.phos)

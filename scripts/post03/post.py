@@ -102,7 +102,7 @@ def main(logfile: Path, repdir: Path, dna: bool = False, phos: bool = False):
     checkpoint.parent.mkdir(exist_ok=True, parents=True)
     with checkpoint.open('w') as f:
         f.write(f"Post-processing completed at {timestamp}\n")
-        logger.info("Post-processing completed successfully. Checkpoint created: " + checkpoint)
+        logger.info(f"Post-processing completed successfully. Checkpoint created: {checkpoint}")
         return
 
 
