@@ -29,9 +29,9 @@ def main(logfile : str = None, tprfile : str = None, xtcfile : str = None, scrip
            "-v", "eigenvec.trr", 
            "-s", tprfile_abs, 
            "-f", xtcfile_abs, 
-           "-b", "0", "-e", "200001", 
+           "-b", "0", 
            "-first", "1", "-last", "1", 
-           "-extr", "extreme1.gro", "-nframes", "2001"
+           "-extr", "extreme1.gro"
     ]
     subprocess.run(cmd, cwd=outdir, check=True, text=True, input="C-alpha\nC-alpha\n")
     logger.info(f"Executed gmx anaeig in directory: {outdir}")

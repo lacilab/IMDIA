@@ -5,11 +5,8 @@ load extreme1.gro, extreme1
 hide ribbon
 show cartoon
 split_states extreme1, 1, 2
-split_states extreme1, 2000, 2001
 set_name extreme1_0001, 0001
-set_name extreme1_2001, 2001
-delete extreme1_0002
-delete extreme1_2000
+set_name extreme1_0002, 0002
 run modevectors.py
 modevectors 0001, 2001, cutoff=0, head_length=1, head=0.4, headrgb=(1, 0.2, 0.1), tailrgb=(1, 0.2, 0.1), notail=0
 

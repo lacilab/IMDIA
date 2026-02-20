@@ -54,7 +54,7 @@ C-alpha
 EOL
 
 #STEP 2: project an MD trajectory along a 1st eigenvector
-gmx anaeig -f $xtc -v $outdir/eigenvec.trr -eig $outdir/eigenval.xvg -s $tpr -proj $outdir/proj_1_2.xvg -b 0 -e 500001 -first 1 -last 1 << EOL
+gmx anaeig -f $xtc -v $outdir/eigenvec.trr -eig $outdir/eigenval.xvg -s $tpr -proj $outdir/proj_1_2.xvg -b 0 -first 1 -last 1 << EOL
 C-alpha
 C-alpha
 EOL
@@ -68,7 +68,7 @@ vim $outdir/timescale.csv << EOL
 EOL
 
 #STEP 4: project an MD trajectory in two dimensions of selected eigenvectors (essential subspace)
-gmx anaeig -f $xtc -v $outdir/eigenvec.trr -eig $outdir/eigenval.xvg -s $tpr -2d $outdir/2dproj_1_2.xvg  -b 0 -e 500001 -first 1 -last 2 <<EOL
+gmx anaeig -f $xtc -v $outdir/eigenvec.trr -eig $outdir/eigenval.xvg -s $tpr -2d $outdir/2dproj_1_2.xvg  -b 0 -first 1 -last 2 <<EOL
 C-alpha
 C-alpha
 EOL
