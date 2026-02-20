@@ -28,7 +28,7 @@ def main(logfile: Path, datadir: Path, configfile: Path, cores: int = None, rule
     else:
         logger.debug("No rules were specified. Executing all rules in the Snakefile.")
         
-    config_args = [f"logfile={str(logfile)}"]
+    config_args = [f"logfile={str(logfile)}", f"datadir={str(datadir)}"]
 
     if rules:
         config_args.append(f"rule_groups={' '.join(rules)}")

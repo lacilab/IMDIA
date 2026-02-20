@@ -3,11 +3,11 @@
 # Load configuration file
 # ------------------------
 
-logfile = config.get("logfile", None)
-rule_groups = config.get("rule_groups", "").split(' ')
+LOGFILE        = config.get("logfile", None)
+DATADIR        = config.get("datadir", "data")
+rule_groups    = config.get("rule_groups", "").split(' ')
 
 SCRIPTDIR      = os.path.join(os.path.dirname(workflow.snakefile), "scripts_analysis")
-DATADIR        = config.get("datadir", "data")
 METHODS_HBONDS = config.get("methods_hbonds", ["gmx", "mda"])
 STRUCTURES     = config.get("structure", [])
 MUTS           = config.get("muts", [])
@@ -196,7 +196,7 @@ rule universe:
     run:
         from scripts_analysis.universe import main
         main(
-            logfile=logfile,
+            logfile=LOGFILE,
             pdbfile=input.pdb,
             xtcfile=input.xtc,
             outdir=params.outdir,
@@ -237,7 +237,7 @@ rule qc:
     run:
         from scripts_analysis.qc import main
         main(
-            logfile=logfile,
+            logfile=LOGFILE,
             universe=input.universe,
             outdir=params.outdir,
             outfiles=dict(output),
@@ -269,7 +269,7 @@ rule interaction_index:
         from scripts.utils.group_index import group_index_interactions
         import json
 
-        index_group1, index_group2 = group_index_interactions(gmxdir=params.gmxdir, logfile=logfile, logname='analysis', 
+        index_group1, index_group2 = group_index_interactions(gmxdir=params.gmxdir, logfile=LOGFILE, logname='analysis', 
                                                          structurefile=input.pdb, indexfile=output.index,
                                                          group1=GROUP1, group2=GROUP2, dna=DNA, phos=PHOS)
 
@@ -298,7 +298,7 @@ rule hbonds_gmx:
     run:
         from scripts_analysis.hbonds_gmx import main
         main(
-            logfile=logfile,
+            logfile=LOGFILE,
             universe=input.universe,
             gmxdir=params.gmxdir,
             outdir=params.outdir,
@@ -331,7 +331,7 @@ rule hbonds_gmx_parse:
     run:
         from scripts_analysis.hbonds_gmx_parse import main
         main(
-            logfile=logfile,
+            logfile=LOGFILE,
             hbonds_gmx=input.hbonds_gmx,
             hbonds_gmx_parsed=output.hbonds_gmx_parsed,
             group1=params.index_group1,
@@ -358,7 +358,7 @@ rule hbonds_mda:
     run:
         from scripts_analysis.hbonds_mda import main
         main(
-            logfile=logfile,
+            logfile=LOGFILE,
             universe=input.universe,
             tprfile=input.tpr,
             xtcfile=input.xtc,
@@ -394,7 +394,7 @@ rule hbonds_extend:
     run:
         from scripts_analysis.hbonds_extend import main
         main(
-            logfile=logfile,
+            logfile=LOGFILE,
             pdbfile=input.pdb,
             universe=input.universe,
             hbonds_parsed=input.hbonds_parsed,
@@ -427,7 +427,7 @@ rule hbonds_plots:
     run:
         from scripts_analysis.hbonds_plots import main
         main(
-            logfile=logfile,
+            logfile=LOGFILE,
             hbonds_ext=input.hbonds_ext,
             method=wildcards.method,
             dna=DNA,
@@ -450,7 +450,7 @@ rule hbonds_pymol:
     run:
         from scripts_analysis.hbonds_pymol import main
         main(
-            logfile=logfile,
+            logfile=LOGFILE,
             hbonds_ext=input.hbonds_ext,
             hbonds_pymol=output.hbonds_pymol
         )
@@ -473,7 +473,7 @@ rule contact_ratio:
     run:
         from scripts_analysis.contact_ratio import main
         main(
-            logfile=logfile,
+            logfile=LOGFILE,
             universe=input.universe,
             group1=GROUP1,
             group2=GROUP2,
@@ -495,7 +495,7 @@ rule contact_pairwise:
     run:
         from scripts_analysis.contacts_pairwise import main
         main(
-            logfile=logfile,
+            logfile=LOGFILE,
             universe=input.universe,
             tprfile=input.tpr,
             xtcfile=input.xtc,
@@ -520,7 +520,7 @@ rule water_bridges:
     run:
         from scripts_analysis.water_bridges import main
         main(
-            logfile=logfile,
+            logfile=LOGFILE,
             universe=input.universe,
             tprfile=input.tpr,
             xtcfile=input.xtc,
@@ -551,7 +551,7 @@ rule pca_mda:
     run:
         from scripts_analysis.pca import main
         main(
-            logfile=logfile,
+            logfile=LOGFILE,
             universe=input.universe,
             outdir=params.outdir
         )
@@ -589,7 +589,7 @@ rule pca_gmx_porcupine:
     run:
         from scripts_analysis.pca_gmx_porcupine_plot import main
         main(
-            logfile=logfile,
+            logfile=LOGFILE,
             tprfile=input.tpr,
             xtcfile=input.xtc,
             scriptdir=SCRIPTDIR,
@@ -693,14 +693,14 @@ rule clustering_pca_gmx:
     run:
         from scripts_analysis.clustering_pca_gmx import main
         main(
-            logfile=logfile,
+            logfile=LOGFILE,
             timescale=input.proj_timescale,
             clust_labels=input.hclust,
             clust_alg ="hclust",
             outdir=params.outdir
         )
         main(
-            logfile=logfile,
+            logfile=LOGFILE,
             timescale=input.proj_timescale,
             clust_labels=input.kmeans,
             clust_alg ="kmeans",
@@ -742,7 +742,7 @@ rule gbsa:
     run:
         from scripts_analysis.gbsa import main
         main(
-            logfile=logfile,
+            logfile=LOGFILE,
             scriptdir=params.scriptdir,
             gmxdir=params.gmxdir,
             outdir=params.outdir,
