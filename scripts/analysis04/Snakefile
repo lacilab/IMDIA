@@ -18,7 +18,7 @@ OFFSET         = int(config.get("offset", 0))
 DOMAINS        = config.get("domains", [])
 GROUP1         = config.get("group1", None)
 GROUP2         = config.get("group2", None)
-START          = config.get("start_frame", None)     
+START          = config.get("start_frame", 0)     
 STOP           = config.get("stop_frame", None)
 FFS            = config.get("ffs", None)
 

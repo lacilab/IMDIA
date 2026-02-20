@@ -30,6 +30,9 @@ def an_perblock(logger, tprfile, xtcfile, n_jobs, func, start=0, stop=None, *arg
     logger.debug(f"Dask setup complete.")
     u_temp = Universe(tprfile, xtcfile) 
     logger.debug(f"u_temp Universe loaded.")
+    if start is None or start < 0:
+        start = 0
+        logger.debug(f"Start frame not provided or negative. Using start frame: {start}")
     if stop is None: 
         stop = u_temp.trajectory.n_frames
         logger.debug(f"Stop frame not provided. Using total number of frames: {stop}")
