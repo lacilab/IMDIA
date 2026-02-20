@@ -224,16 +224,20 @@ def group_index_interactions(gmxdir: str = None, logfile: str = None, logname: s
         # if group1 and group2 are single letters (representing chains), map them to the corresponding chains
         for i, group in enumerate([group1, group2]):
             if re.match(r"^[A-Za-z]$", group):
+                logger.debug(f"Creating group for chain {group} as number {group_n + i}")
                 groups_input += f"""chain {group}
-                            name {group_n + i} Chain_{group}"""
+                name {group_n + i} Chain_{group}
+"""
             elif group == "DNA" and dna:
                 groups_input += f"""
                             r DA | r DC | r DT | r DG | r DC3 | r DC5 | r DG3 | r DG5
-                            name {group_n + i} DNA"""
+                            name {group_n + i} DNA
+                            """
             elif group == "Protein" and phos:
                 groups_input += f"""
                             {group_protein} | {group_phosphate}
-                            name {group_n + i} Protein_P"""
+                            name {group_n + i} Protein_P
+                            """
                  
         
         groups_input += """
