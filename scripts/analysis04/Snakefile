@@ -57,6 +57,15 @@ structures, mutations, reps = zip(*combinations)
 
 print("os.getcwd():", os.getcwd())
 
+##### CHECK INTERACTION GROUPS #####
+interaction_rules = ["hbonds", "contacts", "wb", "gbsa"]
+# Check if rules contain interaction analysis and if group1 and group2 are defined
+if any(rule in rule_groups for rule in interaction_rules) or rule_groups == [""]:
+    if GROUP1 is None or GROUP2 is None:
+        raise ValueError("Both GROUP1 and GROUP2 must be defined in the config file when running interaction analysis rules.")
+    else:
+        print(f"Interaction analysis will be performed between groups: {GROUP1} and {GROUP2}")
+
 ###### PATHS ######
 PATH_MUT = f"{DATADIR}" + "/{struct}/{mut}"
 PATH_REP = f"{PATH_MUT}" + "/{rep}"
@@ -546,12 +555,7 @@ rule pca_mda:
             universe=input.universe,
             outdir=params.outdir
         )
-    # shell: 
-    #     """
-    #     {SCRIPTDIR}/pca.py \
-    #         --universe {input.universe} \
-    #         --outdir "{DATADIR}/{wildcards.struct}/{wildcards.mut}/{wildcards.rep}/analysis/003_pca" \
-    #     """
+
 
 rule pca_gmx:
     params:
