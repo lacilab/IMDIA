@@ -3,7 +3,6 @@
 from datetime import datetime
 import sys
 import os
-import glob
 import re
 import subprocess
 import shutil
@@ -116,7 +115,6 @@ def main(logfile: Path, datadir: Path, filename: str,
     else:
         logger.error(f"{str(path_amber)} directory is missing or incomplete.")
         sys.exit(1)
-
 
     ##### PREPARATION ######
 

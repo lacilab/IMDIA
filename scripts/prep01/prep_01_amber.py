@@ -5,11 +5,9 @@ import os
 import subprocess
 import time
 import sys
-import shutil
-import glob
-import argparse
 from pathlib import Path
 from venv import logger
+import MDAnalysis as mda
 from scripts.utils.helpers import setup_logger
 
 
@@ -216,18 +214,12 @@ def main(logfile: Path = None, pdbpath: Path = None,
 	protonated_complex = add_hydrogens(noH_complex, logger_name, logfile, ffs)
 
 	# Extract chain ids from the PDB file
-	chains = set()
-	with open(pdbfile) as f:
-		for line in f:
-			if line.startswith(("ATOM  ", "HETATM")):
-				# PDB chain ID is column 22 (1-based), index 21 (0-based)
-				chain = line[21].strip()
-				if chain:
-					chains.add(chain)
-
-	chains = sorted(chains)
-	logger.debug(f"Chains found in PDB: {chains}")
-
+	u = mda.Universe(pdbfile)
+	chains = []
+	for atom in u.atoms:
+		if atom.segid and atom.segid not in chains:
+			chains.append(atom.segid)
+	logger.debug(f"Extracted chain IDs: {chains}")
 
 	# Generate the receptor & ligand (also match the hydrogens to amber specifics)
 	chain_files = gen_chains(noH_complex, logger_name, logfile, chains, ffs)
