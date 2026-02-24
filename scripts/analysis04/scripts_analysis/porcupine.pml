@@ -1,14 +1,21 @@
 # Load the GROMACS .gro file (assuming it's in the current directory)
 load extreme1.gro, extreme1
 
-# Your original commands
 hide ribbon
 show cartoon
+
+# Split states
 split_states extreme1, 1, 2
-set_name extreme1_0001, 0001
-set_name extreme1_0002, 0002
+set_name extreme1_0001, 01
+set_name extreme1_0002, 02
+
+# Show porcupine cones/arrows
 run modevectors.py
-modevectors 0001, 2001, cutoff=0, head_length=1, head=0.4, headrgb=(1, 0.2, 0.1), tailrgb=(1, 0.2, 0.1), notail=0
+modevectors 01, 02, cutoff=0, head_length=1, head=0.4, headrgb=(1, 0.2, 0.1), tailrgb=(1, 0.2, 0.1), notail=0
+
+# Hide extreme states
+hide cartoon, 01
+hide cartoon, 02
 
 # Visualization settings
 set cartoon_ring_mode, 3
@@ -19,6 +26,7 @@ set antialias,2
 set ray_trace_color, black
 set ray_trace_gain, 0.005
 
+# Fix view coordinates for snapshot
 set_view (\
      0.153344378,   -0.861105382,   -0.484749764,\
      0.879321575,   -0.104914077,    0.464531869,\
