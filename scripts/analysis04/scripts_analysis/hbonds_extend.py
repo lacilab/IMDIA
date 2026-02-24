@@ -62,7 +62,7 @@ def get_atom_info(structure_file, atom_ids, chains=['A', 'B', 'C', 'D']):
 def main(logfile: str = None, pdbfile: str = None, universe: str = None, 
          hbonds_parsed : str = None, hbonds_ext : str = None, 
          hbonds_perframe : str = None,
-         offset : int = 0, domains : list = []):
+         offsets : dict = None, domains : list = []):
 
     # # Arguments
     # parser = argparse.ArgumentParser(description="Extend hydrogen bonds data with additional information.")
@@ -172,23 +172,10 @@ def main(logfile: str = None, pdbfile: str = None, universe: str = None,
         'protein',
         'DNA'
     )
-
+    
     # Adjusted residue number to global complete protein
-    hbonds_grouped['donor_res_num_adjusted'] = (
-        np.where(
-            hbonds_grouped['donor_type'] == 'protein',
-            hbonds_grouped['donor_res_num'] + offset,
-            hbonds_grouped['donor_res_num']
-        ).astype(int)
-    )
-
-    hbonds_grouped['acceptor_res_num_adjusted'] = (
-        np.where(
-            hbonds_grouped['acceptor_type'] == 'protein',
-            hbonds_grouped['acceptor_res_num'] + offset,
-            hbonds_grouped['acceptor_res_num']
-        ).astype(int)
-    )
+    hbonds_grouped['donor_res_num_adjusted'] = (hbonds_grouped['donor_res_num'] + hbonds_grouped['donor_chain'].map(offsets)).astype(int)
+    hbonds_grouped['acceptor_res_num_adjusted'] = (hbonds_grouped['acceptor_res_num'] + hbonds_grouped['acceptor_chain'].map(offsets)).astype(int)
 
     # Add 'donor_section' column
     hbonds_grouped['donor_section'] = np.where(

@@ -34,14 +34,14 @@ def radgyr(atomgroup, masses, total_mass=None):
         return np.sqrt(rog_sq)
 
 def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles : dict = {}, 
-         with_dna: bool = False, offset: int = 0, domains: list = []):
+         with_dna: bool = False, offsets: dict = None, domains: list = []):
     # Arguments
     # parser = argparse.ArgumentParser(description="Quality control analysis of MD simulation")
     # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
     # parser.add_argument("-u", "--universe", help="Path to the Universe object")
     # parser.add_argument("-d", "--outdir", help="Output directory")
     # parser.add_argument("--dna", action='store_true', dest='with_dna', help="DNA is present in the system")
-    # parser.add_argument("--offset", type=int, default=0, help="Offset for residue numbering")
+    # parser.add_argument("--offsets", type=dict, default=None, help="Offset for residue numbering per chain")
     # parser.add_argument("--domains", type=list, default=[], help="Protein domain definitions.")
 # 
     # if len(sys.argv) < 4:
@@ -52,7 +52,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
     # universe = args.universe
     # outdir = args.outdir
     # with_dna = args.with_dna
-    # offset = args.offset
+    # offsets = args.offsets
     # domains = args.domains
 
     ##### Initialize logger
@@ -185,7 +185,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
     rmsf_prot = pd.DataFrame()
     for chain in prot_rmsf.keys():  
         df_chain = pd.DataFrame({
-            'Residue': prot_rmsf[chain]['resids'] + offset,   
+            'Residue': prot_rmsf[chain]['resids'] + offsets[chain],   
             'Chain': chain,  
             f'RMSF': prot_rmsf[chain]['rmsf']
         })
@@ -195,7 +195,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
 
     # Plot
     for chain in prot_rmsf.keys():
-        plt.plot(prot_rmsf[chain]['resids'] + offset, prot_rmsf[chain]['rmsf'], label=f'Chain {chain}')
+        plt.plot(prot_rmsf[chain]['resids'] + offsets[chain], prot_rmsf[chain]['rmsf'], label=f'Chain {chain}')
     # Color by protein domains
     if len(domains) > 0:
         for domain in domains:
@@ -231,7 +231,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
         rmsf_dna = pd.DataFrame()
         for chain in dna_rmsf.keys():  
             df_chain = pd.DataFrame({
-                'Residue': dna_rmsf[chain]['resids'],   
+                'Residue': dna_rmsf[chain]['resids'] + offsets[chain],   
                 'Chain': chain,  
                 f'RMSF': dna_rmsf[chain]['rmsf']
             })
@@ -241,7 +241,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
 
         # Plot
         for chain in dna_rmsf.keys():
-            plt.plot(dna_rmsf[chain]['resids'], dna_rmsf[chain]['rmsf'], label=f'DNA Chain {chain}')
+            plt.plot(dna_rmsf[chain]['resids'] + offsets[chain], dna_rmsf[chain]['rmsf'], label=f'DNA Chain {chain}')
         plt.xlabel('Residue number')
         plt.ylabel('RMSF (Å)')
         plt.title('RMSF of DNA Chains')

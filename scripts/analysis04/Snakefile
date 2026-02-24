@@ -1,3 +1,4 @@
+from pathlib import Path
 
 # ------------------------
 # Load configuration file
@@ -14,7 +15,7 @@ MUTS           = config.get("muts", [])
 REPS           = config.get("repn", [])
 DNA            = config.get("dna", False)
 PHOS           = config.get("phos", False)
-OFFSET         = int(config.get("offset", 0))
+OFFSETS        = config.get("offsets", {})
 DOMAINS        = config.get("domains", [])
 GROUP1         = config.get("group1", None)
 GROUP2         = config.get("group2", None)
@@ -57,6 +58,8 @@ structures, mutations, reps = zip(*combinations)
 
 print("os.getcwd():", os.getcwd())
 
+print(f"Received offset dictionary: {OFFSETS}")
+
 ##### CHECK INTERACTION GROUPS #####
 interaction_rules = ["hbonds", "contacts", "wb", "gbsa"]
 # Check if rules contain interaction analysis and if group1 and group2 are defined
@@ -67,22 +70,22 @@ if any(rule in rule_groups for rule in interaction_rules) or rule_groups == [""]
         print(f"Interaction analysis will be performed between groups: {GROUP1} and {GROUP2}")
 
 ###### PATHS ######
-PATH_MUT = f"{DATADIR}" + "/{struct}/{mut}"
-PATH_REP = f"{PATH_MUT}" + "/{rep}"
-PATH_ANALYSIS = f"{PATH_REP}" + "/analysis"
-PATH_MUT_OUT = f"{DATADIR}" + "/{{struct}}/{{mut}}"
-PATH_REP_OUT = f"{PATH_MUT_OUT}" + "/{{rep}}"
-PATH_ANALYSIS_OUT = f"{PATH_REP_OUT}" + "/analysis"
-PATH_ANALYSIS_WC = lambda wc: f"{DATADIR}/{wc.struct}/{wc.mut}/{wc.rep}/analysis"
-PATH_GMX_WC = lambda wc: f"{DATADIR}/{wc.struct}/{wc.mut}/{wc.rep}/gromacs"
-PATH_GMX = f"{PATH_REP}" + "/gromacs"
-PATH_RAW = f"{PATH_ANALYSIS}" + "/000_raw"
-PATH_QC = f"{PATH_ANALYSIS}" + "/001_qc"
-PATH_HBONDS = f"{PATH_ANALYSIS}/002_hbonds_{GROUP1}_{GROUP2}" 
-PATH_PCA = f"{PATH_ANALYSIS}" + "/003_pca"
-PATH_CONTACTS = f"{PATH_ANALYSIS}/004_contacts_{GROUP1}_{GROUP2}"
-PATH_CLUST = f"{PATH_ANALYSIS}" + "/005_clustering"
-PATH_GBSA= f"{PATH_ANALYSIS}/006_gbsa_{GROUP1}_{GROUP2}"
+PATH_MUT = Path(DATADIR) / "{struct}" / "{mut}"
+PATH_REP = PATH_MUT / "{rep}"
+PATH_ANALYSIS = PATH_REP / "analysis"
+PATH_MUT_OUT = Path(DATADIR) / "{struct}" / "{mut}"
+PATH_REP_OUT = PATH_MUT_OUT / "{rep}"
+PATH_ANALYSIS_OUT = PATH_REP_OUT / "analysis"
+PATH_ANALYSIS_WC = lambda wc: Path(DATADIR) / wc.struct / wc.mut / wc.rep / "analysis"
+PATH_GMX_WC = lambda wc: Path(DATADIR) / wc.struct / wc.mut / wc.rep / "gromacs"
+PATH_GMX = PATH_REP / "gromacs"
+PATH_RAW = PATH_ANALYSIS / "000_raw"
+PATH_QC = PATH_ANALYSIS / "001_qc"
+PATH_HBONDS = PATH_ANALYSIS / f"002_hbonds_{GROUP1}_{GROUP2}" 
+PATH_PCA = PATH_ANALYSIS / "003_pca"
+PATH_CONTACTS = PATH_ANALYSIS / f"004_contacts_{GROUP1}_{GROUP2}"
+PATH_CLUST = PATH_ANALYSIS / "005_clustering"
+PATH_GBSA= PATH_ANALYSIS / f"006_gbsa_{GROUP1}_{GROUP2}"
 
 ###### CONDITIONAL OUTPUT - RUN CERTAIN RULES BASED ON INPUT LIST ######
 # Conditional I/O files
@@ -242,7 +245,7 @@ rule qc:
             outdir=params.outdir,
             outfiles=dict(output),
             with_dna=DNA,
-            offset=OFFSET,
+            offsets=OFFSETS,
             domains=DOMAINS
         )
     #shell:
@@ -400,7 +403,7 @@ rule hbonds_extend:
             hbonds_parsed=input.hbonds_parsed,
             hbonds_ext=output.hbonds_ext,
             hbonds_perframe=output.hbonds_perframe,
-            offset=OFFSET,
+            offsets=OFFSETS,
             domains=DOMAINS
         )
     # shell: 
@@ -578,22 +581,27 @@ rule pca_gmx:
 
 rule pca_gmx_porcupine:
     params:
-        gmxdir = lambda wc: f"{PATH_GMX_WC(wc)}",
-        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/003_pca"
+        gmxdir = lambda wc: Path(f"{PATH_GMX_WC(wc)}"),
+        outdir = lambda wc: Path(f"{PATH_ANALYSIS_WC(wc)}/003_pca")
     input: 
-        eigenvec = f"{PATH_PCA}/eigenvec.trr",
-        tpr = f"{PATH_GMX}/md.tpr",
-        xtc = f"{PATH_GMX}/md_post.xtc"
+        eigenvec = PATH_PCA / "eigenvec.trr",
+        tpr = PATH_GMX / "md.tpr",
+        xtc = PATH_GMX / "md_post.xtc"
     output: 
-        porcupine = report(f"{PATH_PCA}/porcupine.png", category="PCA", labels={"sample": "{mut} {rep} Porcupine plot"}),
+        porcupine = report(PATH_PCA / "porcupine.png", category="PCA", labels={"sample": "{mut} {rep} Porcupine plot"}),
     run:
         from scripts_analysis.pca_gmx_porcupine_plot import main
+
+        tprfile = Path(input.tpr)
+        xtcfile = Path(input.xtc)
+        outdir = Path(params.outdir)
+
         main(
             logfile=LOGFILE,
-            tprfile=input.tpr,
-            xtcfile=input.xtc,
+            tprfile=tprfile,
+            xtcfile=xtcfile,
             scriptdir=SCRIPTDIR,
-            outdir=params.outdir,
+            outdir=outdir,
         )
     # shell: 
     #     """

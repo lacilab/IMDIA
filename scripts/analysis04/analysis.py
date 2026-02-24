@@ -2,10 +2,13 @@
 # -*- coding: utf-8 -*-
 
 from pathlib import Path
+import shutil
 import subprocess
+import MDAnalysis as mda
+import yaml
 from scripts.utils.helpers import setup_logger
 
-def main(logfile: Path, datadir: Path, configfile: Path, cores: int = None, rules: list[str] = None, unlock: bool = False):
+def main(logfile: Path, datadir: Path, configfile: Path, pdbpath: Path, cores: int = None, rules: list[str] = None, unlock: bool = False):
     # parser = argparse.ArgumentParser(description="Analyse MD simulation results.")
     # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
     # parser.add_argument('--datadir', '-d', dest='datadir', default=None, help='Path to the data directory.')
@@ -22,6 +25,23 @@ def main(logfile: Path, datadir: Path, configfile: Path, cores: int = None, rule
     # Initialize logger
     logger = setup_logger("analysis", logfile)
     logger.debug(f"Starting analysis with snakemake using config file: {configfile}.")
+
+    ##### Get chain IDs and offsets ######
+    # Extract chain ids from the PDB file
+    u = mda.Universe(pdbpath)
+    chains = {"offsets":{}}
+    for atom in u.atoms:
+        if atom.segid: 
+            if atom.segid not in chains["offsets"].keys():
+                chains["offsets"][atom.segid] = int(atom.resid) - 1
+                logger.debug(f"Found chain ID: '{atom.segid}' with starting residue number {atom.resid}")
+            elif atom.resid - 1 < chains["offsets"][atom.segid]:
+                chains["offsets"][atom.segid] = int(atom.resid) - 1
+                logger.debug(f"Updated chain ID: '{atom.segid}' with new starting residue number {atom.resid}")
+
+    params_copy = shutil.copyfile(configfile, pdbpath.parent / "params_copy.yaml")
+    with open(params_copy, "a") as f:
+        yaml.safe_dump(chains, f)
     
     if rules is not None:
         logger.debug(f"Executing specific rules: {rules}")
@@ -39,7 +59,7 @@ def main(logfile: Path, datadir: Path, configfile: Path, cores: int = None, rule
             "snakemake",
             "--snakefile", "scripts/analysis04/Snakefile",
             "--cores", "1",
-            "--configfile", str(configfile),
+            "--configfile", str(params_copy),    
             "--config",
             *config_args,
             "--unlock"
@@ -49,7 +69,7 @@ def main(logfile: Path, datadir: Path, configfile: Path, cores: int = None, rule
             "snakemake",
             "--snakefile", "scripts/analysis04/Snakefile",
             "--cores", str(cores) if cores is not None else "all",
-            "--configfile", str(configfile),
+            "--configfile", str(params_copy),
             "--config",
             *config_args
         ]
