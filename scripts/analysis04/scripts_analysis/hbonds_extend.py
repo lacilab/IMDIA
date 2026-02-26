@@ -174,8 +174,9 @@ def main(logfile: str = None, pdbfile: str = None, universe: str = None,
     )
     
     # Adjusted residue number to global complete protein
-    hbonds_grouped['donor_res_num_adjusted'] = (hbonds_grouped['donor_res_num'] + hbonds_grouped['donor_chain'].map(offsets)).astype(int)
-    hbonds_grouped['acceptor_res_num_adjusted'] = (hbonds_grouped['acceptor_res_num'] + hbonds_grouped['acceptor_chain'].map(offsets)).astype(int)
+    offset_map = {chain: data["offset"] for chain, data in offsets.items()}
+    hbonds_grouped['donor_res_num_adjusted'] = (hbonds_grouped['donor_res_num'] + hbonds_grouped['donor_chain'].map(offset_map)).astype(int)
+    hbonds_grouped['acceptor_res_num_adjusted'] = (hbonds_grouped['acceptor_res_num'] + hbonds_grouped['acceptor_chain'].map(offset_map)).astype(int)
 
     # Add 'donor_section' column
     hbonds_grouped['donor_section'] = np.where(

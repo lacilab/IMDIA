@@ -185,7 +185,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
     rmsf_prot = pd.DataFrame()
     for chain in prot_rmsf.keys():  
         df_chain = pd.DataFrame({
-            'Residue': prot_rmsf[chain]['resids'] + offsets[chain],   
+            'Residue': prot_rmsf[chain]['resids'] + offsets[chain]['offset'],   
             'Chain': chain,  
             f'RMSF': prot_rmsf[chain]['rmsf']
         })
@@ -195,7 +195,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
 
     # Plot
     for chain in prot_rmsf.keys():
-        plt.plot(prot_rmsf[chain]['resids'] + offsets[chain], prot_rmsf[chain]['rmsf'], label=f'Chain {chain}')
+        plt.plot(prot_rmsf[chain]['resids'] + offsets[chain]['offset'], prot_rmsf[chain]['rmsf'], label=f'Chain {chain}')
     # Color by protein domains
     if len(domains) > 0:
         for domain in domains:
@@ -231,7 +231,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
         rmsf_dna = pd.DataFrame()
         for chain in dna_rmsf.keys():  
             df_chain = pd.DataFrame({
-                'Residue': dna_rmsf[chain]['resids'] + offsets[chain],   
+                'Residue': dna_rmsf[chain]['resids'] + offsets[chain]['offset'],   
                 'Chain': chain,  
                 f'RMSF': dna_rmsf[chain]['rmsf']
             })
@@ -241,7 +241,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
 
         # Plot
         for chain in dna_rmsf.keys():
-            plt.plot(dna_rmsf[chain]['resids'] + offsets[chain], dna_rmsf[chain]['rmsf'], label=f'DNA Chain {chain}')
+            plt.plot(dna_rmsf[chain]['resids'] + offsets[chain]['offset'], dna_rmsf[chain]['rmsf'], label=f'DNA Chain {chain}')
         plt.xlabel('Residue number')
         plt.ylabel('RMSF (Å)')
         plt.title('RMSF of DNA Chains')

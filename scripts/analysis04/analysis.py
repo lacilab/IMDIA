@@ -4,6 +4,7 @@
 from pathlib import Path
 import shutil
 import subprocess
+import string
 import MDAnalysis as mda
 import yaml
 from scripts.utils.helpers import setup_logger
@@ -28,16 +29,19 @@ def main(logfile: Path, datadir: Path, configfile: Path, pdbpath: Path, cores: i
 
     ##### Get chain IDs and offsets ######
     # Extract chain ids from the PDB file
+    uppercase_alphabet = list(string.ascii_uppercase)
     u = mda.Universe(pdbpath)
-    chains = {"offsets":{}}
+    chains = {"chains": {}}
+    i = 0
     for atom in u.atoms:
         if atom.segid: 
-            if atom.segid not in chains["offsets"].keys():
-                chains["offsets"][atom.segid] = int(atom.resid) - 1
-                logger.debug(f"Found chain ID: '{atom.segid}' with starting residue number {atom.resid}")
-            elif atom.resid - 1 < chains["offsets"][atom.segid]:
-                chains["offsets"][atom.segid] = int(atom.resid) - 1
-                logger.debug(f"Updated chain ID: '{atom.segid}' with new starting residue number {atom.resid}")
+            if atom.segid not in chains["chains"].keys():
+                chains["chains"][atom.segid] = {"new_id": uppercase_alphabet[i], "offset": int(atom.resid) - 1}
+                logger.debug(f"Found chain ID: '{atom.segid}' with starting residue number {atom.resid}. Assigned chain ID '{uppercase_alphabet[i]}' in the offset dictionary.")
+                i += 1
+            elif atom.resid - 1 < chains["chains"][atom.segid]['offset']:
+                chains["chains"][atom.segid]['offset'] = int(atom.resid) - 1
+                logger.debug(f"Updated chain {atom.segid} (new ID {chains['chains'][atom.segid]['new_id']}) with new starting residue number {atom.resid}")
 
     params_copy = shutil.copyfile(configfile, pdbpath.parent / "params_copy.yaml")
     with open(params_copy, "a") as f:
