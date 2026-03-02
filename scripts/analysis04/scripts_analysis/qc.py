@@ -34,7 +34,7 @@ def radgyr(atomgroup, masses, total_mass=None):
         return np.sqrt(rog_sq)
 
 def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles : dict = {}, 
-         with_dna: bool = False, offsets: dict = None, domains: list = []):
+         with_dna: bool = False, offsets: dict = None, domains: list = [], chaingroups: list = []):
     # Arguments
     # parser = argparse.ArgumentParser(description="Quality control analysis of MD simulation")
     # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
@@ -75,6 +75,8 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
     u.trajectory[0]
 
     protein_sel = u.select_atoms("protein")
+    nucleic_sel = u.select_atoms("nucleic")
+    other_sel = u.select_atoms("not (protein or nucleic)")
 
     ########## RMSD ##########
     rmsd_analysis = rms.RMSD(u, select='backbone', groupselections=['name CA', 'protein'])
@@ -166,36 +168,50 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
 
     # Get segids of the protein, to avoid leaving out non-standard residues like PTR
     prot_segids = [seg.segid for seg in protein_sel.segments]
+    nucleic_segids = [seg.segid for seg in nucleic_sel.segments]
+    other_sesgids = [seg.segid for seg in other_sel.segments]
     logger.debug(f"Protein segids identified: {prot_segids}")
+    logger.debug(f"Nucleic segids identified: {nucleic_segids}")
+    logger.debug(f"Other segids identified: {other_sesgids}")
 
-    prot_rmsf = {}
-    for segid in prot_segids:
-        prot_rmsf[segid] = {}
-        ca = u.select_atoms(f"segid {segid} and name CA")
-        prot_rmsf[segid]['resids'] = ca.resids
-        if ca.n_atoms == 0:
+    # Calculate RMSF
+    all_segids = [s for s in u.segments.segids if s.strip()] 
+    logger.debug(f"All segids in the universe: {all_segids}")
+    rmsf_all = {}
+    for segid in all_segids:
+        rmsf_all[segid] = {}
+        if segid in prot_segids:
+            sel = f"segid {segid} and protein and name CA"
+        elif segid in nucleic_segids:
+            sel = f"segid {segid} and nucleic and name P"
+        else:
+            logger.debug(f"Segid {segid} not recognized as protein or nucleic acid. Using backbone selection for RMSF, but this may not be ideal.")
+            sel = f"segid {segid} and backbone"  # Default to all atoms in the segment, but this may not be ideal for non-protein/non-nucleic segments
+        atoms = u.select_atoms(sel)
+        if atoms.n_atoms == 0:
             logger.warning(f"Selection for segid {segid} is empty. Please check the chain ids.")
             continue
         else:
-            logger.debug(f"Selection for segid {segid} has {ca.n_atoms} CA atoms.")
-            rmsf = rms.RMSF(ca).run()
-            prot_rmsf[segid]['rmsf'] = rmsf.results.rmsf
+            logger.debug(f"Selection for segid {segid} has {atoms.n_atoms} atoms.")
+            rmsf = rms.RMSF(atoms).run()
+            rmsf_all[segid]['rmsf'] = rmsf.results.rmsf
+            rmsf_all[segid]['resids'] = atoms.resids
 
-    # Save Protein RMSF to CSV
+    # Save protein RMSF to CSV
     rmsf_prot = pd.DataFrame()
-    for chain in prot_rmsf.keys():  
+    for chain in prot_segids:
         df_chain = pd.DataFrame({
-            'Residue': prot_rmsf[chain]['resids'] + offsets[chain]['offset'],   
+            'Residue': rmsf_all[chain]['resids'] + offsets[chain]['offset'],   
             'Chain': chain,  
-            f'RMSF': prot_rmsf[chain]['rmsf']
+            f'RMSF': rmsf_all[chain]['rmsf']
         })
         rmsf_prot = pd.concat([rmsf_prot, df_chain], axis=1)
     
     rmsf_prot.to_csv(outfiles['rmsf_prot_csv'], index=False)
 
-    # Plot
-    for chain in prot_rmsf.keys():
-        plt.plot(prot_rmsf[chain]['resids'] + offsets[chain]['offset'], prot_rmsf[chain]['rmsf'], label=f'Chain {chain}')
+    # Plot all protein chain RMSF together
+    for chain in prot_segids:
+        plt.plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f'Chain {chain}')
     # Color by protein domains
     if len(domains) > 0:
         for domain in domains:
@@ -206,8 +222,41 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
     plt.ylabel('RMSF (Å)')
     plt.title('RMSF of Protein Chains')
     plt.legend()
-    plt.savefig(outfiles['rmsf_prot_domains'])
+    plt.savefig(outfiles['rmsf_prot'])
     plt.close()
+
+    # Plot each chaingroup
+    # One plot row per chaingroup, one plot per chain not in a chaingroup
+    chains_with_groups = set(chain for group in chaingroups for chain in group['chains'])
+    chains_without_groups = [chain for chain in all_segids if chain not in chains_with_groups]
+    num_groups = len(chaingroups) + len(chains_without_groups)
+    logger.debug(f"Number of chaingroups: {len(chaingroups)}, Chains without groups: {len(chains_without_groups)}, Total subplots: {num_groups}")
+    if num_groups > 0:
+        fig, axes = plt.subplots(num_groups, 1, figsize=(10, 5*num_groups))
+        if num_groups == 1:
+            axes = [axes]
+        for i, group in enumerate(chaingroups):
+            logger.debug(f"Plotting chaingroup {group['name']} with chains: {group['chains']}")
+            chain_list = group['chains']
+            for chain in chain_list:
+                if chain in rmsf_all:
+                    axes[i].plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f'Chain {chain}')
+                else:
+                    logger.warning(f"Chain {chain} not found in rmsf_all.")
+            axes[i].set_xlabel('Residue number (adjusted)')
+            axes[i].set_ylabel('RMSF (Å)')
+            axes[i].set_title(f'RMSF of chain group {group["name"]}')
+            axes[i].legend()
+        for i, chain in enumerate(chains_without_groups):
+            j = len(chaingroups) + i
+            axes[j].plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f'Chain {chain}')
+            axes[j].set_xlabel('Residue number (adjusted)')
+            axes[j].set_ylabel('RMSF (Å)')
+            axes[j].set_title(f'RMSF of Chain {chain}')
+            axes[j].legend()
+        plt.tight_layout()
+        plt.savefig(outfiles['rmsf_chaingroups'])
+        plt.close()
 
     ##### If the complex contains dsDNA #####
     if with_dna:
@@ -246,7 +295,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
         plt.ylabel('RMSF (Å)')
         plt.title('RMSF of DNA Chains')
         plt.legend()
-        plt.savefig(outfiles['rmsf_dna_res'])
+        plt.savefig(outfiles['rmsf_dna'])
         plt.close()
 
     logger.debug("\nChecking generated files.")

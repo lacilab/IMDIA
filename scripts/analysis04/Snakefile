@@ -19,6 +19,7 @@ PHOS           = config.get("phos", False)
 DOMAINS        = config.get("domains", [])
 GROUP1         = config.get("group1", None)
 GROUP2         = config.get("group2", None)
+CHAINGROUPS    = config.get("chaingroups", [])
 START          = config.get("start_frame", 0)     
 STOP           = config.get("stop_frame", None)
 FFS            = config.get("ffs", None)
@@ -88,10 +89,10 @@ in_rmsf_dna = {}
 out_hbond_plots_dna = {}
 in_hbond_plots_dna = {}
 if DNA:
-    out_rmsf_dna["rmsf_dna_res"] = report(f"{PATH_QC}/rmsf_dna_res.png", 
+    out_rmsf_dna["rmsf_dna"] = report(f"{PATH_QC}/rmsf_dna.png", 
             category="QC", subcategory="RMSF", labels={"sample": "{mut} {rep} RMSF DNA"})
     out_rmsf_dna["rmsf_dna_csv"] = f"{PATH_QC}/rmsf_dna.csv"
-    in_rmsf_dna["rmsf_dna_res"] = expand(f"{PATH_QC}/rmsf_dna_res.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    in_rmsf_dna["rmsf_dna"] = expand(f"{PATH_QC}/rmsf_dna.png", struct=structures, mut=mutations, rep=reps, zip=True)
     in_rmsf_dna["rmsf_dna_csv"] = expand(f"{PATH_QC}/rmsf_dna.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     out_hbond_plots_dna["hbonds_dna"] = report(f"{PATH_HBONDS}/hbonds_{{method}}_dna.png", 
             category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} Hbonds per DNA chain and residue"})
@@ -102,14 +103,15 @@ if DNA:
     in_hbond_plots_dna["hbonds_dna"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_dna.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
     in_hbond_plots_dna["hbonds_dna_bb"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_dna_bb.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
     in_hbond_plots_dna["hbonds_dna_base"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_dna_base.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
-
+if len(CHAINGROUPS) > 0: 
+    all_input["rmsf_chaingroups"] = expand(f"{PATH_QC}/rmsf_chaingroups.png", struct=structures, mut=mutations, rep=reps, zip=True)
 if "qc" in rule_groups or rule_groups == [""]:
     all_input["rmsdpng"] = expand(f"{PATH_QC}/rmsd.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["rmsd_cats"] = expand(f"{PATH_QC}/rmsd_cats.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["rmsd_bb"] = expand(f"{PATH_QC}/rmsd_bb.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["radius_axis"] = expand(f"{PATH_QC}/radius_axis.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["radius_rmsd"] = expand(f"{PATH_QC}/radius_rmsd.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["rmsf_prot_domains"] = expand(f"{PATH_QC}/rmsf_prot_domains.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["rmsf_prot"] = expand(f"{PATH_QC}/rmsf_prot.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["rmsd_csv"] = expand(f"{PATH_QC}/rmsd.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["radius_axis_csv"] = expand(f"{PATH_QC}/radius_axis.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["rmsf_prot_csv"] = expand(f"{PATH_QC}/rmsf_prot.csv", struct=structures, mut=mutations, rep=reps, zip=True)
@@ -226,11 +228,12 @@ rule qc:
             category="QC", subcategory="RMSD", labels={"sample": "{mut} {rep} Radius of gyration"}),
         radius_rmsd = report(f"{PATH_QC}/radius_rmsd.png", 
             category="QC", subcategory="RMSD", labels={"sample": "{mut} {rep} Radius of gyration vs RMSD"}),
-        rmsf_prot_domains = report(f"{PATH_QC}/rmsf_prot_domains.png", 
+        rmsf_prot = report(f"{PATH_QC}/rmsf_prot.png", 
             category="QC", subcategory="RMSF", labels={"sample": "{mut} {rep} RMSF Protein"}),
         rmsd_csv = f"{PATH_QC}/rmsd.csv",
         radius_axis_csv = f"{PATH_QC}/radius_axis.csv",
         rmsf_prot_csv = f"{PATH_QC}/rmsf_prot.csv",
+        rmsf_chaingroups = f"{PATH_QC}/rmsf_chaingroups.png",
         **out_rmsf_dna
     run:
         from scripts_analysis.qc import main
@@ -241,7 +244,8 @@ rule qc:
             outfiles=dict(output),
             with_dna=DNA,
             offsets=OFFSETS,
-            domains=DOMAINS
+            domains=DOMAINS,
+            chaingroups=CHAINGROUPS
         )
 
 
