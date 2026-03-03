@@ -34,7 +34,7 @@ def radgyr(atomgroup, masses, total_mass=None):
         return np.sqrt(rog_sq)
 
 def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles : dict = {}, 
-         with_dna: bool = False, offsets: dict = None, domains: list = [], chaingroups: list = []):
+         with_dna: bool = False, offsets: dict = None, domains: dict = {}, chaingroups: list = {}):
     # Arguments
     # parser = argparse.ArgumentParser(description="Quality control analysis of MD simulation")
     # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
@@ -212,12 +212,6 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
     # Plot all protein chain RMSF together
     for chain in prot_segids:
         plt.plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f'Chain {chain}')
-    # Color by protein domains
-    if len(domains) > 0:
-        for domain in domains:
-            start = domain['start']
-            end = domain['end']
-            plt.axvspan(start, end, zorder=0, alpha=0.2, color=domain['color'], label=domain['label'])
     plt.xlabel('Residue number (adjusted)')
     plt.ylabel('RMSF (Å)')
     plt.title('RMSF of Protein Chains')
@@ -227,7 +221,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
 
     # Plot each chaingroup
     # One plot row per chaingroup, one plot per chain not in a chaingroup
-    chains_with_groups = set(chain for group in chaingroups for chain in group['chains'])
+    chains_with_groups = set(chain for group in chaingroups.values() for chain in group)
     chains_without_groups = [chain for chain in all_segids if chain not in chains_with_groups]
     num_groups = len(chaingroups) + len(chains_without_groups)
     logger.debug(f"Number of chaingroups: {len(chaingroups)}, Chains without groups: {len(chains_without_groups)}, Total subplots: {num_groups}")
@@ -235,17 +229,24 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
         fig, axes = plt.subplots(num_groups, 1, figsize=(10, 5*num_groups))
         if num_groups == 1:
             axes = [axes]
-        for i, group in enumerate(chaingroups):
-            logger.debug(f"Plotting chaingroup {group['name']} with chains: {group['chains']}")
-            chain_list = group['chains']
+        for i, group in enumerate(chaingroups.keys()):
+            logger.debug(f"Plotting chaingroup {group} with chains: {chaingroups[group]}")
+            chain_list = chaingroups[group]
             for chain in chain_list:
                 if chain in rmsf_all:
                     axes[i].plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f'Chain {chain}')
                 else:
                     logger.warning(f"Chain {chain} not found in rmsf_all.")
+                # Color by protein domains
+                if group in domains.keys():
+                    group_domains = [domain for domain in domains[group]]
+                    for domain in group_domains:
+                        start = domain['start']
+                        end = domain['end']
+                        axes[i].axvspan(start, end, zorder=0, alpha=0.2, color=domain['color'], label=domain['label'])
             axes[i].set_xlabel('Residue number (adjusted)')
             axes[i].set_ylabel('RMSF (Å)')
-            axes[i].set_title(f'RMSF of chain group {group["name"]}')
+            axes[i].set_title(f'RMSF of chain group {group}')
             axes[i].legend()
         for i, chain in enumerate(chains_without_groups):
             j = len(chaingroups) + i

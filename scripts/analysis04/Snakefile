@@ -16,10 +16,10 @@ MUTS           = config.get("muts", [])
 REPS           = config.get("repn", [])
 DNA            = config.get("dna", False)
 PHOS           = config.get("phos", False)
-DOMAINS        = config.get("domains", [])
+DOMAINS        = config.get("domains", {})
 GROUP1         = config.get("group1", None)
 GROUP2         = config.get("group2", None)
-CHAINGROUPS    = config.get("chaingroups", [])
+CHAINGROUPS    = config.get("chaingroups", {})
 START          = config.get("start_frame", 0)     
 STOP           = config.get("stop_frame", None)
 FFS            = config.get("ffs", None)
@@ -84,28 +84,17 @@ PATH_GBSA= PATH_ANALYSIS / f"006_gbsa_{GROUP1}_{GROUP2}"
 # print("Setting up conditional outputs based on the presence of DNA and specified rule groups...")
 # Conditional I/O files
 all_input = {}
-out_rmsf_dna = {}
-in_rmsf_dna = {}
-out_hbond_plots_dna = {}
-in_hbond_plots_dna = {}
-if DNA:
-    out_rmsf_dna["rmsf_dna"] = report(f"{PATH_QC}/rmsf_dna.png", 
-            category="QC", subcategory="RMSF", labels={"sample": "{mut} {rep} RMSF DNA"})
-    out_rmsf_dna["rmsf_dna_csv"] = f"{PATH_QC}/rmsf_dna.csv"
-    in_rmsf_dna["rmsf_dna"] = expand(f"{PATH_QC}/rmsf_dna.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    in_rmsf_dna["rmsf_dna_csv"] = expand(f"{PATH_QC}/rmsf_dna.csv", struct=structures, mut=mutations, rep=reps, zip=True)
-    out_hbond_plots_dna["hbonds_dna"] = report(f"{PATH_HBONDS}/hbonds_{{method}}_dna.png", 
-            category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} Hbonds per DNA chain and residue"})
-    out_hbond_plots_dna["hbonds_dna_bb"] = report(f"{PATH_HBONDS}/hbonds_{{method}}_dna_bb.png", 
-            category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} Hbonds per DNA backbone"})
-    out_hbond_plots_dna["hbonds_dna_base"] = report(f"{PATH_HBONDS}/hbonds_{{method}}_dna_base.png", 
-            category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} Hbonds per DNA base"})
-    in_hbond_plots_dna["hbonds_dna"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_dna.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
-    in_hbond_plots_dna["hbonds_dna_bb"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_dna_bb.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
-    in_hbond_plots_dna["hbonds_dna_base"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_dna_base.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
+out_rmsf = {}
+out_hbonds_plots = {}
 if len(CHAINGROUPS) > 0: 
     all_input["rmsf_chaingroups"] = expand(f"{PATH_QC}/rmsf_chaingroups.png", struct=structures, mut=mutations, rep=reps, zip=True)
 if "qc" in rule_groups or rule_groups == [""]:
+    if DNA:
+        out_rmsf["rmsf_dna"] = report(f"{PATH_QC}/rmsf_dna.png", 
+                category="QC", subcategory="RMSF", labels={"sample": "{mut} {rep} RMSF DNA"})
+        out_rmsf["rmsf_dna_csv"] = f"{PATH_QC}/rmsf_dna.csv"
+        all_input["rmsf_dna"] = expand(f"{PATH_QC}/rmsf_dna.png", struct=structures, mut=mutations, rep=reps, zip=True)
+        all_input["rmsf_dna_csv"] = expand(f"{PATH_QC}/rmsf_dna.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["rmsdpng"] = expand(f"{PATH_QC}/rmsd.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["rmsd_cats"] = expand(f"{PATH_QC}/rmsd_cats.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["rmsd_bb"] = expand(f"{PATH_QC}/rmsd_bb.png", struct=structures, mut=mutations, rep=reps, zip=True)
@@ -115,7 +104,6 @@ if "qc" in rule_groups or rule_groups == [""]:
     all_input["rmsd_csv"] = expand(f"{PATH_QC}/rmsd.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["radius_axis_csv"] = expand(f"{PATH_QC}/radius_axis.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["rmsf_prot_csv"] = expand(f"{PATH_QC}/rmsf_prot.csv", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input.update(in_rmsf_dna)
 if "hbonds" in rule_groups or rule_groups == [""]:
     if "gmx" in METHODS_HBONDS:
         all_input["hbonds_gmx"] = expand(f"{PATH_HBONDS}/hbonds_gmx.ndx", struct=structures, mut=mutations, rep=reps, zip=True)
@@ -123,11 +111,15 @@ if "hbonds" in rule_groups or rule_groups == [""]:
         all_input["hbonds_gmx_parsed"] = expand(f"{PATH_HBONDS}/hbonds_gmx_parsed.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     if "mda" in METHODS_HBONDS:
         all_input["hbonds_mda_parsed"] = expand(f"{PATH_HBONDS}/hbonds_mda_parsed.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    if "Protein" in [GROUP1, GROUP2]:
+        all_input["hbonds_prot_chains"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_protein_perchain.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
+        out_hbonds_plots["hbonds_prot_chains"] = report(f"{PATH_HBONDS}/hbonds_{{method}}_protein_perchain.png", category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} Protein hydrogen bonds"})
+    if "DNA" in [GROUP1, GROUP2]:
+        all_input["hbonds_dna_chains"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_dna_perchain.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
+        out_hbonds_plots["hbonds_dna_chains"] = report(f"{PATH_HBONDS}/hbonds_{{method}}_dna_perchain.png", category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} DNA hydrogen bonds"})
     all_input["hbonds_perframe"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_perframe.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
     all_input["hbonds_ext"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_ext.csv", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
-    all_input["hbonds_prot_domains"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_prot_domains.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
-    all_input["hbonds_prot_monomer"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_monomer.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
-    all_input.update(in_hbond_plots_dna)
+    all_input["hbonds_per_group"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_per_group.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
     all_input["hbonds_pymol"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_pymol.txt", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
 if "wb" in rule_groups or rule_groups == [""]:
     all_input["water_bridges"] = expand(f"{PATH_HBONDS}/waterbridges.csv", struct=structures, mut=mutations, rep=reps, zip=True)
@@ -181,7 +173,9 @@ onstart:
     for structure, mutation, rep in combinations:
         print(f"Structure: {structure}, Mutation: {mutation}, Replicate: {rep}")
     print("Hydrogen bonds analysis methods to be used:", METHODS_HBONDS)
+    print(f"Chaingroups defined for analysis: {CHAINGROUPS}")
     print(f"Received offset dictionary: {OFFSETS}")
+    print(f"Received domains dictionary: {DOMAINS}")
     print(f"Interaction analysis will be performed between groups: {GROUP1} and {GROUP2}")
 
 
@@ -234,7 +228,7 @@ rule qc:
         radius_axis_csv = f"{PATH_QC}/radius_axis.csv",
         rmsf_prot_csv = f"{PATH_QC}/rmsf_prot.csv",
         rmsf_chaingroups = f"{PATH_QC}/rmsf_chaingroups.png",
-        **out_rmsf_dna
+        **out_rmsf
     run:
         from scripts_analysis.qc import main
         main(
@@ -378,7 +372,9 @@ rule hbonds_extend:
             hbonds_ext=output.hbonds_ext,
             hbonds_perframe=output.hbonds_perframe,
             offsets=OFFSETS,
-            domains=DOMAINS
+            domains=DOMAINS,
+            chaingroups=CHAINGROUPS, 
+            chains=OFFSETS,
         )
 
 
@@ -389,19 +385,18 @@ rule hbonds_plots:
     input: 
         hbonds_ext = f"{PATH_HBONDS}/hbonds_{{method}}_ext.csv",
     output: 
-        hbonds_prot_domains = report(f"{PATH_HBONDS}/hbonds_{{method}}_prot_domains.png", 
-            category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} Hbonds per protein domain and residue"}),
-        hbonds_prot_monomer = report(f"{PATH_HBONDS}/hbonds_{{method}}_monomer.png", 
-            category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} Hbonds per protein monomer and atom"}),
-        **out_hbond_plots_dna
+        hbonds_per_group = report(f"{PATH_HBONDS}/hbonds_{{method}}_per_group.png", 
+            category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} Hbonds per interaction group."}),
+        **out_hbonds_plots
     run:
         from scripts_analysis.hbonds_plots import main
         main(
             logfile=LOGFILE,
             hbonds_ext=input.hbonds_ext,
-            method=wildcards.method,
-            dna=DNA,
             domains=DOMAINS,
+            chaingroups=CHAINGROUPS,
+            group1=GROUP1,
+            group2=GROUP2,
             outfiles=dict(output)
         )
 
