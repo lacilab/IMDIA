@@ -129,32 +129,50 @@ The following parameters are parsed from ```params.yml```:
 | methods_hbonds | list | Packages to use for hydrogen bond analysis: MDAnalysis and/or GROMACS. Values: gmx, mda. | an |        | [gmx, mda] | [mda]
 | structure      | list | Structure(s) to analyze.                                       | an | * |  [ ]       | [1BF5, 1YVL] |
 | muts           | list | Mutations or variants of the previous structures to analyze.   | an | * |     [ ]      | [WT, N460H] |
-| offset         | int  | Residue id of the first residue in the starting PDB structure. | an |        | 0 | 135 |
 | start_frame    | int  | First frame to analyze in interaction analysis.                | an |        | 1 | 1000 |
 | stop_frame     | int  | Last frame to analyze in interaction analysis.                 | an |        | None | 2001 |
-| group1         | str  | First group of interest for interaction analysis, which studies the interaction between group1 and group2. Values: Protein, DNA, or chain IDs (A, B, C...)  | an (hbonds, contacts, water bridges) | * | | Protein |
-| group2         | str  | Second group of interest for interaction analysis, which studies the interaction between group1 and group2. Values: Protein, DNA, or a chain ID (A, B, C...) | an (hbonds, contacts, water bridges) | * | | DNA |
-| domains        | nested list | Domains or segments of the protein. These are used to color plots by domain. Each item in the list must contain: start (int), end (int), color (str), labe(str). | an | | [ ] | (See below) |
+| group1         | str  | First group of interest for interaction analysis, which studies the interaction between group1 and group2. These can be chain IDs (e.g., "A", "B", "C") or predefined groups (e.g., "Protein", "DNA")  | an (hbonds, contacts, water bridges) | * | | Protein |
+| group2         | str  | Second group of interest for interaction analysis, which studies the interaction between group1 and group2. These can be chain IDs (e.g., "A", "B", "C") or predefined groups (e.g., "Protein", "DNA") | an (hbonds, contacts, water bridges) | * | | DNA |
+| chaingroups    | dict | Named groups of chain lists. Used to group them together for plotting. | an |  |  | (See below)
+| domains        | dict | Domains or segments of the protein. These are used for annotation and plotting. First level keys are group names, which must match chaingroup keys. Each domain is defined by: start (int), end (int), color (str), labe(str). Domains for the same chaingroup should not overlap, but can be adjacent.| an | | | (See below) |
+
+Example 'chaingroups' definition:
+```
+chaingroups:
+  Protein: [A, B]
+  DNA: [C, D]
+```
+
 
 Example 'domains' definition:
 ```
 domains:
-  - start: 134
-    end: 317
-    color: blue
-    label: CCD
-  - start: 318
-    end: 488
-    color: red
-    label: DBD
-  - start: 489
-    end: 576
-    color: green
-    label: LD
-  - start: 577
-    end: 683
-    color: yellow
-    label: SH2
+  Protein:
+    - start: 134
+      end: 317
+      color: blue
+      label: CCD
+    - start: 318
+      end: 488
+      color: red
+      label: DBD
+    - start: 489
+      end: 576
+      color: green
+      label: LD
+    - start: 577
+      end: 683
+      color: yellow
+      label: SH2
+  DNA:
+    - start: 1
+      end: 12
+      color: green
+      label: DNA_Domain1
+    - start: 13
+      end: 24
+      color: orange
+      label: DNA_Domain2
 ```
 
 # Modules

@@ -1,19 +1,29 @@
-pdbpath: '../data/1BF5/WT'
-dna: True
-phos: True
-repn: [1, 2]
-# ffs: []
+### Path to the PDB file for the structure to analyze
+pdbpath: '../data/1BF5/WT/1BF5_WT.pdb'
 
-### DNA strand ranges
+### Does the structure contain DNA?
+dna: True
+
+### Does the structure contain phosphorylated amino acids?
+phos: True
+
+### Replicates to analyze
+repn: [1, 2]
+
+### Custom AMBER force fields to use (if any)
+# ffs: [water.opc, protein.ff19SB, GLYCAM_06j-1]
+
+### DNA strand ranges per chain (if DNA is present)
 # range_a: [2,-1]
 # range_b: [2,-1]
 
-### MD simulation parameters
+### Custom MD simulation parameters
 # em: 'myscripts/em.mdp'
 # nvt: 'myscripts/nvt.mdp'
 # npt: 'myscripts/npt.mdp'
 # md: 'myscripts/md.mdp'
 
+### MD computational resource use 
 # ntmpi: "2"
 # ntomp: "16"
 # ngpu: "1"
@@ -22,47 +32,55 @@ repn: [1, 2]
 # pme: gpu
 # npme: "1"
 
-
 ##### SNAKEMAKE ANALYSIS PARAMETERS #####
+### Number of cores to use for Snakemake analysis
+snakecores: 12
 
-snakecores: 36
-
-# Hydrogen bond analysis methods
+### Hydrogen bond analysis methods
 methods_hbonds: [mda, gmx]
 
-# Structures to analyze
+### Structure(s) to analyze
 structure: [1BF5]
 
-# Mutations to analyze
+### Mutation(s) to analyze
 muts: [WT, E411A]
 
-# Interaction groups for interaction analysis
+### Interaction groups for interaction analysis
+# These can be chain IDs (e.g., "A", "B", "C") or predefined groups (e.g., "Protein", "DNA")
 group1: Protein
 group2: DNA
 
-# Frames for interaction analysis
+### Frames for interaction analysis. If not specified, all frames will be analyzed.
 start_frame: 1000
 # stop_frame: 2001
 
-# Offset for residue numbering (default: 0)
-offset: 135
+### Chain groups, for example for RMSF plotting. Each group is a list of chain IDs.
+chaingroups:
+  Protein: [A, B]
+  DNA: [C, D]
 
-# Protein domain definitions
+### Domains for annotation and plot coloring
+# First level keys are group names (e.g., "Protein", "DNA") and should match chaingroups keys. 
+# Each domain is defined by a start and end residue number, a color, and a label.
+# Domains for the same chaingroup should not overlap, but can be adjacent.
 domains:
-  - start: 134
-    end: 317
-    color: blue
-    label: CCD
-  - start: 318
-    end: 488
-    color: red
-    label: DBD
-  - start: 489
-    end: 576
-    color: green
-    label: LD
-  - start: 577
-    end: 683
-    color: yellow
-    label: SH2
+  Protein:
+    - start: 540
+      end: 580
+      color: blue
+      label: Domain1
+    - start: 581
+      end: 600
+      color: red
+      label: Domain2
+  DNA:
+    - start: 1
+      end: 12
+      color: green
+      label: DNA_Domain1
+    - start: 13
+      end: 24
+      color: orange
+      label: DNA_Domain2
+
   
