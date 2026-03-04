@@ -2,6 +2,7 @@
 
 import pandas as pd
 import numpy as np
+import seaborn as sns
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -15,7 +16,10 @@ def get_chaingroup(chain, chaingroups):
             return group
     return None
 
-def main(logfile : str =None, hbonds_ext : str =None, domains : dict = {}, chaingroups: dict = {}, 
+def format_residue(chain, res_num):
+    return f"{chain}-{res_num}"
+
+def main(logfile : str =None, hbonds_parsed: str = None, hbonds_ext : str =None, domains : dict = {}, chaingroups: dict = {}, 
          group1: str = None, group2 : str = None, outfiles : list = []):
     # Arguments
     # parser = argparse.ArgumentParser(description='Generate plots from extended hydrogen bonds data.')
@@ -26,13 +30,14 @@ def main(logfile : str =None, hbonds_ext : str =None, domains : dict = {}, chain
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)
 
+    hbonds_ori = pd.read_csv(hbonds_parsed)
     hbonds_df = pd.read_csv(hbonds_ext)
 
     ##########  Plots per group
     # 2 groups
     fig, axes = plt.subplots(2, 1, figsize=(10, 5*2))
     for i, group in enumerate([group1, group2]):
-        # If group is a chain ID, use regex
+        # If group is a chain ID
         if len(group) == 1 and group.isalpha():
             donor_df = hbonds_df[hbonds_df['donor_chain'] == group]
             acceptor_df = hbonds_df[hbonds_df['acceptor_chain'] == group]
@@ -77,7 +82,6 @@ def main(logfile : str =None, hbonds_ext : str =None, domains : dict = {}, chain
                 marker='o', 
                 s=30
             )
-            logger.debug(f"Normalized acceptor chain indexes for group {group}: {norm_indices}")
             # Legend for BOTH donors (filled) and acceptors (outlines)
             legend_elements = []
             logger.debug(f"Range: {len(chains_donor)} for donors, {len(chains_acceptor)} for acceptors")
@@ -166,6 +170,41 @@ def main(logfile : str =None, hbonds_ext : str =None, domains : dict = {}, chain
                 plt.savefig(outfiles[f"hbonds_dna_chains"])
                 plt.close()
                 logger.info(f"Plot of DNA hydrogen bonds per chain saved as {outfiles[f'hbonds_dna_chains']}")
+
+
+    ##### HEATMAPS ####
+    total_frames = hbonds_ori['frame'].nunique()
+    chains_df = hbonds_df.copy()
+
+    for group in [group1, group2]:
+        # If group is a chain ID
+        if len(group) == 1 and group.isalpha():
+            chains_df[f'{group}'] = np.where(
+                hbonds_df['donor_chain'] == group,
+                hbonds_df['donor_res_num_adjusted'],
+                hbonds_df['acceptor_res_num_adjusted']
+            )
+        # If group is a predefined group (e.g., "Protein", "DNA")
+        elif group == "Protein" or group == "DNA":
+            chains_df[f'{group}'] = np.where(
+                hbonds_df['donor_group'] == group,
+                hbonds_df.apply(lambda row: format_residue(row['donor_chain'], row['donor_res_num_adjusted']), axis=1),
+                hbonds_df.apply(lambda row: format_residue(row['acceptor_chain'], row['acceptor_res_num_adjusted']), axis=1)
+            )
+
+    df_pivot = chains_df.pivot_table(
+        index=f'{group1}',
+        columns=f'{group2}',
+        values='count',
+        aggfunc='sum',
+    ) / total_frames
+
+    sns.heatmap(df_pivot, cmap='rocket_r', annot=False, linewidths=0.5, linecolor='lightgray', cbar_kws={'label': 'Frame ratio'})
+    plt.figure(figsize=(8, 6))
+    plt.xticks(rotation=-90)
+    plt.savefig(outfiles[f"hbonds_heatmap"])
+    plt.close()
+    logger.info(f"Plot of hydrogen bonds heatmap saved as {outfiles[f'hbonds_heatmap']}")
 
       
 if __name__ == "__main__":
