@@ -5,7 +5,8 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import argparse
+from matplotlib.lines import Line2D
+from matplotlib.colors import ListedColormap
 from scripts.utils.helpers import setup_logger
 
 def get_chaingroup(chain, chaingroups):
@@ -28,7 +29,6 @@ def main(logfile : str =None, hbonds_ext : str =None, domains : dict = {}, chain
     hbonds_df = pd.read_csv(hbonds_ext)
 
     ##########  Plots per group
-    markers = ['o', 's', 'D', '^', 'v', '<', '>', 'p', '*', 'h', 'H', 'X']
     # 2 groups
     fig, axes = plt.subplots(2, 1, figsize=(10, 5*2))
     for i, group in enumerate([group1, group2]):
@@ -37,24 +37,69 @@ def main(logfile : str =None, hbonds_ext : str =None, domains : dict = {}, chain
             donor_df = hbonds_df[hbonds_df['donor_chain'] == group]
             acceptor_df = hbonds_df[hbonds_df['acceptor_chain'] == group]
             group_domains = get_chaingroup(group, chaingroups)
+            chains_donor = donor_df['donor_chain'].unique().tolist()
+            axes[i].scatter(donor_df['donor_res_num_adjusted'], 
+                            donor_df['frame%'], 
+                            color='black', s=30, label=f'Donor {group}')
+            axes[i].scatter(
+                acceptor_df['acceptor_res_num_adjusted'], 
+                acceptor_df['frame%'],
+                color='black', s=30, marker='o', facecolors='none', label=f'Acceptor {group}'
+            )
+            axes[i].legend()
         # If group is a predefined group (e.g., "Protein", "DNA")
         elif group == "Protein" or group == "DNA":
             donor_df = hbonds_df[hbonds_df['donor_group'] == group]
             acceptor_df = hbonds_df[hbonds_df['acceptor_group'] == group]
             group_domains = group if group in domains.keys() else None
-        chains = set(donor_df['donor_chain'].unique().tolist() + acceptor_df['acceptor_chain'].unique().tolist())
-        for j, chain in enumerate(chains):
-            donor_chain_df = donor_df[donor_df['donor_chain'] == chain]
-            acceptor_chain_df = acceptor_df[acceptor_df['acceptor_chain'] == chain]
-            axes[i].scatter(donor_chain_df['donor_res_num_adjusted'], donor_chain_df['frame%'], 
-                    color='red', label=f'Donor Chain {chain}', alpha=0.6, marker=markers[j % len(markers)])
-            axes[i].scatter(acceptor_chain_df['acceptor_res_num_adjusted'], acceptor_chain_df['frame%'], 
-                    color='blue', label=f'Acceptor Chain {chain}', alpha=0.6, marker=markers[j % len(markers)])
+            chains_donor = donor_df['donor_chain'].unique().tolist()
+            chains_acceptor = acceptor_df['acceptor_chain'].unique().tolist()
+            tab10_colors = plt.cm.tab10(np.linspace(0, 1, 10))  # Get all 10 colors
+            discrete_cmap = ListedColormap(tab10_colors[:max(len(chains_donor), len(chains_acceptor))])
+            axes[i].scatter(donor_df['donor_res_num_adjusted'], 
+                            donor_df['frame%'], 
+                            c=[chains_donor.index(chain) for chain in donor_df['donor_chain']], 
+                            cmap=discrete_cmap,  # ← Only first N colors
+                            s=30)
+            chain_idx_acceptor = [chains_acceptor.index(chain) for chain in acceptor_df['acceptor_chain']]
+            # Convert indices to RGBA colors (same length as data points)
+            if len(chains_acceptor) == 1:
+                norm_indices = np.array([0])
+            else:
+                idx = [chains_acceptor.index(chain) for chain in acceptor_df['acceptor_chain']]
+                norm_indices = np.array(idx) / (len(chains_acceptor) - 1)
+            edge_colors = discrete_cmap(norm_indices)
+            axes[i].scatter(
+                acceptor_df['acceptor_res_num_adjusted'], 
+                acceptor_df['frame%'],
+                facecolors='none', 
+                edgecolors=edge_colors,
+                marker='o', 
+                s=30
+            )
+            logger.debug(f"Normalized acceptor chain indexes for group {group}: {norm_indices}")
+            # Legend for BOTH donors (filled) and acceptors (outlines)
+            legend_elements = []
+            logger.debug(f"Range: {len(chains_donor)} for donors, {len(chains_acceptor)} for acceptors")
+            for i in range(len(chains_donor)):
+                legend_elements.append(Line2D([0], [0], marker='o', color='w', 
+                                            markerfacecolor=f'C{i}',
+                                            markersize=8, 
+                                            label=f'Donor Chain {chains_donor[i]}'))
+
+            # Acceptor chains (outline markers)  
+            for i in range(len(chains_acceptor)):
+                legend_elements.append(Line2D([0], [0], marker='o', color='w', 
+                                            markerfacecolor='none',
+                                            markeredgecolor=f'C{i}', markeredgewidth=2,
+                                            markersize=8, 
+                                            label=f'Acceptor Chain {chains_acceptor[i]}'))
+
+            axes[i].legend(handles=legend_elements, ncol=1)
         axes[i].set_xlabel('Residue Number (Adjusted)')
         axes[i].set_ylabel('Frame %')
         axes[i].set_title(f'Hydrogen Bonds for {group}')
         axes[i].grid(True, alpha=0.3)
-        axes[i].legend()
         # Color by domain if available
         if group_domains and group_domains in domains.keys():
             for domain in domains[group_domains]:
@@ -68,64 +113,59 @@ def main(logfile : str =None, hbonds_ext : str =None, domains : dict = {}, chain
 
     ########## Hbonds per chain (if groups have multiple chains)
     for group in [group1, group2]:
-        if group == "Protein":
-            chains = hbonds_df[hbonds_df['donor_group'] == group]['donor_chain'].unique()
+        if group == "Protein" or group == "DNA":
+            chains = hbonds_df[(hbonds_df['donor_group'] == group)]['donor_chain'].unique().tolist() + hbonds_df[(hbonds_df['acceptor_group'] == group)]['acceptor_chain'].unique().tolist()
+            chains = list(set(chains))
             nchains = len(chains)
+            logger.debug(f"Group {group} has {nchains} chains: {chains}")
             fig, axes = plt.subplots(nchains, 1, figsize=(10, 5*nchains))
             if nchains == 1:
                 axes = [axes]
-            for i, chain in enumerate(chains):
-                donor_df = hbonds_df[hbonds_df['donor_chain'] == chain]
-                acceptor_df = hbonds_df[hbonds_df['acceptor_chain'] == chain]
-                axes[i].scatter(donor_df['donor_res_num_adjusted'], donor_df['frame%'], 
-                        color='red', label=f'Donor', alpha=0.6)
-                axes[i].scatter(acceptor_df['acceptor_res_num_adjusted'], acceptor_df['frame%'], 
-                        color='blue', label=f'Acceptor', alpha=0.6)
-                axes[i].set_xlabel('Residue Number (Adjusted)')
-                axes[i].set_ylabel('Frame %')
-                axes[i].set_title(f'Hydrogen Bonds for Chain {chain}')
-                axes[i].grid(True, alpha=0.3)
-                axes[i].legend()
-                # Color by domain if available
-                chain_group = get_chaingroup(chain, chaingroups)
-                if chain_group and chain_group in domains.keys():
-                        for domain in domains[chain_group]:
-                                axes[i].axvspan(domain['start'], domain['end'], zorder=0, alpha=0.2, color=domain['color'], label=domain['label'])    
-            plt.tight_layout()
-            plt.savefig(outfiles[f"hbonds_prot_chains"])
-            plt.close()
-            logger.info(f"Plot of protein hydrogen bonds per chain saved as {outfiles[f'hbonds_prot_chains']}")
-        elif group == "DNA": 
-            chains = hbonds_df[hbonds_df['donor_group'] == group]['donor_chain'].unique()
-            nchains = len(chains)
-            fig, axes = plt.subplots(nchains, 1, figsize=(10, 5*nchains))
-            if nchains == 1:
-                axes = [axes]
-            for i, chain in enumerate(chains):
-                donor_df = hbonds_df[hbonds_df['donor_chain'] == chain]
-                acceptor_df = hbonds_df[hbonds_df['acceptor_chain'] == chain]
-                sections = set(donor_df['donor_section'].unique().tolist() + acceptor_df['acceptor_section'].unique().tolist())
-                for j, section in enumerate(sections):
-                    donor_section_df = donor_df[donor_df['donor_section'] == section]
-                    acceptor_section_df = acceptor_df[acceptor_df['acceptor_section'] == section]
-                    axes[i].scatter(donor_section_df['donor_res_num_adjusted'], donor_section_df['frame%'], 
-                            color='red', marker=markers[j % len(markers)],  label=f'Donor, {section}', alpha=0.6)
-                    axes[i].scatter(acceptor_section_df['acceptor_res_num_adjusted'], acceptor_section_df['frame%'], 
-                            color='blue', label=f'Acceptor, {section}', alpha=0.6)
-                axes[i].set_xlabel('Residue Number (Adjusted)')
-                axes[i].set_ylabel('Frame %')
-                axes[i].set_title(f'Hydrogen Bonds for Chain {chain}')
-                axes[i].grid(True, alpha=0.3)
-                axes[i].legend()
-                # Color by domain if available
-                chain_group = get_chaingroup(chain, chaingroups)
-                if chain_group and chain_group in domains.keys():
-                        for domain in domains[chain_group]:
-                                axes[i].axvspan(domain['start'], domain['end'], zorder=0, alpha=0.2, color=domain['color'], label=domain['label'])    
-            plt.tight_layout()
-            plt.savefig(outfiles[f"hbonds_dna_chains"])
-            plt.close()
-            logger.info(f"Plot of DNA hydrogen bonds per chain saved as {outfiles[f'hbonds_dna_chains']}")
+            if group == "Protein":
+                for i, chain in enumerate(chains):
+                    donor_df = hbonds_df[hbonds_df['donor_chain'] == chain]
+                    acceptor_df = hbonds_df[hbonds_df['acceptor_chain'] == chain]
+                    axes[i].scatter(donor_df['donor_res_num_adjusted'], donor_df['frame%'], 
+                            color='black', s=30, label=f'Donor')
+                    axes[i].scatter(acceptor_df['acceptor_res_num_adjusted'], acceptor_df['frame%'], 
+                            color='black', label=f'Acceptor', s=30, marker='o', facecolors='none')
+                    axes[i].set_xlabel('Residue Number (Adjusted)')
+                    axes[i].set_ylabel('Frame %')
+                    axes[i].set_title(f'Hydrogen Bonds for Chain {chain}')
+                    axes[i].grid(True, alpha=0.3)
+                    axes[i].legend()
+                    # Color by domain if available
+                    chain_group = get_chaingroup(chain, chaingroups)
+                    if chain_group and chain_group in domains.keys():
+                            for domain in domains[chain_group]:
+                                    axes[i].axvspan(domain['start'], domain['end'], zorder=0, alpha=0.2, color=domain['color'], label=domain['label'])    
+                plt.tight_layout()
+                plt.savefig(outfiles[f"hbonds_prot_chains"])
+                plt.close()
+                logger.info(f"Plot of protein hydrogen bonds per chain saved as {outfiles[f'hbonds_prot_chains']}")
+            elif group == "DNA": 
+                for i, chain in enumerate(chains):
+                    donor_df = hbonds_df[hbonds_df['donor_chain'] == chain]
+                    acceptor_df = hbonds_df[hbonds_df['acceptor_chain'] == chain]
+                    axes[i].scatter(donor_df['donor_res_num_adjusted'], donor_df['frame%'], 
+                                    color="black", s=30, label=f'Donor')
+                    axes[i].scatter(acceptor_df['acceptor_res_num_adjusted'], acceptor_df['frame%'], 
+                                    color="black", s=30, 
+                                    label=f'Acceptor', marker='o', facecolors='none')
+                    axes[i].set_xlabel('Residue Number (Adjusted)')
+                    axes[i].set_ylabel('Frame %')
+                    axes[i].set_title(f'Hydrogen Bonds for Chain {chain}')
+                    axes[i].grid(True, alpha=0.3)
+                    axes[i].legend()
+                    # Color by domain if available
+                    chain_group = get_chaingroup(chain, chaingroups)
+                    if chain_group and chain_group in domains.keys():
+                            for domain in domains[chain_group]:
+                                    axes[i].axvspan(domain['start'], domain['end'], zorder=0, alpha=0.2, color=domain['color'], label=domain['label'])    
+                plt.tight_layout()
+                plt.savefig(outfiles[f"hbonds_dna_chains"])
+                plt.close()
+                logger.info(f"Plot of DNA hydrogen bonds per chain saved as {outfiles[f'hbonds_dna_chains']}")
 
       
 if __name__ == "__main__":
