@@ -172,48 +172,87 @@ def main(logfile: Path, gmxdir: Path, topol: Path = Path("./topol.top"),
     # Mapping local ids to global ids
     with open(topol) as f:
         itps = []
+        molmap = {}
+        in_molecules = False
         for line in f:
+            # Get list of itps included in topol (except forcefield)
             if line.strip().startswith("#include") and "forcefield" not in line:
                 filename = line.split("/")[-1].strip().strip('"') 
                 itps.append(filename)
-    
+            # Get number of copies per moleculetype
+            if line.strip().startswith('[ molecules ]'):
+                in_molecules = True
+                continue
+            # End of [ molecules ] section
+            if line.strip().startswith("[ intermolecular_interactions ]"):
+                in_molecules = False
+                continue
+            if in_molecules:
+                if not line or len(line) == 0 or line.startswith(';'):
+                    continue
+                # First data line, i.e. "system1          2"
+                cols = line.split()
+                if len(cols) == 2:
+                    molmap[cols[0]] = int(cols[1])
+                elif len(cols) > 0:
+                    logger.warning(f"[ molecules ] line {line} in {topol} could not be split in columns. Skipping count of this compound.")
+
+
     global_id = 0
     global_a = 0
     global_b = 0
     logger.debug(f"Found .itp files included in {topol} (excluding forcefield.itp):")
+
+
     for itp in itps:
         logger.debug(itp)
-        if dna_a.name in itp:
-            logger.debug(f"Match: {dna_a.name}, {itp}")
+        if dna_a.name == itp:
+            logger.debug(f"Match: {itp}")
             global_a = global_id
-        elif dna_b.name in itp:
-            logger.debug(f"Match: {dna_b.name}, {itp}")
+        elif dna_b.name == itp:
+            logger.debug(f"Match: {itp}")
             global_b = global_id
-        n = None 
-        inside = False
+        in_atoms = False
+        in_moleculetype = False
+        itp_name = None
         with open(f"{gmxdir}/toppar/{itp}") as f:
             last_value = None
-            for line in f:
+            for line_raw in f:
+                line = line_raw.strip()
+                # ---- [ moleculetype ] handling ----
+                if line.startswith('[') and 'moleculetype' in line:
+                    in_moleculetype = True
+                    continue
+                if in_moleculetype and itp_name is None:
+                    if not line or line.startswith(';'):
+                        continue
+                    # First data line, i.e. "system1          3"
+                    cols = line.split()
+                    if cols:
+                        itp_name = cols[0]
+                    in_moleculetype = False
                 # Find [ atoms ] section
                 if "[ atoms ]" in line:
-                    inside = True
+                    in_atoms = True
                     continue
                 if "[ bonds ]" in line:
-                    inside = False
-                if not inside:
+                    in_atoms = False
+                if not in_atoms:
                     continue
-                # Consider only lines with digits
-                if not any(ch.isdigit() for ch in line):
-                    continue
-                # Split in columns
-                parts = line.split()
-                if not parts:
-                    continue
-                # take first column (atom id)
-                last_value = parts[0]
-        # after reading whole file:
-        if last_value is not None:
-            global_id += int(last_value)
+                cols = line.split()
+                if cols and cols[0].isnumeric():
+                        last_value = cols[0]
+            logger.debug(f"File {itp} corresponds to compound {itp_name}, containing {last_value} atoms.")
+            if itp_name and itp_name in molmap.keys():
+                natoms = int(last_value) * molmap[itp_name]
+                logger.debug(f"Found {molmap[itp_name]} ocurrences of compound {itp_name} in the system.")
+            else:
+                natoms = int(last_value)
+                logger.debug(f"Number of ocurrences of compound {itp_name} in the system could not be determined. Using default 1.")
+        # after reading whole itp file:
+        if natoms is not None:
+            global_id += natoms
+            
 
     logger.debug(f"Number of atoms in the complex before DNA A: {global_a}")
     logger.debug(f"Number of atoms in the complex before DNA B: {global_b}")

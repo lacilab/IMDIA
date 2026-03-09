@@ -166,11 +166,28 @@ def main(logfile: Path, datadir: Path, filename: str,
 
     ### 6. Add DNA H-bonds restraints if DNA is present
     if dna:
+        dna_resnames = {"DC", "DA", "DG", "DT"}
         dna_files = []
         for file in path_toppar.glob("*.itp"):
-            if re.search(r'DC|DA|DG|DT', open(file).read()):
-                logger.debug(f"Found DNA base in {file}")
-                dna_files.append(Path(file))
+            # if re.search(r'DC|DA|DG|DT', open(file).read()):
+            #     logger.debug(f"Found DNA base in {file}")
+            #     dna_files.append(Path(file))
+            has_dna = False
+            with open(file) as f:
+                for line in f:
+                    line = line.strip()
+                    # match comment lines that define residues
+                    if line.startswith(";") and "residue" in line:
+                        cols = line.split()
+                        # typical line:
+                        # ; residue    2 DG rtp DG q -1.0
+                        if len(cols) >= 3:
+                            resname = cols[3]
+                            if resname in dna_resnames:
+                                has_dna = True
+                                dna_files.append(file)
+                                logger.debug(f"Found DNA residue {resname} in {file}.")
+                                break
         if len(dna_files) != 2:
             logger.error(f"--dna flag provided but found {len(dna_files)} files containing DNA residues. Expected 2 files.")
             sys.exit(1)
