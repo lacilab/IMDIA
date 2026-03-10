@@ -51,12 +51,12 @@ class Pipeline:
         paramspath = Path(self.paramsfile)
         self._validate_file(paramspath, "Parameter")
         mutdir = Path(pdbpath.parent)
-        self._validate_dir(mutdir, "Mutation directory")
+        self._validate_dir(mutdir, "Mutation")
         datadir = Path(mutdir.parent.parent)
-        self._validate_dir(datadir, "Data directory")
+        self._validate_dir(datadir, "Data")
         gmxdir = mutdir / "gromacs_common" # Don't validate, will be created during prep step
         pdbfile = pdbpath.name 
-        self._validate_file(mutdir / pdbfile, "PDB in mutation directory")
+        self._validate_file(mutdir / pdbfile, "In the mutation directory, PDB")
         return Paths(mutdir=mutdir, datadir=datadir, pdbfile=pdbfile,
                      gmxdir=gmxdir, paramspath=paramspath)
     
