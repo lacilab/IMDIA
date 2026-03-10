@@ -8,6 +8,7 @@ import re
 import multiprocessing
 import subprocess
 import shutil
+from sympy import isprime
 from pathlib import Path
 from scripts.utils.helpers import setup_logger
 from scripts.utils.group_index import group_index
@@ -61,7 +62,7 @@ def log_process_output(process, step_name, logger):
 # to check the step outputs.
 def check_step(logger, step_short: str, step_name: str, outdir: Path):
     if check_finished(step_short, outdir):
-        logger.info(f"{step_name} completed successfully.")
+        logger.info(f"{step_name} completed.")
     else:
         logger.error(f"{step_name} failed. Check {outdir}/{step_short}.log for details.")
         sys.exit(1)
@@ -156,7 +157,7 @@ def get_scaling(logger, tpr_file: Path, stage: str, total_cores = None):
             ntmpi = 4      # Medium box
         else:
             ntmpi = 8      # Large box
-            
+        ntmpi = min(total_cores, ntmpi)    
         if natoms < 50000:
             ntomp = min(total_cores // ntmpi // 4, 16)
         elif natoms < 200000:
@@ -166,9 +167,12 @@ def get_scaling(logger, tpr_file: Path, stage: str, total_cores = None):
         return max(1, ntmpi), max(1, ntomp)
     # If minimum cell size is available, use it to calculate safe scaling with better resource use
     else:
-       logger.debug(f"Minimum cell size found: {mincellsize} nm. Calculating scaling based on box size and minimum cell size for step {stage}.")
-       ntmpi = max(1, int(box_nm // mincellsize))
+       logger.debug(f"Minimum cell size found: {mincellsize} nm.")
+       ntmpi = min(max(1, int(box_nm // mincellsize)), total_cores, 16)
+       if ntmpi > 7 and isprime(ntmpi):
+        ntmpi -= 1
        ntomp = max(1, total_cores // ntmpi)
+       logger.debug(f"Calculated ntmpi {ntmpi} and ntomp {ntomp} based on box size {box_nm} and min cell size {mincellsize} for step {stage}.")
        return ntmpi, ntomp
 
 # parser = argparse.ArgumentParser(description="Perform MD simulation steps: minimization, NVT, NPT, and production MD.")
@@ -283,6 +287,42 @@ def main(logfile: Path, gmxdir: Path, outdir: Path, repn: int,
         subprocess.run(cmd, check=True, text=True)
         # log_process_output(process, "gmx mdrun EM")
         check_step(logger, "em", "Energy Minimization", outdir)
+
+    # Check EM convergence and energy
+    converged = False
+    pot_energy = None
+    fmax = None
+    
+    with open(outdir / "em.log", 'r') as f:
+        content = f.read()
+        # Extract final Potential Energy and Fmax
+        pot_match = re.search(r'Potential Energy\s*=\s*([+-]?\d+\.?\d*[eE][+-]?\d+)', content)
+        fmax_match = re.search(r'Maximum force\s*=\s*([+-]?\d+\.?\d*[eE][+-]?\d+)', content)
+        conv_match = re.search(r'converged to Fmax', content)
+        
+        if pot_match:
+            pot_energy = float(pot_match.group(1))
+            pot_ok = pot_energy is not None and pot_energy < 0 and pot_energy < -1e-6
+        if fmax_match:
+            fmax = float(fmax_match.group(1))
+            fmax_ok = fmax is not None and fmax < 1e5  # Sanity check
+        if conv_match:
+            converged = True
+        
+    em_check = {
+        'converged': converged,
+        'pot_energy_ok': pot_ok,
+        'pot_energy': pot_energy,
+        'fmax': fmax,
+        'success': converged and pot_ok and fmax_ok
+    }
+    if em_check['success']:
+        logger.info("EM sanity check completed successfully.")
+    else:
+        logger.warning(f"EM sanity check failed. Consider tuning the EM parameters in a custom .mdp file.")
+    logger.debug(f"Converged: {em_check['converged']}")
+    logger.debug(f"PotE OK: {em_check['pot_energy_ok']} ({em_check['pot_energy']:.2e})")
+    logger.debug(f"Fmax: {em_check['fmax']:.2e}")
 
     ### 2. Create groups
     group_index(gmxdir=outdir, logfile=logfile, logname='md', structurefile=outdir / "em.gro", dna=dna, phos=phos)
