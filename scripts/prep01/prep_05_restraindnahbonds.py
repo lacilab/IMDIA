@@ -9,8 +9,7 @@ import time
 from scripts.utils.helpers import setup_logger
 from pathlib import Path
 
-def main(logfile: Path, gmxdir: Path, topol: Path = Path("./topol.top"), 
-         dna_a: Path = Path("./toppar/molecule_3.itp"), dna_b: Path = Path("./toppar/molecule_4.itp"), range_a: list = [0, -1], range_b: list = [0, -1],
+def main(logfile: Path, gmxdir: Path, topol: Path = Path("./topol.top"), range_a: list = [0, -1], range_b: list = [0, -1],
          type: int = 1, type2: int = 2, low: float = 0.0, up1: float = 0.3, up2: float = 0.4, fac: float = 1.0):
     # parser = argparse.ArgumentParser(description="Calculate distance restraints for DNA H-bonds and append them to a topology file.")
     # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
@@ -41,10 +40,14 @@ def main(logfile: Path, gmxdir: Path, topol: Path = Path("./topol.top"),
 
     ##### Initialize logger
     logger = setup_logger("prep", logfile)
+    toppar = gmxdir / "toppar"
 
     ##### CHECK INPUT #####
     if not gmxdir.is_dir():
         logger.error(f"Directory {str(gmxdir)} not found")
+        sys.exit(1)
+    if not toppar.is_dir():
+        logger.error(f"Topology directory {str(toppar)} not found")
         sys.exit(1)
     if not topol.is_file():
         logger.error(f"Topology file {str(topol)} not found.")
@@ -63,6 +66,34 @@ def main(logfile: Path, gmxdir: Path, topol: Path = Path("./topol.top"),
             else:
                 logger.warning(f"Checkpoint file found but [ distance_restraints ] section not found in {str(topol)}. The previous run might have been incomplete. Proceeding with DNA H-bond restraints addition.")
 
+    # Find DNA itp files
+    dna_resnames = {"DC", "DA", "DG", "DT"}
+    dna_files = []
+    # Find DNA itp files
+    for file in toppar.glob("*.itp"):
+        has_dna = False
+        with open(file) as f:
+            for line in f:
+                line = line.strip()
+                # match comment lines that define residues
+                # example line:
+                # ; residue    2 DG rtp DG q -1.0
+                if line.startswith(";") and "residue" in line:
+                    cols = line.split()
+                    if len(cols) >= 3:
+                        resname = cols[3]
+                        if resname in dna_resnames:
+                            has_dna = True
+                            dna_files.append(Path(file))
+                            logger.debug(f"Found DNA residue {resname} in {file}.")
+                            break
+    if len(dna_files) != 2:
+        logger.error(f"--dna flag provided but found {len(dna_files)} files containing DNA residues. Expected 2 files.")
+        sys.exit(1)
+    else:
+        dna_a, dna_b = dna_files
+        logger.info("The complex includes DNA. Adding DNA H-bond restraints.")
+    
     if not dna_a.is_file():
         logger.error(f"DNA chain A topology file {str(dna_a)} not found.")
         sys.exit(1)

@@ -26,12 +26,12 @@ def main(logfile: Path, gmxdir: Path, ions: Path = Path("scripts/prep01/ions.mdp
     path_toppar = gmxdir / "toppar"
 
     # Check if checkpoint file from previous run exists
-    checkpoint_files = list(path_toppar.glob("check_06_addgmxions_*.done"))
+    checkpoint_files = list(gmxdir.glob("check_06_addgmxions_*.done"))
     if len(checkpoint_files) > 0:
         logger.warning("Checkpoint file found.")
         # check if ions.gro exists
         if os.path.isfile(gmxdir / "ions.gro"):
-            logger.info(f"Updated topology file found at {str(gmxdir / 'ions.gro')}.")
+            logger.info(f"Found updated topology file {str(gmxdir / 'ions.gro')}.")
             logger.warning("Skipping GROMACS ions addition.")
             return
         else:

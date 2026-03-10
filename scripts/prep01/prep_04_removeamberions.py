@@ -47,12 +47,13 @@ def main(logfile: Path, gmxdir: Path):
         sys.exit(1)
 
     # Check if checkpoint file from previous run exists
-    if len(list(path_toppar.glob(f"check_04_removeamberions_*.done"))) > 0:
-        logger.warning("Checkpoint file found.")
-         # check if updated_gromacs.gro exists
+    checkpoint_files = list(gmxdir.glob(f"check_04_removeamberions_*.done"))
+    if len(checkpoint_files) > 0:
+        logger.warning(f"Checkpoint file(s) found: {', '.join([str(f) for f in checkpoint_files])}")
+        # check if updated_gromacs.gro exists
         path_updated_gro = gmxdir / "updated_gromacs.gro"
         if os.path.isfile(path_updated_gro):
-            logger.info(f"Updated topology file found at {str(path_updated_gro)}.")
+            logger.info(f"Found updated topology file {str(path_updated_gro)}.")
             logger.warning("Skipping Amber ions removal.")
             return
         else:

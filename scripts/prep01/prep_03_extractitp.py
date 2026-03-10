@@ -27,8 +27,9 @@ def main(logfile: Path, top: Path, dna: bool = False):
     logger = setup_logger("prep", logfile)
 
     # Check for checkpoint files
-    if len(list(path_toppar.glob(f"check_03_extractitp_*.done"))) > 0:
-        logger.warning("Checkpoint file found. Checking .itp files.")
+    checkpoint_files = list(path_toppar.glob(f"check_03_extractitp_*.done"))
+    if len(checkpoint_files) > 0:
+        logger.warning(f"Checkpoint file(s) found: {', '.join([str(f) for f in checkpoint_files])}")
         itps = list(path_toppar.glob(f"*.itp"))
         if len(itps) != expected_itps:
             logger.warning(f"Expected {expected_itps} .itp files, but found {len(itps)}.")
