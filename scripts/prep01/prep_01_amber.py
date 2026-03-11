@@ -19,7 +19,7 @@ def remove_hydrogens(filename: str, logger_name: str, logfile: Path):
 	cmd = f"""
 	pdb4amber -i {filename} -o {outfile} --nohyd --no-conect
     """
-
+	
 	process = subprocess.run(cmd, shell=True, text=True, capture_output=True)
 	if process.returncode != 0:
 		logger.error(process.stderr)
@@ -32,6 +32,7 @@ def remove_hydrogens(filename: str, logger_name: str, logfile: Path):
 def add_hydrogens(file: str, logger_name: str, logfile: Path, ffs: list[str] = ['water.opc', 'protein.ff19SB']):
 	"""Add hydrogen atoms to a PDB file using tleap."""
 	logger = setup_logger(logger_name, logfile)
+	logger.debug(f"Adding hydrogens to {file} using tleap with force fields: {ffs}")
 	outfile = file.replace('_noH.pdb', '_protonated.pdb')
 	# Build tleap input dynamically
 	ffs_import = "\n".join(f"source leaprc.{ff}" for ff in ffs)
@@ -42,7 +43,7 @@ def add_hydrogens(file: str, logger_name: str, logfile: Path, ffs: list[str] = [
 		savePdb complex {outfile}
 		quit
 	"""
-	logger.debug(f"Running tleap with input:\n{tleap_input}")  # Debugging: Show tleap input
+	logger.debug(f"Running tleap with input:\n{tleap_input}") 
 	process = subprocess.run(['tleap', '-f', '-'], input=tleap_input, text=True, capture_output=True)
 	
 	if process.returncode != 0:
@@ -58,6 +59,7 @@ def gen_chains(complex_file: Path, logger_name: str, logfile: Path, chains: list
 		Generate separate PDB files.
 	"""
 	logger = setup_logger(logger_name, logfile)
+	logger.debug(f"Generating separate PDB files for chains: {chains} from {complex_file}")
 	complex_name = Path(complex_file).stem
 
 	files = []
@@ -88,8 +90,10 @@ def gen_chains(complex_file: Path, logger_name: str, logfile: Path, chains: list
 	return list(files)
 
 
-def solvate_gen_parm(complex_file: Path, chains: list[str], ffs: list[str] = ['water.opc', 'protein.ff19SB']):
+def solvate_gen_parm(complex_file: Path, logger_name: str, logfile: Path, chains: list[str], ffs: list[str] = ['water.opc', 'protein.ff19SB']):
 	"""Protonate and solvate the complex and chains using LEaP."""
+	logger = setup_logger(logger_name, logfile)
+	logger.debug(f"Solvating and generating Amber output for {complex_file} and chains: {chains}")
 	complex_name = Path(complex_file).stem
 	complex_solvated_file = complex_name + '_solvated.pdb'
 
@@ -129,11 +133,23 @@ def solvate_gen_parm(complex_file: Path, chains: list[str], ffs: list[str] = ['w
 
 	quit
 	'''
-	# Encode the command string into bytes
-	cmd_bytes = cmd.encode('utf-8')
+	logger.debug(f"Running tleap with input:\n{cmd}")
 
-	# Run the command using subprocess
-	subprocess.run(['tleap', '-f', '-'], input=cmd_bytes)
+	result = subprocess.run(['tleap', '-f', '-'], capture_output=True, text=True, check=True, input=cmd)
+	lines = result.stdout.splitlines()
+	filtered = []
+	i = 0
+	while i < len(lines):
+		start = i
+		while i < len(lines) and lines[i] == lines[start]:
+			i += 1
+		count = i - start
+		if count > 10:
+			filtered.append(f"SUPPRESSED {count} consecutive '{lines[start]}' lines.")
+		else:
+			filtered.extend(lines[start:i])
+	logger.debug('\n'.join(filtered))
+	
 
 
 
@@ -223,7 +239,7 @@ def main(logfile: Path = None, pdbpath: Path = None,
 
 	# Generate the receptor & ligand (also match the hydrogens to amber specifics)
 	chain_files = gen_chains(noH_complex, logger_name, logfile, chains, ffs)
-	solvate_gen_parm(protonated_complex, chain_files, ffs)
+	solvate_gen_parm(protonated_complex, logger_name, logfile,chain_files, ffs)
 
 	protonated_complex.replace('.pdb', '_solvated.prmtop')
 	protonated_complex.replace('.pdb', '_solvated.pdb')
