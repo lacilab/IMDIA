@@ -9,7 +9,10 @@ import multiprocessing
 import subprocess
 import shutil
 from sympy import isprime
+import numpy as np
 from pathlib import Path
+import math
+import matplotlib.pyplot as plt
 from scripts.utils.helpers import setup_logger
 from scripts.utils.group_index import group_index
 
@@ -302,7 +305,7 @@ def main(logfile: Path, gmxdir: Path, outdir: Path, repn: int,
         
         if pot_match:
             pot_energy = float(pot_match.group(1))
-            pot_ok = pot_energy is not None and pot_energy < 0 and pot_energy < -1e-6
+            pot_ok = pot_energy is not None and pot_energy < 0 and pot_energy < -1e5
         if fmax_match:
             fmax = float(fmax_match.group(1))
             fmax_ok = fmax is not None and fmax < 1e5  # Sanity check
@@ -323,6 +326,18 @@ def main(logfile: Path, gmxdir: Path, outdir: Path, repn: int,
     logger.debug(f"Converged: {em_check['converged']}")
     logger.debug(f"PotE OK: {em_check['pot_energy_ok']} ({em_check['pot_energy']:.2e})")
     logger.debug(f"Fmax: {em_check['fmax']:.2e}")
+
+    # Plot EM potential
+    cmd = ["gmx", "energy", "-f", outdir / "em.edr", "-o", outdir / "em_potential.xvg", "-quiet"]
+    subprocess.run(cmd, check=True, text=True, input="Potential\n0\n")
+
+    x, y = np.loadtxt(outdir / "em_potential.xvg",comments=["@", "#"],unpack=True)
+    plt.plot(x, y)
+    plt.title("EM - Potential energy")
+    plt.xlabel("Time (ps)")
+    plt.ylabel("Potential energy (kJ/mol)")
+    plt.savefig(outdir / "em_potential.png")
+    plt.close()
 
     ### 2. Create groups
     group_index(gmxdir=outdir, logfile=logfile, logname='md', structurefile=outdir / "em.gro", dna=dna, phos=phos)
@@ -349,6 +364,37 @@ def main(logfile: Path, gmxdir: Path, outdir: Path, repn: int,
         # log_process_output(process, "gmx mdrun NVT")
         check_step(logger, "nvt", "NVT Equilibration", outdir)
 
+    # Plot NVT Temperature
+    cmd = ["gmx", "energy", "-f", outdir / "nvt.edr", "-o", outdir / "nvt_temp.xvg", "-quiet"]
+    subprocess.run(cmd, check=True, text=True, input="Temperature\n0\n")
+
+    x, y = np.loadtxt(outdir / "nvt_temp.xvg",comments=["@", "#"],unpack=True)
+    final_seg_start = math.floor(max(x) / 3) * 2
+    mean_final_seg = y[x >= final_seg_start].mean()
+    std_final_seg = y[x >= final_seg_start].std()
+    plt.plot(x, y)
+    plt.axhline(y.mean(), color='b', ls='--', label = "Mean - full NVT")
+    plt.axhline(mean_final_seg, color='r', ls='--', label = "Mean - last 1/3 time segment")
+    plt.legend()
+    plt.title("NVT Equilibration - Temperature")
+    plt.xlabel("Time (ps)")
+    plt.ylabel("Temperature (K)")
+    plt.yticks(np.arange(round(min(y), -2), max(y), step=10))
+    plt.savefig(outdir / "nvt_temp.png")
+    plt.close()
+
+    # Sanity check
+    range_temp = range(290, 310)
+    percent_out = np.sum((y[x >= final_seg_start] < range_temp.start) | (y[x >= final_seg_start] > range_temp.stop)) / len(y[x >= final_seg_start]) * 100
+    logger.info(f"Temperature in the last 1/3 timepoints of NVT: average {mean_final_seg:.2f}, std {std_final_seg:.2f}.")
+    logger.info(f"{percent_out:.2f}% of temperature values in the last 1/3 timepoints of NVT are outside of the default range ({range_temp.start}, {range_temp.stop}) (K).")
+    if round(mean_final_seg) not in range_temp:
+        logger.warning(f"Average temperature is outside of the default range ({range_temp.start}, {range_temp.stop}) (K), recommend for the default target temperature 300 K. " \
+        "If this is your target temperature, consider tuning the NVT parameters in a custom .mdp file." \
+        "If you are targeting a different temperature, please verify that the observed average temperature is close to your target.")
+    else:
+        logger.info(f"Average temperature is within the default range ({range_temp.start}, {range_temp.stop}) (K).")
+
     ### 4. NPT Equilibration
     if check_finished("npt", outdir):
         logger.warning("npt.log indicates NPT equilibration already completed and npt.gro exists. Skipping NPT equilibration.")
@@ -371,6 +417,65 @@ def main(logfile: Path, gmxdir: Path, outdir: Path, repn: int,
                     + flag_nb_gpu, check=True, text=True)
         # log_process_output(process, "gmx mdrun NPT")
         check_step(logger, "npt", "NPT Equilibration", outdir)
+
+    # Plot NPT Pressure
+    cmd = ["gmx", "energy", "-f", outdir / "npt.edr", "-o", outdir / "npt_pressure.xvg", "-quiet"]
+    subprocess.run(cmd, check=True, text=True, input="Pressure\n0\n")
+
+    x, y = np.loadtxt(outdir / "npt_pressure.xvg",comments=["@", "#"],unpack=True)
+    final_seg_start = math.floor(max(x) / 3) * 2
+    mean_final_seg = y[x >= final_seg_start].mean()
+    std_final_seg = y[x >= final_seg_start].std()
+    plt.plot(x, y)
+    plt.axhline(y.mean(), color='b', ls='--', label = "Mean - full NPT")
+    plt.axhline(mean_final_seg,color='r', ls='--', label = "Mean - last 1/3 time segment")
+    plt.legend()
+    plt.title("NPT Equilibration - Pressure")
+    plt.xlabel("Time (ps)")
+    plt.ylabel("Pressure (bar)")
+    plt.yticks(np.arange(round(min(y), -3), max(y) , step=200))
+    plt.savefig(outdir / "npt_pressure.png")
+    plt.close()
+
+    # Sanity check
+    range_pres = range(-11, 11)
+    percent_out = np.sum((y[x >= final_seg_start] < range_pres.start) | (y[x >= final_seg_start] > range_pres.stop)) / len(y[x >= final_seg_start]) * 100
+    logger.info(f"Pressure in the last 1/3 timepoints of NPT: average {mean_final_seg:.3f}, std {std_final_seg:.3f}.")
+    logger.info(f"{percent_out:.2f}% of pressure values in the last 1/3 timepoints of NPT are outside of the default range ({range_pres.start}, {range_pres.stop}) (bar).")
+    if round(mean_final_seg) not in range_pres:
+        logger.warning(f"Average pressure is outside of the default range ({range_pres.start}, {range_pres.stop}) (bar). " \
+        "If this is your target pressure, consider tuning the NPT parameters in a custom .mdp file. " \
+        "If you are targeting a different pressure, please verify that the observed average pressure is close to your target.")
+    else:
+        logger.info(f"Average pressure is within the default range ({range_pres.start}, {range_pres.stop}) (bar).")
+
+    # Plot NPT Density
+    cmd = ["gmx", "energy", "-f", outdir / "npt.edr", "-o", outdir / "npt_density.xvg", "-quiet"]
+    subprocess.run(cmd, check=True, text=True, input="Density\n0\n")
+
+    x, y = np.loadtxt(outdir / "npt_density.xvg",comments=["@", "#"],unpack=True)
+    final_seg_start = math.floor(max(x) / 3) * 2
+    mean_final_seg = y[x >= final_seg_start].mean()
+    std_final_seg = y[x >= final_seg_start].std()
+    plt.plot(x, y)
+    plt.axhline(y.mean(), color='b', ls='--', label = "Mean - full NPT")
+    plt.axhline(mean_final_seg,color='r', ls='--', label = "Mean - last 1/3 time segment")
+    plt.legend()
+    plt.title("NPT Equilibration - Density")
+    plt.xlabel("Time (ps)")
+    plt.ylabel("Density (kg/m\u00b3)")
+    plt.savefig(outdir / "npt_density.png")
+    plt.close()
+
+    # Sanity check
+    logger.info(f"Density in the last 1/3 timepoints of NPT: average {mean_final_seg:.3f}, std {std_final_seg:.3f}.")
+    if round(std_final_seg) not in range(-5, 5):
+        logger.warning("Standard deviation of density in the last 1/3 timepoints of NPT is outside of the default range (-5, 5) (kg/m^3). " \
+        "This might indicate that the system did not stabilize. "  \
+        "Check the density plot and consider tuning the NPT parameters in a custom .mdp file.")
+    else:
+        logger.info("Standard deviation of density is within the default range (-5, 5) (kg/m^3).")
+
 
     ### 5. Production MD
     if check_finished("md", outdir):
