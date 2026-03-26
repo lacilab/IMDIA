@@ -129,33 +129,51 @@ if "contacts" in rule_groups or rule_groups == [""]:
     all_input["timeseries_full_png"] = expand(f"{PATH_CONTACTS}/timeseries_full.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["pairs_full_csv"] = expand(f"{PATH_CONTACTS}/pairs_full.csv", struct=structures, mut=mutations, rep=reps, zip=True)
 if "pca" in rule_groups or rule_groups == [""]:
-    all_input["pc_cumulative"] = expand(f"{PATH_PCA}/pc_cumulative.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["pc_pairgrid"] = expand(f"{PATH_PCA}/pc_pairgrid.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["pc_cosine"] = expand(f"{PATH_PCA}/pc_cosine.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["proj_timescale"] = expand(f"{PATH_PCA}/2dproj_timescale.csv", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["pca_2dproj"] = expand(f"{PATH_PCA}/2D_projection_1_2.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["porcupine"] = expand(f"{PATH_PCA}/porcupine.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["pc_cumulative"] = expand(f"{PATH_PCA}/pc_cumulative.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["pc_pairgrid"] = expand(f"{PATH_PCA}/pc_pairgrid.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["pc_cosine"] = expand(f"{PATH_PCA}/pc_cosine_old.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["proj_timescale"] = expand(f"{PATH_PCA}/2dproj_timescale.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["pca_2dproj"] = expand(f"{PATH_PCA}/2D_projection_1_2.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["porcupine"] = expand(f"{PATH_PCA}/porcupine.png", struct=structures, mut=mutations, rep=reps, zip=True)
+
+    all_input["pca_proj_xvg"] = expand(f"{PATH_PCA}/proj_10.xvg", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["pca_proj_csv"] = expand(f"{PATH_PCA}/proj_10.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["pca_proj_png"] = expand(f"{PATH_PCA}/pc1_pc2.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["pca_cosine"] = expand(f"{PATH_PCA}/pc_cosine.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["pca_cumulative"] = expand(f"{PATH_PCA}/cum_var.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["pca_pairgrid"] = expand(f"{PATH_PCA}/pc_pairgrid.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["pca_rmsf"] = expand(f"{PATH_PCA}/pc_rmsf.png", struct=structures, mut=mutations, rep=reps, zip=True)
 if "clust" in rule_groups or rule_groups == [""]:
-    all_input["summary"] = expand(f"{PATH_CLUST}/analysis_summary.txt", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["hclust"] = expand(f"{PATH_CLUST}/hclust_labels.csv", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["kmeans"] = expand(f"{PATH_CLUST}/kmeans_labels.csv", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["hclust_timeline"] = expand(f"{PATH_CLUST}/hclust_cluster_timeline.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["kmeans_timeline"] = expand(f"{PATH_CLUST}/kmeans_cluster_timeline.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["umap_timeline"] = expand(f"{PATH_CLUST}/umap_3d_timeline.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["umap_hclust_clusters"] = expand(f"{PATH_CLUST}/umap_hclust_clusters.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["umap_kmeans_clusters"] = expand(f"{PATH_CLUST}/umap_kmeans_clusters.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["umap_optimization"] = expand(f"{PATH_CLUST}/umap_optimization.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["pca_sk_hclust"] = expand(f"{PATH_CLUST}/pca_sklearn_clusters_hclust.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["pca_sk_kmeans"] = expand(f"{PATH_CLUST}/pca_sklearn_clusters_kmeans.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["pca_gmx_hclust"] = expand(f"{PATH_CLUST}/pca_gmx_clusters_hclust.jpg", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["pca_gmx_kmeans"] = expand(f"{PATH_CLUST}/pca_gmx_clusters_kmeans.jpg", struct=structures, mut=mutations, rep=reps, zip=True)
-if "clust_gromos" in rule_groups or rule_groups == [""]:
-    all_input["gromos_xpm"] = expand(f"{PATH_CLUST}/gromos_clusters.xpm", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["gromos_log"] = expand(f"{PATH_CLUST}/gromos_clusters.log", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["pca_gromos"] = expand(f"{PATH_CLUST}/pca_gromos_clusters.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["pca_gromos_top10"] = expand(f"{PATH_CLUST}/pca_gromos_clusters_top10.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["gromos_clusters_freq"] = expand(f"{PATH_CLUST}/gromos_clusters_freq.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["gromos_clusters_freqcum"] = expand(f"{PATH_CLUST}/gromos_clusters_freq_cum.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["summary"] = expand(f"{PATH_CLUST}/analysis_summary.txt", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["hclust"] = expand(f"{PATH_CLUST}/hclust_labels.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["kmeans"] = expand(f"{PATH_CLUST}/kmeans_labels.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["hclust_timeline"] = expand(f"{PATH_CLUST}/hclust_cluster_timeline.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["kmeans_timeline"] = expand(f"{PATH_CLUST}/kmeans_cluster_timeline.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["umap_timeline"] = expand(f"{PATH_CLUST}/umap_3d_timeline.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["umap_hclust_clusters"] = expand(f"{PATH_CLUST}/umap_hclust_clusters.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["umap_kmeans_clusters"] = expand(f"{PATH_CLUST}/umap_kmeans_clusters.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["umap_optimization"] = expand(f"{PATH_CLUST}/umap_optimization.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["pca_sk_hclust"] = expand(f"{PATH_CLUST}/pca_sklearn_clusters_hclust.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["pca_sk_kmeans"] = expand(f"{PATH_CLUST}/pca_sklearn_clusters_kmeans.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["pca_gmx_hclust"] = expand(f"{PATH_CLUST}/pca_gmx_clusters_hclust.jpg", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["pca_gmx_kmeans"] = expand(f"{PATH_CLUST}/pca_gmx_clusters_kmeans.jpg", struct=structures, mut=mutations, rep=reps, zip=True)
+    # all_input["pca_gmx_new"] = expand(f"{PATH_CLUST}/pca_clustering.png", struct=structures, mut=mutations, rep=reps, zip=True)
+
+    all_input["clust_kmeans"] = expand(f"{PATH_CLUST}/clust_kmeans.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["clust_kmeans_sizes"] = expand(f"{PATH_CLUST}/clust_kmeans_sizes.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["clust_kmeans_time"] = expand(f"{PATH_CLUST}/clust_kmeans_time.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["clust_hclust"] = expand(f"{PATH_CLUST}/clust_hierarchical.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["clust_hclust_sizes"] = expand(f"{PATH_CLUST}/clust_hierarchical_sizes.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["clust_hclust_time"] = expand(f"{PATH_CLUST}/clust_hierarchical_time.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["clust_scores"] = expand(f"{PATH_CLUST}/clust_silhouette.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["clust_summary"] = expand(f"{PATH_CLUST}/summary.txt", struct=structures, mut=mutations, rep=reps, zip=True)
+# if "clust_gromos" in rule_groups or rule_groups == [""]:
+#     all_input["gromos_xpm"] = expand(f"{PATH_CLUST}/gromos_clusters.xpm", struct=structures, mut=mutations, rep=reps, zip=True)
+#     all_input["gromos_log"] = expand(f"{PATH_CLUST}/gromos_clusters.log", struct=structures, mut=mutations, rep=reps, zip=True)
+#     all_input["pca_gromos"] = expand(f"{PATH_CLUST}/pca_gromos_clusters.png", struct=structures, mut=mutations, rep=reps, zip=True)
+#     all_input["pca_gromos_top10"] = expand(f"{PATH_CLUST}/pca_gromos_clusters_top10.png", struct=structures, mut=mutations, rep=reps, zip=True)
+#     all_input["gromos_clusters_freq"] = expand(f"{PATH_CLUST}/gromos_clusters_freq.png", struct=structures, mut=mutations, rep=reps, zip=True)
+#     all_input["gromos_clusters_freqcum"] = expand(f"{PATH_CLUST}/gromos_clusters_freq_cum.png", struct=structures, mut=mutations, rep=reps, zip=True)
 if "gbsa" in rule_groups or rule_groups == [""]:
     all_input["gbsa_info"] = expand(f"{PATH_GBSA}/_GMXMMPBSA_info", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["gbsa_final_results"] = expand(f"{PATH_GBSA}/FINAL_RESULTS_MMPBSA.dat", struct=structures, mut=mutations, rep=reps, zip=True)
@@ -497,7 +515,7 @@ rule water_bridges:
         )
 
 
-
+# TODO Remove, redudant as PCA is already performed in pca_gmx_new (GROMACS)
 rule pca_mda:
     params:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/003_pca"
@@ -505,8 +523,8 @@ rule pca_mda:
         universe = f"{PATH_RAW}/universe",
     output: 
         pc_cumulative = report(f"{PATH_PCA}/pc_cumulative.png", category="PCA", labels={"sample": "{mut} {rep} Cumulative variance"}),
-        pc_pairgrid = report(f"{PATH_PCA}/pc_pairgrid.png", category="PCA", labels={"sample": "{mut} {rep} 3 PC pairgrid"}),
-        pc_cosine = report(f"{PATH_PCA}/pc_cosine.png", category="PCA", labels={"sample": "{mut} {rep} Cosine content"}),
+        # pc_pairgrid = report(f"{PATH_PCA}/pc_pairgrid.png", category="PCA", labels={"sample": "{mut} {rep} 3 PC pairgrid"}),
+        pc_cosine = report(f"{PATH_PCA}/pc_cosine_old.png", category="PCA", labels={"sample": "{mut} {rep} Cosine content"}),
     run:
         from scripts_analysis.pca import main
         main(
@@ -516,7 +534,7 @@ rule pca_mda:
         )
 
 
-
+# TODO Remove (now replaced by pca_gmx_new)
 rule pca_gmx:
     params:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/003_pca"
@@ -535,6 +553,35 @@ rule pca_gmx:
             --xtc {input.xtc} \
         """
 
+rule pca_gmx_new:
+    params:
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/003_pca"
+    input: 
+        tpr = f"{PATH_GMX}/md.tpr",
+        xtc = f"{PATH_GMX}/md_post.xtc"
+    output: 
+        xvg = f"{PATH_PCA}/proj_10.xvg",
+        csv = f"{PATH_PCA}/proj_10.csv",
+        eigenvec = PATH_PCA / "eigenvec.trr",
+        pca_2dproj = report(f"{PATH_PCA}/pc1_pc2.png", category="PCA", labels={"sample": "{mut} {rep} PCA 2D projection"}),
+        cos = report(f"{PATH_PCA}/pc_cosine.png", category="PCA", labels={"sample": "{mut} {rep} PCA Cosine content"}),
+        cum = report(f"{PATH_PCA}/cum_var.png", category="PCA", labels={"sample": "{mut} {rep} PCA Cumulative variance"}),
+        pairgrid = report(f"{PATH_PCA}/pc_pairgrid.png", category="PCA", labels={"sample": "{mut} {rep} PCA pairgrid"}),
+        rmsf = report(f"{PATH_PCA}/pc_rmsf.png", category="PCA", labels={"sample": "{mut} {rep} PCA RMSF"})
+    run: 
+        from scripts_analysis.pca_gmx import main
+
+        logfile = Path(LOGFILE)
+        tprfile = Path(input.tpr)
+        xtcfile = Path(input.xtc)
+        outdir = Path(params.outdir)
+
+        main(
+            logfile=logfile,
+            outdir=outdir,
+            tpr=tprfile,
+            xtc=xtcfile,
+        )
 
 
 rule pca_gmx_porcupine:
@@ -562,8 +609,34 @@ rule pca_gmx_porcupine:
             outdir=outdir,
         )
 
+rule clust_new:
+    params:
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/005_clustering"
+    input:
+        csv = f"{PATH_PCA}/proj_1_2.csv",
+    output:
+        clust_kmeans = report(f"{PATH_CLUST}/clust_kmeans.png", category="Clustering", labels={"sample": "{mut} {rep} Kmeans clustering"}),
+        clust_kmeans_sizes = report(f"{PATH_CLUST}/clust_kmeans_sizes.png", category="Clustering", labels={"sample": "{mut} {rep} Kmeans clustering sizes"}),
+        clust_kmeans_time = report(f"{PATH_CLUST}/clust_kmeans_time.png", category="Clustering", labels={"sample": "{mut} {rep} Kmeans clustering time"}),
+        clust_hclust = report(f"{PATH_CLUST}/clust_hierarchical.png", category="Clustering", labels={"sample": "{mut} {rep} Hierarchical clustering"}),
+        clust_hclust_sizes = report(f"{PATH_CLUST}/clust_hierarchical_sizes.png", category="Clustering", labels={"sample": "{mut} {rep} Hierarchical clustering sizes"}),
+        clust_hclust_time = report(f"{PATH_CLUST}/clust_hierarchical_time.png", category="Clustering", labels={"sample": "{mut} {rep} Hierarchical clustering time"}),
+        scores = report(f"{PATH_CLUST}/clust_silhouette.png", category="Clustering", labels={"sample": "{mut} {rep} Clustering silhouette scores"}),
+        summary = f"{PATH_CLUST}/summary.txt",
+    run:
+        from scripts_analysis.clust import main
 
+        logfile = Path(LOGFILE)
+        csvfile = Path(input.csv)
+        outdir = Path(params.outdir)
 
+        main(
+            logfile=logfile,
+            outdir=outdir,
+            csv=csvfile,
+        )
+
+# TODO Remove (old clustering based on UMAP, now replaced by clust_new)
 rule clustering_sklearn:
     params:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/005_clustering"
@@ -599,6 +672,7 @@ rule clustering_sklearn:
             --outdir {params.outdir}
         """
 
+# TODO Remove (gromos not widespread algorithm)
 rule clustering_gromos:
     input: 
         # proj_timescale = f"{PATH_PCA}/2dproj_timescale.csv",
@@ -618,7 +692,7 @@ rule clustering_gromos:
         """
 
 
-
+# TODO Remove (gromos not widespread algorithm)
 rule clustering_pca_gromos:
     input: 
         proj_timescale = f"{PATH_PCA}/2dproj_timescale.csv",
@@ -641,7 +715,7 @@ rule clustering_pca_gromos:
         """
 
 
-
+# TODO Remove (now replaced by clust_new)
 rule clustering_pca_gmx:
     params:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/005_clustering"
