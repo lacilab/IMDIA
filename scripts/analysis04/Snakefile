@@ -136,13 +136,20 @@ if "clust" in rule_groups or rule_groups == [""]:
     all_input["clust_hclust_time"] = expand(f"{PATH_CLUST}/clust_hierarchical_time.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["clust_scores"] = expand(f"{PATH_CLUST}/clust_silhouette.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["clust_summary"] = expand(f"{PATH_CLUST}/summary.txt", struct=structures, mut=mutations, rep=reps, zip=True)
-# if "clust_gromos" in rule_groups or rule_groups == [""]:
-#     all_input["gromos_xpm"] = expand(f"{PATH_CLUST}/gromos_clusters.xpm", struct=structures, mut=mutations, rep=reps, zip=True)
-#     all_input["gromos_log"] = expand(f"{PATH_CLUST}/gromos_clusters.log", struct=structures, mut=mutations, rep=reps, zip=True)
-#     all_input["pca_gromos"] = expand(f"{PATH_CLUST}/pca_gromos_clusters.png", struct=structures, mut=mutations, rep=reps, zip=True)
-#     all_input["pca_gromos_top10"] = expand(f"{PATH_CLUST}/pca_gromos_clusters_top10.png", struct=structures, mut=mutations, rep=reps, zip=True)
-#     all_input["gromos_clusters_freq"] = expand(f"{PATH_CLUST}/gromos_clusters_freq.png", struct=structures, mut=mutations, rep=reps, zip=True)
-#     all_input["gromos_clusters_freqcum"] = expand(f"{PATH_CLUST}/gromos_clusters_freq_cum.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["clust_csv"] = expand(f"{PATH_CLUST}/pca_clusters.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    # Gromos
+    all_input["gromos_xpm"] = expand(f"{PATH_CLUST}/gromos_clusters.xpm", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["gromos_log"] = expand(f"{PATH_CLUST}/gromos_clusters.log", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["pca_gromos"] = expand(f"{PATH_CLUST}/pca_gromos_clusters.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["pca_gromos_top10"] = expand(f"{PATH_CLUST}/pca_gromos_clusters_top10.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["gromos_clusters_freq"] = expand(f"{PATH_CLUST}/gromos_clusters_freq.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["gromos_clusters_ids"] = expand(f"{PATH_CLUST}/gromos_clust_ids.xvg", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["gromos_clust_ids_plot"] = expand(f"{PATH_CLUST}/gromos_clust_ids.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["gromos_clust_size"] = expand(f"{PATH_CLUST}/gromos_clust_size.xvg", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["gromos_clusters_eps"] = expand(f"{PATH_CLUST}/gromos_clusters.eps", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["gromos_clusters_png"] = expand(f"{PATH_CLUST}/gromos_clusters.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["gromos_clust_dist"] = expand(f"{PATH_CLUST}/gromos_rmsd_dist.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["gromos_pca_csv"] = expand(f"{PATH_CLUST}/pca_clusters_ext.csv", struct=structures, mut=mutations, rep=reps, zip=True)
 if "gbsa" in rule_groups or rule_groups == [""]:
     all_input["gbsa_info"] = expand(f"{PATH_GBSA}/_GMXMMPBSA_info", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["gbsa_final_results"] = expand(f"{PATH_GBSA}/FINAL_RESULTS_MMPBSA.dat", struct=structures, mut=mutations, rep=reps, zip=True)
@@ -544,7 +551,7 @@ rule pca_porcupine:
 
 
 
-rule clustering:
+rule clustering_kmeans_hierarchical:
     params:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/005_clustering"
     input:
@@ -558,6 +565,7 @@ rule clustering:
         clust_hclust_time = report(f"{PATH_CLUST}/clust_hierarchical_time.png", category="Clustering", labels={"sample": "{mut} {rep} Hierarchical clustering time"}),
         scores = report(f"{PATH_CLUST}/clust_silhouette.png", category="Clustering", labels={"sample": "{mut} {rep} Clustering silhouette scores"}),
         summary = f"{PATH_CLUST}/summary.txt",
+        csv_clusters = f"{PATH_CLUST}/pca_clusters.csv"
     run:
         from scripts_analysis.clust import main
 
@@ -573,10 +581,10 @@ rule clustering:
 
 
 
-# TODO Remove (gromos not widespread algorithm)
 rule clustering_gromos:
+    params:
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/005_clustering"
     input: 
-        # proj_timescale = f"{PATH_PCA}/2dproj_timescale.csv",
         tpr = f"{PATH_GMX}/md.tpr",
         xtc = f"{PATH_GMX}/md_post.xtc"
     output: 
@@ -584,19 +592,33 @@ rule clustering_gromos:
         gromos_xpm = f"{PATH_CLUST}/gromos_clusters.xpm",
         gromos_log = f"{PATH_CLUST}/gromos_clusters.log",
         rmsd_dist = f"{PATH_CLUST}/gromos_clusters_rmsd_dist.xvg",
-    shell: 
-        """
-        {SCRIPTDIR}/clustering_gromos.sh \
-            --tpr {input.tpr} \
-            --xtc {input.xtc} \
-            --outdir "{DATADIR}/{wildcards.struct}/{wildcards.mut}/{wildcards.rep}/analysis/005_clustering" \
-        """
+        ids = f"{PATH_CLUST}/gromos_clust_ids.xvg",
+        sizes = f"{PATH_CLUST}/gromos_clust_size.xvg",
+        eps = f"{PATH_CLUST}/gromos_clusters.eps",
+        png = f"{PATH_CLUST}/gromos_clusters.png"
+    run: 
+        from scripts_analysis.clustering_gromos import main
+
+        logfile = Path(LOGFILE)
+        tprfile = Path(input.tpr)
+        xtcfile = Path(input.xtc)
+        outdir =  Path(params.outdir)
+
+        main(
+            logfile=logfile,
+            tpr=tprfile,
+            xtc=xtcfile,
+            outdir=outdir
+        )
 
 
-# TODO Remove (gromos not widespread algorithm)
-rule clustering_pca_gromos:
+
+
+rule clustering_gromos_plots:
+    params:
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/005_clustering"
     input: 
-        proj_timescale = f"{PATH_PCA}/2dproj_timescale.csv",
+        pca_csv = f"{PATH_CLUST}/pca_clusters.csv",
         gromos_index = f"{PATH_CLUST}/gromos_clusters.ndx",
     output: 
         pca_gromos = report(f"{PATH_CLUST}/pca_gromos_clusters.png", 
@@ -605,15 +627,22 @@ rule clustering_pca_gromos:
             category="Clustering", subcategory="Gromos clustering", labels={"sample": "{mut} {rep} Overlay on gmx PCA, top 10 clusters"}),
         gromos_clusters_freq = report(f"{PATH_CLUST}/gromos_clusters_freq.png", 
             category="Clustering", subcategory="Gromos clustering", labels={"sample": "{mut} {rep} Cluster frequencies"}),
-        gromos_clusters_freqcum = report(f"{PATH_CLUST}/gromos_clusters_freq_cum.png", 
-            category="Clustering", subcategory="Gromos clustering", labels={"sample": "{mut} {rep} Cluster cumulative frequencies"}),
-    shell: 
-        """
-        {SCRIPTDIR}/clustering_pca_gromos.py \
-            --timescale {input.proj_timescale} \
-            --index {input.gromos_index} \
-            --outdir "{DATADIR}/{wildcards.struct}/{wildcards.mut}/{wildcards.rep}/analysis/005_clustering" \
-        """
+        ids_plot = f"{PATH_CLUST}/gromos_clust_ids.png",
+        dist = f"{PATH_CLUST}/gromos_rmsd_dist.png",
+        pca_csv_gromos = f"{PATH_CLUST}/pca_clusters_ext.csv",
+    run: 
+        from scripts_analysis.clustering_gromos_plots import main
+
+        csvfile = Path(input.pca_csv)
+        gromos_index = Path(input.gromos_index)
+        outdir = Path(params.outdir)
+
+        main(
+            logfile=LOGFILE,
+            csv=csvfile,
+            ndx=gromos_index,
+            outdir=outdir,
+        )
 
 
         
