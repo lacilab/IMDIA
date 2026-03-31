@@ -212,6 +212,23 @@ Steps performed by this command:
 2. NPT equilibration to reach the target pressure. Default: 1 bar. 
 3. Production molecular dynamics simulation. Default: 200 ns with 2 fs steps.
 
+It is also possible to run energy minimization, equilibration (NVT and NPT) and production MD separately. This is particularly useful if you want to fine tune the parameters and check that the system is reaching stable target values before moving on to production MD, which requires more resources. The output includes plots of potential energy (for EM), temperature (for NVT), pressure and density (for NPT) across time, to help you assess if adjusting the parameters or applying longer minimization and/or equilibration times is necessary.
+
+The commands for individual MD steps are:
+
+```
+# Energy minimization
+python -m scripts.main --params <params.yml path> --md_em
+
+# Equilibration (NVT and NPT)
+python -m scripts.main --params <params.yml path> --md_eq
+
+# Production MD
+python -m scripts.main --params <params.yml path> --md_prod
+```
+
+These flags can be combined. Be aware that equilibration depends on the output of EM, and production MD relies on the results of equilibration. Therefore, running `--md_eq` without `--md_em` will result in an error, unless `--md_em` was previously run independently for that replicate.
+
 For each step, .mdp configuration files are provided and used by default. It is possible to provide custom .mdp files for one or more steps to overwrite the defaults. The provided .mdp can be useful as templates.
 
 ## 3. Post-processing
