@@ -65,13 +65,13 @@ def setup(logfile: Path, gmxdir: Path, outdir: Path, repn: int,
     ##### PARAMETER FILES SETUP #####
     # copy parameter files to outdir
     # parameter files
-    param_mdp(logger, 'minim.mdp', outdir, em)
+    param_mdp(logger, 'em.mdp', outdir, em)
     param_mdp(logger, 'nvt.mdp', outdir, nvt)
     param_mdp(logger, 'npt.mdp', outdir, npt)
     param_mdp(logger, 'md.mdp', outdir, md)
 
-    # check outdir contains minim.mdp, nvt.mdp, npt.mdp, md.mdp
-    for mdp_file in ['minim.mdp', 'nvt.mdp', 'npt.mdp', 'md.mdp']:
+    # check outdir contains em.mdp, nvt.mdp, npt.mdp, md.mdp
+    for mdp_file in ['em.mdp', 'nvt.mdp', 'npt.mdp', 'md.mdp']:
         if not (outdir / mdp_file).is_file():
             logger.error(f"Parameter file {mdp_file} not found in output directory {outdir}.")
             sys.exit(1)
@@ -91,7 +91,7 @@ def minimization(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
     else:
         logger.debug("Starting energy minimization...")
         cmd = ["gmx", "grompp",
-            "-f", outdir / "minim.mdp",
+            "-f", outdir / "em.mdp",
             "-c", gmxdir / "ions.gro",
             "-r", gmxdir / "ions.gro",
             "-p", gmxdir / "topol.top",
