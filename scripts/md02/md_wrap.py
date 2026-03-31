@@ -62,7 +62,7 @@ def main(pipe: Pipeline, steps: list):
             md.minimization(logfile=LOGFILE, gmxdir=pipe.paths.gmxdir, outdir=outdir, flag_nb_gpu=flag_nb_gpu)
         if "md_eq" in steps or "md" in steps:
             group_index(gmxdir=outdir, logfile=LOGFILE, logname='md', structurefile=outdir / "em.gro", dna=pipe.system.dna, phos=pipe.system.phos)
-            md.equilibration(logfile=LOGFILE, gmxdir=pipe.paths.gmxdir, outdir=outdir, dna=pipe.system.dna, phos=pipe.system.phos, flag_nb_gpu=flag_nb_gpu)
+            md.equilibration(logfile=LOGFILE, gmxdir=pipe.paths.gmxdir, outdir=outdir, flag_nb_gpu=flag_nb_gpu)
         if "md_prod" in steps or "md" in steps:
             group_index(gmxdir=outdir, logfile=LOGFILE, logname='md', structurefile=outdir / "em.gro", dna=pipe.system.dna, phos=pipe.system.phos)
             md.production(logfile=LOGFILE, gmxdir=pipe.paths.gmxdir, outdir=outdir, ntmpi=pipe.run.ntmpi, ntomp=pipe.run.ntomp, 

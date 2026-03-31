@@ -147,20 +147,21 @@ def minimization(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
     logger.debug(f"Fmax: {em_check['fmax']:.2e}")
 
     # Plot EM potential
-    cmd = ["gmx", "energy", "-f", outdir / "em.edr", "-o", outdir / "em_potential.xvg", "-quiet"]
-    subprocess.run(cmd, check=True, text=True, input="Potential\n0\n")
+    if (outdir / "em.edr").is_file() and not (outdir / "em_potential.png").is_file():
+        cmd = ["gmx", "energy", "-f", outdir / "em.edr", "-o", outdir / "em_potential.xvg", "-quiet"]
+        subprocess.run(cmd, check=True, text=True, input="Potential\n0\n")
+    if (outdir / "em_potential.png").is_file() and not (outdir / "em_potential.png").is_file():
+        x, y = np.loadtxt(outdir / "em_potential.xvg",comments=["@", "#"],unpack=True)
+        plt.plot(x, y)
+        plt.title("EM - Potential energy")
+        plt.xlabel("Time (ps)")
+        plt.ylabel("Potential energy (kJ/mol)")
+        plt.savefig(outdir / "em_potential.png")
+        plt.close()
 
-    x, y = np.loadtxt(outdir / "em_potential.xvg",comments=["@", "#"],unpack=True)
-    plt.plot(x, y)
-    plt.title("EM - Potential energy")
-    plt.xlabel("Time (ps)")
-    plt.ylabel("Potential energy (kJ/mol)")
-    plt.savefig(outdir / "em_potential.png")
-    plt.close()
 
 
-
-def equilibration(logfile: Path, gmxdir: Path, outdir: Path, dna: bool, phos: bool, flag_nb_gpu: list):
+def equilibration(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
     
     ##### INITIALIZE LOG
     logger = setup_logger("md", logfile)
@@ -188,23 +189,26 @@ def equilibration(logfile: Path, gmxdir: Path, outdir: Path, dna: bool, phos: bo
         check_step(logger, "nvt", "NVT Equilibration", outdir)
 
     # Plot NVT Temperature
-    cmd = ["gmx", "energy", "-f", outdir / "nvt.edr", "-o", outdir / "nvt_temp.xvg", "-quiet"]
-    subprocess.run(cmd, check=True, text=True, input="Temperature\n0\n")
+    if (outdir / "nvt.edr").is_file() and not (outdir / "nvt_temp.xvg").is_file():
+        cmd = ["gmx", "energy", "-f", outdir / "nvt.edr", "-o", outdir / "nvt_temp.xvg", "-quiet"]
+        subprocess.run(cmd, check=True, text=True, input="Temperature\n0\n")
 
     x, y = np.loadtxt(outdir / "nvt_temp.xvg",comments=["@", "#"],unpack=True)
     final_seg_start = math.floor(max(x) / 3) * 2
     mean_final_seg = y[x >= final_seg_start].mean()
     std_final_seg = y[x >= final_seg_start].std()
-    plt.plot(x, y)
-    plt.axhline(y.mean(), color='b', ls='--', label = "Mean - full NVT")
-    plt.axhline(mean_final_seg, color='r', ls='--', label = "Mean - last 1/3 time segment")
-    plt.legend()
-    plt.title("NVT Equilibration - Temperature")
-    plt.xlabel("Time (ps)")
-    plt.ylabel("Temperature (K)")
-    plt.yticks(np.arange(round(min(y), -2), max(y), step=10))
-    plt.savefig(outdir / "nvt_temp.png")
-    plt.close()
+
+    if not (outdir / "nvt_temp.png").is_file():
+        plt.plot(x, y)
+        plt.axhline(y.mean(), color='b', ls='--', label = "Mean - full NVT")
+        plt.axhline(mean_final_seg, color='r', ls='--', label = "Mean - last 1/3 time segment")
+        plt.legend()
+        plt.title("NVT Equilibration - Temperature")
+        plt.xlabel("Time (ps)")
+        plt.ylabel("Temperature (K)")
+        plt.yticks(np.arange(round(min(y), -2), max(y), step=10))
+        plt.savefig(outdir / "nvt_temp.png")
+        plt.close()
 
     # Sanity check
     range_temp = range(290, 310)
@@ -242,23 +246,26 @@ def equilibration(logfile: Path, gmxdir: Path, outdir: Path, dna: bool, phos: bo
         check_step(logger, "npt", "NPT Equilibration", outdir)
 
     # Plot NPT Pressure
-    cmd = ["gmx", "energy", "-f", outdir / "npt.edr", "-o", outdir / "npt_pressure.xvg", "-quiet"]
-    subprocess.run(cmd, check=True, text=True, input="Pressure\n0\n")
+    if (outdir / "npt.edr").is_file() and not (outdir / "npt_pressure.xvg").is_file():
+        cmd = ["gmx", "energy", "-f", outdir / "npt.edr", "-o", outdir / "npt_pressure.xvg", "-quiet"]
+        subprocess.run(cmd, check=True, text=True, input="Pressure\n0\n")
 
     x, y = np.loadtxt(outdir / "npt_pressure.xvg",comments=["@", "#"],unpack=True)
     final_seg_start = math.floor(max(x) / 3) * 2
     mean_final_seg = y[x >= final_seg_start].mean()
     std_final_seg = y[x >= final_seg_start].std()
-    plt.plot(x, y)
-    plt.axhline(y.mean(), color='b', ls='--', label = "Mean - full NPT")
-    plt.axhline(mean_final_seg,color='r', ls='--', label = "Mean - last 1/3 time segment")
-    plt.legend()
-    plt.title("NPT Equilibration - Pressure")
-    plt.xlabel("Time (ps)")
-    plt.ylabel("Pressure (bar)")
-    plt.yticks(np.arange(round(min(y), -3), max(y) , step=200))
-    plt.savefig(outdir / "npt_pressure.png")
-    plt.close()
+
+    if not (outdir / "npt_pressure.png").is_file():
+        plt.plot(x, y)
+        plt.axhline(y.mean(), color='b', ls='--', label = "Mean - full NPT")
+        plt.axhline(mean_final_seg,color='r', ls='--', label = "Mean - last 1/3 time segment")
+        plt.legend()
+        plt.title("NPT Equilibration - Pressure")
+        plt.xlabel("Time (ps)")
+        plt.ylabel("Pressure (bar)")
+        plt.yticks(np.arange(round(min(y), -3), max(y) , step=200))
+        plt.savefig(outdir / "npt_pressure.png")
+        plt.close()
 
     # Sanity check
     range_pres = range(-11, 11)
@@ -273,22 +280,25 @@ def equilibration(logfile: Path, gmxdir: Path, outdir: Path, dna: bool, phos: bo
         logger.info(f"Average pressure is within the default range ({range_pres.start}, {range_pres.stop}) (bar).")
 
     # Plot NPT Density
-    cmd = ["gmx", "energy", "-f", outdir / "npt.edr", "-o", outdir / "npt_density.xvg", "-quiet"]
-    subprocess.run(cmd, check=True, text=True, input="Density\n0\n")
+    if not (outdir / "npt_density.xvg").is_file():
+        cmd = ["gmx", "energy", "-f", outdir / "npt.edr", "-o", outdir / "npt_density.xvg", "-quiet"]
+        subprocess.run(cmd, check=True, text=True, input="Density\n0\n")
 
     x, y = np.loadtxt(outdir / "npt_density.xvg",comments=["@", "#"],unpack=True)
     final_seg_start = math.floor(max(x) / 3) * 2
     mean_final_seg = y[x >= final_seg_start].mean()
     std_final_seg = y[x >= final_seg_start].std()
-    plt.plot(x, y)
-    plt.axhline(y.mean(), color='b', ls='--', label = "Mean - full NPT")
-    plt.axhline(mean_final_seg,color='r', ls='--', label = "Mean - last 1/3 time segment")
-    plt.legend()
-    plt.title("NPT Equilibration - Density")
-    plt.xlabel("Time (ps)")
-    plt.ylabel("Density (kg/m\u00b3)")
-    plt.savefig(outdir / "npt_density.png")
-    plt.close()
+
+    if not (outdir / "npt_density.png").is_file():
+        plt.plot(x, y)
+        plt.axhline(y.mean(), color='b', ls='--', label = "Mean - full NPT")
+        plt.axhline(mean_final_seg,color='r', ls='--', label = "Mean - last 1/3 time segment")
+        plt.legend()
+        plt.title("NPT Equilibration - Density")
+        plt.xlabel("Time (ps)")
+        plt.ylabel("Density (kg/m\u00b3)")
+        plt.savefig(outdir / "npt_density.png")
+        plt.close()
 
     # Sanity check
     logger.info(f"Density in the last 1/3 timepoints of NPT: average {mean_final_seg:.3f}, std {std_final_seg:.3f}.")
