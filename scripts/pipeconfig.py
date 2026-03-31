@@ -134,9 +134,9 @@ class Pipeline:
         import scripts.prep01.prep_wrap as prep_wrap
         prep_wrap.main(self)
 
-    def md(self) -> None:
+    def md(self, steps: list) -> None:
         import scripts.md02.md_wrap as md_wrap
-        md_wrap.main(self)
+        md_wrap.main(self, steps=steps)
 
     def post(self) -> None:
         import scripts.post03.post_wrap as post_wrap
@@ -151,8 +151,10 @@ class Pipeline:
         print(f"Running pipeline with steps: {self.steps}")
         if "prep" in self.steps:
             self.prep()
-        if "md" in self.steps:
-            self.md()
+        # For items in self.steps that start with "md"
+        md_steps = [step for step in self.steps if step.startswith("md")]
+        if any(md_steps):
+            self.md(md_steps)
         if "post" in self.steps:
             self.post()
         if "analysis" in self.steps:

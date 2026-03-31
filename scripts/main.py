@@ -5,7 +5,10 @@ def main():
     parser = argparse.ArgumentParser(description="Pipeline for preparing and running MD simulations.")
     parser.add_argument('--params', dest='paramsfile', type=str, default='scripts/params.yml', help='Path to the YAML parameter file.')
     parser.add_argument('--prep', action='store_true', help='Run preparation step.')
-    parser.add_argument('--md', action='store_true', help='Run MD simulation step.')
+    parser.add_argument('--md', action='store_true', help='Run full MD simulation (energy minimization, NVT and NPT equilibration, MD Production).')
+    parser.add_argument('--md_em', action='store_true', help='Run energy minimization step.')
+    parser.add_argument('--md_eq', action='store_true', help='Run equilibration step (NVT and NPT).')
+    parser.add_argument('--md_prod', action='store_true', help='Run MD production step.')
     parser.add_argument('--post', action='store_true', help='Run post-processing step.')
     parser.add_argument('--analysis', action='store_true', help='Run analysis step.')
     parser.add_argument('--rules', dest='rules', nargs='+', default=None, help='Snakefile rules to be used in analysis step.')
@@ -13,15 +16,18 @@ def main():
     args = parser.parse_args()
 
     # Build array of steps to run
-    steps = []
-    if args.prep:
-        steps.append("prep")
-    if args.md:
-        steps.append("md")
-    if args.post:
-        steps.append("post")
-    if args.analysis:
-        steps.append("analysis")
+    steps_flags = [
+    ("prep", args.prep),
+    ("md", args.md),
+    ("md_em", args.md_em),
+    ("md_eq", args.md_eq),
+    ("md_prod", args.md_prod),
+    ("post", args.post),
+    ("analysis", args.analysis),
+    ]
+
+    steps = [name for name, flag in steps_flags if flag]
+
 
     pipeline = Pipeline(paramsfile=args.paramsfile, 
                         steps=steps, 

@@ -5,13 +5,13 @@ import os
 import re
 import sys
 from datetime import datetime
-from pathlib import Path
-from scripts.utils.helpers import gen_flags, setup_logger
+from scripts.utils.helpers import setup_logger
+from scripts.utils.group_index import group_index
 from scripts.pipeconfig import Pipeline
 from scripts.md02 import md
 
 
-def main(pipe: Pipeline):
+def main(pipe: Pipeline, steps: list):
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     logdir = pipe.paths.mutdir / "logs"
@@ -48,10 +48,23 @@ def main(pipe: Pipeline):
     for n in reps:
         outdir = parent_dir / f"rep{n}" / "gromacs"
         logger.debug(f"Starting MD for replicate {n}.")
-        md.main(logfile=LOGFILE, gmxdir=pipe.paths.gmxdir, outdir=outdir, repn=n,
-            dna=pipe.system.dna, phos=pipe.system.phos,
-            ntmpi=pipe.run.ntmpi, ntomp=pipe.run.ntomp, 
-            nb=pipe.run.nb, pme=pipe.run.pme, npme=pipe.run.npme,
-            ngpu=pipe.run.ngpu, gputasks=pipe.run.gputasks,
-            em=pipe.run.em, nvt=pipe.run.nvt, npt=pipe.run.npt, md=pipe.run.md)
+        if "md" in steps:
+            logger.debug(f"Running full MD for replicate {n}.")
+        else:
+            logger.debug(f"Running specified MD steps {steps} for replicate {n}.")
+        flag_nb_gpu, flag_pme_gpu, flag_gpu_tasks = md.setup(logfile=LOGFILE, 
+                                                             gmxdir=pipe.paths.gmxdir, outdir=outdir, repn=n,
+                                                             ntmpi=pipe.run.ntmpi, ntomp=pipe.run.ntomp, 
+                                                             nb=pipe.run.nb, pme=pipe.run.pme, npme=pipe.run.npme,
+                                                             ngpu=pipe.run.ngpu, gputasks=pipe.run.gputasks,
+                                                             em=pipe.run.em, nvt=pipe.run.nvt, npt=pipe.run.npt, md=pipe.run.md)
+        if "md_em" in steps or "md" in steps:
+            md.minimization(logfile=LOGFILE, gmxdir=pipe.paths.gmxdir, outdir=outdir, flag_nb_gpu=flag_nb_gpu)
+        if "md_eq" in steps or "md" in steps:
+            group_index(gmxdir=outdir, logfile=LOGFILE, logname='md', structurefile=outdir / "em.gro", dna=pipe.system.dna, phos=pipe.system.phos)
+            md.equilibration(logfile=LOGFILE, gmxdir=pipe.paths.gmxdir, outdir=outdir, dna=pipe.system.dna, phos=pipe.system.phos, flag_nb_gpu=flag_nb_gpu)
+        if "md_prod" in steps or "md" in steps:
+            group_index(gmxdir=outdir, logfile=LOGFILE, logname='md', structurefile=outdir / "em.gro", dna=pipe.system.dna, phos=pipe.system.phos)
+            md.production(logfile=LOGFILE, gmxdir=pipe.paths.gmxdir, outdir=outdir, ntmpi=pipe.run.ntmpi, ntomp=pipe.run.ntomp, 
+                          flag_nb_gpu=flag_nb_gpu, flag_pme_gpu=flag_pme_gpu, flag_gpu_tasks=flag_gpu_tasks)
 
