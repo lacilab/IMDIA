@@ -127,6 +127,7 @@ if "pca" in rule_groups or rule_groups == [""]:
     all_input["pca_cumulative"] = expand(f"{PATH_PCA}/cum_var.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["pca_pairgrid"] = expand(f"{PATH_PCA}/pc_pairgrid.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["pca_rmsf"] = expand(f"{PATH_PCA}/pc_rmsf.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["pca_porcupine"] = expand(f"{PATH_PCA}/porcupine.png", struct=structures, mut=mutations, rep=reps, zip=True)
 if "clust" in rule_groups or rule_groups == [""]:
     all_input["clust_kmeans"] = expand(f"{PATH_CLUST}/clust_kmeans.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["clust_kmeans_sizes"] = expand(f"{PATH_CLUST}/clust_kmeans_sizes.png", struct=structures, mut=mutations, rep=reps, zip=True)
