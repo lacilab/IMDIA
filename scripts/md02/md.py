@@ -150,7 +150,7 @@ def minimization(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
     if (outdir / "em.edr").is_file() and not (outdir / "em_potential.png").is_file():
         cmd = ["gmx", "energy", "-f", outdir / "em.edr", "-o", outdir / "em_potential.xvg", "-quiet"]
         subprocess.run(cmd, check=True, text=True, input="Potential\n0\n")
-    if (outdir / "em_potential.png").is_file() and not (outdir / "em_potential.png").is_file():
+    if (outdir / "em_potential.xvg").is_file() and not (outdir / "em_potential.png").is_file():
         x, y = np.loadtxt(outdir / "em_potential.xvg",comments=["@", "#"],unpack=True)
         plt.plot(x, y)
         plt.title("EM - Potential energy")
