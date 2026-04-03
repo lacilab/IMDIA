@@ -322,18 +322,17 @@ def production(logfile: Path, gmxdir: Path, outdir: Path, ntmpi: int, ntomp: int
     else:
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         logfile = os.path.join(outdir, f"md_{timestamp}.log")
-        if ntmpi == 0 or ntomp == 0:
-            logger.warning("ntmpi or ntomp is set to 0. Calculating safe defaults based on system size and available resources.")
-            ntmpi, ntomp = get_scaling(logger, outdir / "md.tpr", 'md')
-            logger.debug(f"Calculated scaling for production MD: ntmpi={ntmpi}, ntomp={ntomp}")
         if os.path.isfile(f"{outdir}/md.cpt"):
+            if ntmpi == 0 or ntomp == 0:
+                logger.warning("ntmpi or ntomp is set to 0. Calculating safe defaults based on system size and available resources.")
+                ntmpi, ntomp = get_scaling(logger, outdir / "md.tpr", 'md')
+                logger.debug(f"Calculated scaling for production MD: ntmpi={ntmpi}, ntomp={ntomp}")
             logger.debug(f"Resuming production MD from checkpoint {outdir}/md.cpt...")
             cmd = ["gmx", "mdrun", 
                 "-ntmpi", str(ntmpi), 
                 "-ntomp", str(ntomp)] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + [
                     "-cpi", outdir / "md.cpt", "-append", "-v", "-deffnm", outdir / "md", "-quiet"]
             subprocess.run(cmd, check=True, text=True)
-            # log_process_output(process, "gmx mdrun MD (from checkpoint)")
         else:
             logger.debug("Starting production MD...")
             cmd = ["gmx", "grompp",
@@ -347,7 +346,10 @@ def production(logfile: Path, gmxdir: Path, outdir: Path, ntmpi: int, ntomp: int
                 "-n", outdir / "index.ndx",
                 "-quiet", "-v", "-maxwarn", "1"]
             subprocess.run(cmd, check=True, text=True)
-            # log_process_output(process, "gmx grompp MD")
+            if ntmpi == 0 or ntomp == 0:
+                logger.warning("ntmpi or ntomp is set to 0. Calculating safe defaults based on system size and available resources.")
+                ntmpi, ntomp = get_scaling(logger, outdir / "md.tpr", 'md')
+                logger.debug(f"Calculated scaling for production MD: ntmpi={ntmpi}, ntomp={ntomp}")
             cmd = ["gmx", "mdrun", "-ntmpi", str(ntmpi), "-ntomp", str(ntomp)
                 ] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + ["-v", "-deffnm", outdir / "md", "-quiet"]
             logger.debug(f"Production MD command: {cmd}")

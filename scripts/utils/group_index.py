@@ -34,7 +34,7 @@ def group_index(gmxdir: Path = None, logfile: Path = None, logname: str = 'log',
             mdp_path = gmxdir / mdp_file
             with mdp_path.open('r') as f:
                 contents = f.read()
-            contents = contents.replace("Protein", group)
+            contents = re.sub(r'\S*Protein\S*', group, contents)
             with mdp_path.open('w') as f:
                 f.write(contents)
 
