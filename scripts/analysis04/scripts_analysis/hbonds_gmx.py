@@ -9,7 +9,6 @@ warnings.filterwarnings('ignore')
 import os
 import sys
 from scripts.utils.helpers import setup_logger
-from scripts.utils.group_index import group_index_interactions
 
 def frame2ps(u, frame):
     frame_dt_ps = u.trajectory.dt

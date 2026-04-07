@@ -255,7 +255,7 @@ rule interaction_index:
 
         index_group1, index_group2 = group_index_interactions(gmxdir=params.gmxdir, logfile=LOGFILE, logname='analysis', 
                                                          structurefile=input.pdb, indexfile=output.index,
-                                                         group1=GROUP1, group2=GROUP2, dna=DNA, phos=PHOS)
+                                                         group1=GROUP1, group2=GROUP2, dna=DNA, phos=PHOS, chains=OFFSETS)
 
         with open(output.groups, "w") as f:
             json.dump(
