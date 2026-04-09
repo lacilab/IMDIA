@@ -55,13 +55,9 @@ def main(logfile: str =None, universe: str = None, gmxdir : str = None, outdir :
            "-o", f"{outdir}/hbonds_gmx.ndx", 
            "-pf", "yes", 
            "-num", f"{outdir}/hbonds_gmx_num.xvg"]
-
-    input_sele = f"""
-        {group1}
-        {group2}
-        """
+    
     logger.debug(f"Running gmx hydrogen bonds analysis between groups: {group1} and {group2}")
-    subprocess.run(cmd, input=input_sele, text=True, check=True)
+    subprocess.run(cmd, input=f"{group1}\n{group2}\n", text=True, check=True)
     logger.info(f"Hydrogen bonds analysis completed with GROMACS. Results saved in: {outdir}")
     
 

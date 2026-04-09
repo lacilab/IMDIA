@@ -5,6 +5,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+import shutil
 import MDAnalysis as mda
 from scripts.utils.helpers import setup_logger
 
@@ -36,23 +37,27 @@ def get_name_main(logger, structurefile: Path = None, dna: bool = False, phos: b
     else:
         logger.debug("No nucleotides found in structure.")
 
-    # Construct group name
-    group = "Protein"
+    # Construct main group name
+    group_main = "Protein"
+    group_protein = "Protein"
     if dna:
-        group += "_DNA"
+        group_main += "_DNA"
     if phos:
-        group += "_P"
+        group_main += "_P"
+        group_protein += "_P"
     if len(present_metals) > 0:
-        group += "_Metals"
+        group_main += "_Metals"
+        group_protein += "_Metals"
 
-    return group, present_metals, present_nucleotides
+    return group_main, group_protein, present_metals, present_nucleotides
 
 def targets_in_index(logger, gmxdir: Path, target_groups: list[str]):
     """Check if an index file with the target groups already exists"""
-    target_groups.append('Water_Ions')
-    index_ori = gmxdir / "index.ndx"
+    targets_comp = target_groups.copy()
+    targets_comp.append('Water_Ions')
+    index_ori = (gmxdir / "index.ndx")
     if index_ori.is_file():
-        logger.debug(f'Index file {gmxdir}/index.ndx already exists. Checking for target groups {target_groups}')
+        logger.debug(f'Index file {gmxdir}/index.ndx already exists. Checking for target groups {targets_comp}')
         with index_ori.open('r') as f:
             ndx_groups = []
             for line in f:
@@ -60,14 +65,14 @@ def targets_in_index(logger, gmxdir: Path, target_groups: list[str]):
                 if line.startswith("[") and line.endswith("]"):
                     ndx_groups.append(line[1:-1].strip())
             logger.debug(f'Groups found in existing index file: {ndx_groups}')
-        if set(target_groups).issubset(ndx_groups):
-            logger.warning(f'The index file {gmxdir}/index.ndx already exists and contains the target groups {target_groups}. Skipping index creation step.')
+        if set(targets_comp).issubset(ndx_groups):
+            logger.warning(f'The index file {gmxdir}/index.ndx already exists and contains the target groups {targets_comp}. Skipping index creation step.')
             return True
         else:
-            logger.debug(f'The index file {gmxdir}/index.ndx does not contain all target groups {target_groups}. Proceeding with index creation step.')
+            logger.debug(f'The index file {gmxdir}/index.ndx does not contain all target groups {targets_comp}. Proceeding with index creation step.')
             return False
         
-def create_index_file(logger, gmxdir: Path, structurefile: Path, phos: bool, mtl: list[str], nt: list[str], chains=None):
+def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, phos: bool, mtl: list[str], nt: list[str], chains=None, outfile: str = "index.ndx"):
     """Create an index file with the target groups"""
 
     index_temp = gmxdir / "temp.ndx"
@@ -100,6 +105,8 @@ def create_index_file(logger, gmxdir: Path, structurefile: Path, phos: bool, mtl
     group_water = groups.index("Water")
     group_na = groups.index("Na")
     group_cl = groups.index("Cl")
+    if dna:
+        group_dna = groups.index("DNA")
 
     if phos:
         group_phosphate = groups.index("PTR")
@@ -118,13 +125,18 @@ def create_index_file(logger, gmxdir: Path, structurefile: Path, phos: bool, mtl
         """
         group_metals = i
         i += 1
-    if len(nt) > 0:
         groups_input += f"""
-        {"r " + " | r ".join(nt)}
-        name {i} DNA
+        {group_protein} | {group_metals}
+        name {i} Protein_Metals
         """
-        group_dna = i
         i += 1
+    #if len(nt) > 0:
+    #    groups_input += f"""
+    #    {"r " + " | r ".join(nt)}
+    #    name {i} DNA
+    #    """
+    #    group_dna = i
+    #    i += 1
     if phos:
         groups_input += f"""
         {group_protein} | {group_phosphate}
@@ -178,9 +190,9 @@ def create_index_file(logger, gmxdir: Path, structurefile: Path, phos: bool, mtl
     log_process_output(logger, process, "gmx make_ndx")
     logger.info("Index file created with new groups")
     # Move temp_groups.ndx to final index.ndx
-    os.replace(f"{gmxdir}/temp_groups.ndx", f"{gmxdir}/index.ndx")
-    if (gmxdir / "index.ndx").is_file():
-        logger.info(f"Index file with target groups saved as {gmxdir}/index.ndx")
+    os.replace(f"{gmxdir}/temp_groups.ndx", f"{gmxdir}/{outfile}")
+    if (gmxdir / f"{outfile}").is_file():
+        logger.info(f"Index file with target groups saved as {gmxdir}/{outfile}")
     return 
 
 def group_index(gmxdir: Path = None, logfile: Path = None, logname: str = 'log', structurefile: Path = None, dna: bool = False, phos: bool = False):
@@ -189,7 +201,7 @@ def group_index(gmxdir: Path = None, logfile: Path = None, logname: str = 'log',
     logger = setup_logger(logname, logfile)
 
     # Get main group name and list of metals and nucleotides present in the structure file
-    group_main, mtl, nt = get_name_main(logger, structurefile, dna, phos)
+    group_main, group_protein, mtl, nt = get_name_main(logger, structurefile, dna, phos)
 
     # In the MD step, substitute group name in nvt.mdp, npt.mdp, md.mdp
     if logname == 'md' and group_main != 'Protein':
@@ -205,7 +217,7 @@ def group_index(gmxdir: Path = None, logfile: Path = None, logname: str = 'log',
     if targets_in_index(logger, gmxdir, [group_main]):
         return group_main
     else: # If not, create index file with target groups
-        create_index_file(logger, gmxdir, structurefile, phos, mtl, nt)
+        create_index_file(logger, gmxdir, structurefile, dna, phos, mtl, nt)
     
     return group_main
 
@@ -222,12 +234,11 @@ def group_index_interactions(gmxdir: str = None, logfile: str = None, logname: s
         sys.exit(1)
 
     # Get main group name and list of metals and nucleotides present in the structure file
-    group_main, mtl, nt = get_name_main(logger, structurefile, dna, phos)
+    group_main, group_protein, mtl, nt = get_name_main(logger, structurefile, dna, phos)
 
     # Check if an index file with the target groups already exists
     ndx_names = []
     chains = []
-    target_groups = [group1, group2]
     for i, group in enumerate([group1, group2]):
             if re.match(r"^[A-Za-z]$", group):
                 # Map old chain IDs to new ones
@@ -238,14 +249,20 @@ def group_index_interactions(gmxdir: str = None, logfile: str = None, logname: s
             elif group == "DNA" and dna:
                 ndx_names.append("DNA")
             elif group == "Protein":
-                ndx_names.append(group_main)
+                ndx_names.append(group_protein)
+    logger.debug(f"Target groups for interaction analysis: {ndx_names}")
     # Check that ndx_names contains two names
     if len(ndx_names) != 2:
         logger.error(f"Error in creating list of index group names. Expected 2 names, got {len(ndx_names)}.")
         sys.exit(1)
 
+    
+    # If index file with target groups exists, create copy with target group names in the title 
+    if targets_in_index(logger, gmxdir, ndx_names):
+        shutil.copy(gmxdir / "index.ndx", gmxdir / f"interaction_{group1}_{group2}.ndx")
+        logger.debug(f"Copied index as {gmxdir / f'interaction_{group1}_{group2}.ndx'}")
     # If not, create index file with target groups
-    if not targets_in_index(logger, gmxdir, target_groups):
-        create_index_file(logger, gmxdir, structurefile, phos, mtl, nt, chains)
-
+    else: 
+        create_index_file(logger, gmxdir, structurefile, dna, phos, mtl, nt, chains, f"interaction_{group1}_{group2}.ndx")
+    logger.debug(f"Returning {ndx_names}")
     return ndx_names

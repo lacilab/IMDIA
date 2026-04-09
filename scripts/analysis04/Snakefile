@@ -256,8 +256,12 @@ rule interaction_index:
         from scripts.utils.group_index import group_index_interactions
         import json
 
-        index_group1, index_group2 = group_index_interactions(gmxdir=params.gmxdir, logfile=LOGFILE, logname='analysis', 
-                                                         structurefile=input.pdb, indexfile=output.index,
+        gmxdir = Path(params.gmxdir)
+        pdbfile = Path(input.pdb)
+        indexfile = Path(output.index)
+
+        index_group1, index_group2 = group_index_interactions(gmxdir=gmxdir, logfile=LOGFILE, logname='analysis', 
+                                                         structurefile=pdbfile, indexfile=indexfile,
                                                          group1=GROUP1, group2=GROUP2, dna=DNA, phos=PHOS, chains=OFFSETS)
 
         with open(output.groups, "w") as f:
