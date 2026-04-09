@@ -222,7 +222,7 @@ def main(logfile : str =None, hbonds_parsed: str = None, hbonds_ext : str =None,
     fig, ax = plt.subplots(figsize=(12, 8))  # Bigger + ax
 
     sns.heatmap(df_pivot, cmap='rocket_r', annot=False, linewidths=0.5, 
-                linecolor='lightgray', cbar_kws={'label': 'predicted bound count / total frames'}, ax=ax)
+                linecolor='lightgray', cbar_kws={'label': 'predicted bond count / total frames'}, ax=ax)
     ax.tick_params(axis='x', rotation=-90)
     ax.tick_params(axis='y', rotation=0)
     ax.set_xlabel(group2, fontsize=14)
