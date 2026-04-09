@@ -17,7 +17,20 @@ def get_chaingroup(chain, chaingroups):
     return None
 
 def format_residue(chain, res_num):
-    return f"{chain}-{res_num}"
+    return f"{chain}:{res_num}"
+
+def label_sort_key(label):
+    if ':' in label:
+        chain, res = label.split(':', 1)
+        try:
+            return (chain, int(res))
+        except:
+            return (chain, res)
+    else:
+        try:
+            return ('@', int(label))  # numbers first
+        except:
+            return (label, 0)         # names last
 
 def main(logfile : str =None, hbonds_parsed: str = None, hbonds_ext : str =None, domains : dict = {}, chaingroups: dict = {}, 
          group1: str = None, group2 : str = None, outfiles : list = []):
@@ -199,10 +212,25 @@ def main(logfile : str =None, hbonds_parsed: str = None, hbonds_ext : str =None,
         aggfunc='sum',
     ) / total_frames
 
-    sns.heatmap(df_pivot, cmap='rocket_r', annot=False, linewidths=0.5, linecolor='lightgray', cbar_kws={'label': 'Frame ratio'})
-    plt.figure(figsize=(8, 6))
-    plt.xticks(rotation=-90)
-    plt.savefig(outfiles[f"hbonds_heatmap"])
+    # Sort by residue number (if group is chain ID) or by chain and residue number (if group is predefined)
+    df_pivot = df_pivot.reindex(
+        index=sorted(df_pivot.index, key=lambda x: label_sort_key(str(x))),
+        columns=sorted(df_pivot.columns, key=lambda x: label_sort_key(str(x)))
+    )
+
+
+    fig, ax = plt.subplots(figsize=(12, 8))  # Bigger + ax
+
+    sns.heatmap(df_pivot, cmap='rocket_r', annot=False, linewidths=0.5, 
+                linecolor='lightgray', cbar_kws={'label': 'predicted bound count / total frames'}, ax=ax)
+    ax.tick_params(axis='x', rotation=-90)
+    ax.tick_params(axis='y', rotation=0)
+    ax.set_xlabel(group2, fontsize=14)
+    ax.set_ylabel(group1, fontsize=14)
+    ax.set_title(f'Hydrogen Bonds between {group1} and {group2}', fontsize=16)
+
+    plt.tight_layout()
+    plt.savefig(outfiles[f"hbonds_heatmap"], dpi=300)
     plt.close()
     logger.info(f"Plot of hydrogen bonds heatmap saved as {outfiles[f'hbonds_heatmap']}")
 
