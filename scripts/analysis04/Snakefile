@@ -157,6 +157,9 @@ if "gbsa" in rule_groups or rule_groups == [""]:
     all_input["gbsa_final_decomp"] = expand(f"{PATH_GBSA}/FINAL_DECOMP_MMPBSA.dat", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["gbsa_energy"] = expand(f"{PATH_GBSA}/FINAL_ENERGY.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["gbsa_energy_decomp"] = expand(f"{PATH_GBSA}/FINAL_ENERGY_DECOMP.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    # Plots
+    all_input["gbsa_full_total"] = expand(f"{PATH_GBSA}/gbsa_full_totalenergy.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["gbsa_res_total"] = expand(f"{PATH_GBSA}/gbsa_res_totalenergy.png", struct=structures, mut=mutations, rep=reps, zip=True)
 
 
 onstart:
@@ -686,4 +689,28 @@ rule gbsa:
             dna=DNA,
             phos=PHOS,
             ffs=FFS
+        )
+
+rule gbsa_plots:
+    params:
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/006_gbsa_{GROUP1}_{GROUP2}"
+    input: 
+        gbsa_total = f"{PATH_GBSA}/FINAL_ENERGY.csv",
+        gbsa_res = f"{PATH_GBSA}/FINAL_ENERGY_DECOMP.csv",
+    output: 
+        full_totalenergy = report(f"{PATH_GBSA}/gbsa_full_totalenergy.png", category="GBSA", labels={"sample": "{mut} {rep} Total Energy"}),
+        res_totalenergy = report(f"{PATH_GBSA}/gbsa_res_totalenergy.png", category="GBSA", labels={"sample": "{mut} {rep} Total Energy by residue"}),
+    run:
+        from scripts_analysis.gbsa_plots import main
+
+        energy_total = Path(input.gbsa_total)
+        energy_decomp = Path(input.gbsa_res)
+        outdir = Path(params.outdir)
+
+        main(
+            logfile=LOGFILE,
+            energy_total=energy_total,
+            energy_decomp=energy_decomp,
+            offsets=OFFSETS,
+            outdir=outdir
         )
