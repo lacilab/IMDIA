@@ -164,6 +164,7 @@ def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, phos
     i += 1
 
     # Define chain groups if chains are specified
+    logger.debug(f"Chains specified for group creation: {chains}")
     if isinstance(chains, list):
         for c in chains:
             if isinstance(c, str):
@@ -238,14 +239,14 @@ def group_index_interactions(gmxdir: str = None, logfile: str = None, logname: s
 
     # Check if an index file with the target groups already exists
     ndx_names = []
-    chains = []
+    target_chains = []
     for i, group in enumerate([group1, group2]):
             if re.match(r"^[A-Za-z]$", group):
                 # Map old chain IDs to new ones
                 if group in chains.keys():
                     chain_id = chains[group]['new_id']
                 ndx_names.append(f"Chain_{chain_id}")
-                chains.append(chain_id)
+                target_chains.append(chain_id)
             elif group == "DNA" and dna:
                 ndx_names.append("DNA")
             elif group == "Protein":
@@ -263,6 +264,6 @@ def group_index_interactions(gmxdir: str = None, logfile: str = None, logname: s
         logger.debug(f"Copied index as {gmxdir / f'interaction_{group1}_{group2}.ndx'}")
     # If not, create index file with target groups
     else: 
-        create_index_file(logger, gmxdir, structurefile, dna, phos, mtl, nt, chains, f"interaction_{group1}_{group2}.ndx")
+        create_index_file(logger, gmxdir, structurefile, dna, phos, mtl, nt, target_chains, f"interaction_{group1}_{group2}.ndx")
     logger.debug(f"Returning {ndx_names}")
     return ndx_names
