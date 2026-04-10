@@ -123,6 +123,9 @@ if "hbonds" in rule_groups or rule_groups == [""]:
     all_input["hbonds_merged_heatmap"] = expand(f"{PATH_HBONDS}/hbonds_merged_heatmap.png", struct=structures, mut=mutations, rep=reps, zip=True)
 if "wb" in rule_groups or rule_groups == [""]:
     all_input["water_bridges"] = expand(f"{PATH_HBONDS}/waterbridges.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["water_bridges_ext"] = expand(f"{PATH_HBONDS}/waterbridges_ext.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["wb_per_frame"] = expand(f"{PATH_HBONDS}/water_bridges_per_frame.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["wb_per_chain"] = expand(f"{PATH_HBONDS}/water_bridges_per_chain.png", struct=structures, mut=mutations, rep=reps, zip=True)
 if "contacts" in rule_groups or rule_groups == [""]:
     all_input["timeseries_full_csv"] = expand(f"{PATH_CONTACTS}/timeseries_full.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["timeseries_full_png"] = expand(f"{PATH_CONTACTS}/timeseries_full.png", struct=structures, mut=mutations, rep=reps, zip=True)
@@ -545,6 +548,42 @@ rule water_bridges:
             dna=DNA
         )
 
+rule water_bridges_extend:
+    input: 
+        universe = f"{PATH_RAW}/universe",
+        wb_csv = f"{PATH_HBONDS}/waterbridges.csv",
+    output: 
+        wb_ext = f"{PATH_HBONDS}/waterbridges_ext.csv",
+    run:
+        from scripts_analysis.water_bridges_extend import main
+        main(
+            logfile=LOGFILE,
+            universe=input.universe,
+            wb_csv=input.wb_csv,
+            offsets=OFFSETS,
+            outfile=output.wb_ext,
+        )
+
+rule water_bridges_plots:
+    input: 
+        wb_csv = f"{PATH_HBONDS}/waterbridges.csv",
+        wb_ext = f"{PATH_HBONDS}/waterbridges_ext.csv",
+    output: 
+        wb_per_frame = report(f"{PATH_HBONDS}/water_bridges_per_frame.png", 
+            category="Water bridges", labels={"sample": "{mut} {rep} Water bridges per frame."}),
+        wb_per_chain = report(f"{PATH_HBONDS}/water_bridges_per_chain.png", 
+            category="Water bridges", labels={"sample": "{mut} {rep} Water bridges per chain"})
+    run:
+        from scripts_analysis.water_bridges_plots import main
+        main(
+            logfile=LOGFILE,
+            wb_csv=input.wb_csv,
+            wb_ext_csv=input.wb_ext,
+            outfiles=dict(output),
+            group1=GROUP1,
+            group2=GROUP2,
+            chains=OFFSETS
+        )
 
 
 rule pca:
