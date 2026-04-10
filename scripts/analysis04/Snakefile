@@ -63,13 +63,14 @@ PATH_ANALYSIS_OUT = PATH_REP_OUT / "analysis"
 PATH_ANALYSIS_WC = lambda wc: Path(DATADIR) / wc.struct / wc.mut / wc.rep / "analysis"
 PATH_GMX_WC = lambda wc: Path(DATADIR) / wc.struct / wc.mut / wc.rep / "gromacs"
 PATH_GMX = PATH_REP / "gromacs"
-PATH_RAW = PATH_ANALYSIS / "000_raw"
-PATH_QC = PATH_ANALYSIS / "001_qc"
-PATH_HBONDS = PATH_ANALYSIS / f"002_hbonds_{GROUP1}_{GROUP2}" 
-PATH_PCA = PATH_ANALYSIS / "003_pca"
-PATH_CONTACTS = PATH_ANALYSIS / f"004_contacts_{GROUP1}_{GROUP2}"
-PATH_CLUST = PATH_ANALYSIS / "005_clustering"
-PATH_GBSA= PATH_ANALYSIS / f"006_gbsa_{GROUP1}_{GROUP2}"
+PATH_RAW = PATH_ANALYSIS / "raw"
+PATH_QC = PATH_ANALYSIS / "qc"
+PATH_HBONDS = PATH_ANALYSIS / f"hbonds_{GROUP1}_{GROUP2}" 
+PATH_WB = PATH_ANALYSIS / f"water_bridges_{GROUP1}_{GROUP2}"
+PATH_PCA = PATH_ANALYSIS / "pca"
+PATH_CONTACTS = PATH_ANALYSIS / f"contacs_{GROUP1}_{GROUP2}"
+PATH_CLUST = PATH_ANALYSIS / "clustering"
+PATH_GBSA= PATH_ANALYSIS / f"gbsa_{GROUP1}_{GROUP2}"
 
 
 ###### CONDITIONAL OUTPUT - RUN CERTAIN RULES BASED ON INPUT LIST ######
@@ -198,7 +199,7 @@ rule all:
 
 rule universe:
     params:
-        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/000_raw"
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/raw"
     input:
         pdb = f"{PATH_GMX}/md_sys.pdb",
         xtc = f"{PATH_GMX}/md_post.xtc"
@@ -218,7 +219,7 @@ rule universe:
 
 rule qc:
     params:
-        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/001_qc"
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/qc"
     input: 
         universe = f"{PATH_RAW}/universe"
     output:
@@ -289,7 +290,7 @@ rule interaction_index:
 rule hbonds_gmx:
     params:
         gmxdir = lambda wc: f"{PATH_GMX_WC(wc)}",
-        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/002_hbonds_{GROUP1}_{GROUP2}",
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/hbonds_{GROUP1}_{GROUP2}",
         index_group1 = lambda wc, input: __import__("json").load(open(input.groups))["group1"],
         index_group2 = lambda wc, input: __import__("json").load(open(input.groups))["group2"]
     input:
@@ -340,7 +341,7 @@ rule hbonds_gmx_parse:
 
 rule hbonds_mda:
     params:
-        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/002_hbonds_{GROUP1}_{GROUP2}"
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/hbonds_{GROUP1}_{GROUP2}"
     threads: min(int(workflow.cores), 64)
     input: 
         universe = f"{PATH_RAW}/universe",
@@ -408,7 +409,7 @@ rule hbonds_merge:
 
 rule hbonds_plots:
     params:
-        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/002_hbonds_{GROUP1}_{GROUP2}"
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/hbonds_{GROUP1}_{GROUP2}"
     input: 
         hbonds_ext = f"{PATH_HBONDS}/hbonds_{{method}}_ext.csv",
         hbonds_parsed = f"{PATH_HBONDS}/hbonds_{{method}}_parsed.csv",
@@ -435,7 +436,7 @@ rule hbonds_plots:
 
 rule hbonds_merged_plots:
     params:
-        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/002_hbonds_{GROUP1}_{GROUP2}"
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/hbonds_{GROUP1}_{GROUP2}"
     input: 
         hbonds_merged = f"{PATH_HBONDS}/hbonds_ext_merged.csv",
         hbonds_parsed = f"{PATH_HBONDS}/hbonds_gmx_parsed.csv", # to get the number of frames
@@ -588,7 +589,7 @@ rule water_bridges_plots:
 
 rule pca:
     params:
-        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/003_pca"
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/pca"
     input: 
         tpr = f"{PATH_GMX}/md.tpr",
         xtc = f"{PATH_GMX}/md_post.xtc"
@@ -621,7 +622,7 @@ rule pca:
 rule pca_porcupine:
     params:
         gmxdir = lambda wc: Path(f"{PATH_GMX_WC(wc)}"),
-        outdir = lambda wc: Path(f"{PATH_ANALYSIS_WC(wc)}/003_pca")
+        outdir = lambda wc: Path(f"{PATH_ANALYSIS_WC(wc)}/pca")
     input: 
         eigenvec = PATH_PCA / "eigenvec.trr",
         tpr = PATH_GMX / "md.tpr",
@@ -647,7 +648,7 @@ rule pca_porcupine:
 
 rule clustering_kmeans_hierarchical:
     params:
-        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/005_clustering"
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/clustering"
     input:
         csv = f"{PATH_PCA}/proj_10.csv",
     output:
@@ -677,7 +678,7 @@ rule clustering_kmeans_hierarchical:
 
 rule clustering_gromos:
     params:
-        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/005_clustering"
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/clustering"
     input: 
         tpr = f"{PATH_GMX}/md.tpr",
         xtc = f"{PATH_GMX}/md_post.xtc"
@@ -710,7 +711,7 @@ rule clustering_gromos:
 
 rule clustering_gromos_plots:
     params:
-        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/005_clustering"
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/clustering"
     input: 
         pca_csv = f"{PATH_CLUST}/pca_clusters.csv",
         gromos_index = f"{PATH_CLUST}/gromos_clusters.ndx",
@@ -745,7 +746,7 @@ rule gbsa:
         index_group1 = lambda wc, input: __import__("json").load(open(input.groups))["group1"],
         index_group2 = lambda wc, input: __import__("json").load(open(input.groups))["group2"],
         gmxdir = lambda wc: f"{PATH_GMX_WC(wc)}",
-        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/006_gbsa_{GROUP1}_{GROUP2}",
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/gbsa_{GROUP1}_{GROUP2}",
         scriptdir = SCRIPTDIR,
     threads: min(int(workflow.cores * 0.95), 64)
     input: 
@@ -783,7 +784,7 @@ rule gbsa:
 
 rule gbsa_plots:
     params:
-        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/006_gbsa_{GROUP1}_{GROUP2}"
+        outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/gbsa_{GROUP1}_{GROUP2}"
     input: 
         gbsa_total = f"{PATH_GBSA}/FINAL_ENERGY.csv",
         gbsa_res = f"{PATH_GBSA}/FINAL_ENERGY_DECOMP.csv",
