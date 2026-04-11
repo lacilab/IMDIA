@@ -68,7 +68,7 @@ def main(logfile : str = None, universe: str = None,
     dist_results = cont.results.timeseries
 
     df_timeseries = pd.DataFrame(dist_results)
-    df_timeseries.to_csv(outfiles["timeseries_full_csv"], index=False)
+    df_timeseries.to_csv(outfiles["contacts_timeseries_csv"], index=False)
 
     average_contacts = np.mean(dist_results[:, 1])
 
@@ -80,7 +80,7 @@ def main(logfile : str = None, universe: str = None,
     plt.ylabel('Fraction of Contacts')
     plt.title('Native Contacts, average = {:.2f}'.format(average_contacts))
     plt.legend()
-    plt.savefig(outfiles["timeseries_full_png"])
+    plt.savefig(outfiles["contacts_timeseries_png"])
     plt.close()
 
 if __name__ == "__main__":

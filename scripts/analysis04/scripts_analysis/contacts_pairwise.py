@@ -107,7 +107,7 @@ def main(logfile : str = None, universe: str = None,
     
     contacts_df = pd.DataFrame(contacts_pairs, 
                                columns=["frame","sele1_resid","sele1_resnm","sele1_chain","sele2_resid","sele2_resnm","sele2_chain","distance"])
-    contacts_df.to_csv(outfiles["pairs_full_csv"], index=False)
+    contacts_df.to_csv(outfiles["contacts_pairs_csv"], index=False)
 
 
 if __name__ == "__main__":

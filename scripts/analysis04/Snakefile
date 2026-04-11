@@ -128,10 +128,10 @@ if "wb" in rule_groups or rule_groups == [""]:
     all_input["wb_per_frame"] = expand(f"{PATH_WB}/water_bridges_per_frame.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["wb_per_chain"] = expand(f"{PATH_WB}/water_bridges_per_chain.png", struct=structures, mut=mutations, rep=reps, zip=True)
 if "contacts" in rule_groups or rule_groups == [""]:
-    all_input["timeseries_full_csv"] = expand(f"{PATH_CONTACTS}/timeseries_full.csv", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["timeseries_full_png"] = expand(f"{PATH_CONTACTS}/timeseries_full.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["pairs_full_csv"] = expand(f"{PATH_CONTACTS}/pairs_full.csv", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["pairs_ext_csv"] = expand(f"{PATH_CONTACTS}/pairs_ext.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["contacts_timeseries_csv"] = expand(f"{PATH_CONTACTS}/contacts_timeseries.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["contacts_timeseries_png"] = expand(f"{PATH_CONTACTS}/contacts_timeseries.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["contacts_pairs_csv"] = expand(f"{PATH_CONTACTS}/contacts_pairs.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["contacts_pairs_ext_csv"] = expand(f"{PATH_CONTACTS}/contacts_pairs_ext.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["contacts_distance"] = expand(f"{PATH_CONTACTS}/contacts_hist_distance.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["contacts_time"] = expand(f"{PATH_CONTACTS}/contacts_hist_time.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["contacts_heatmap_count"] = expand(f"{PATH_CONTACTS}/contacts_heatmap_count.png", struct=structures, mut=mutations, rep=reps, zip=True)
@@ -486,8 +486,8 @@ rule contact_ratio:
         tpr = f"{PATH_GMX}/md.tpr",
         xtc = f"{PATH_GMX}/md_post.xtc"
     output: 
-        timeseries_full_csv = f"{PATH_CONTACTS}/timeseries_full.csv",
-        timeseries_full_png = report(f"{PATH_CONTACTS}/timeseries_full.png",
+        contacts_timeseries_csv = f"{PATH_CONTACTS}/contacts_timeseries.csv",
+        contacts_timeseries_png = report(f"{PATH_CONTACTS}/contacts_timeseries.png",
                                 category="Contact analysis", labels={"sample": "{mut} {rep} Timeseries full protein"}),
     run:
         from scripts_analysis.contact_ratio import main
@@ -511,7 +511,7 @@ rule contact_pairwise:
         xtc = f"{PATH_GMX}/md_post.xtc"
     threads: min(int(workflow.cores), 34)
     output: 
-        pairs_full_csv = f"{PATH_CONTACTS}/pairs_full.csv",
+        contacts_pairs_csv = f"{PATH_CONTACTS}/contacts_pairs.csv",
     run:
         from scripts_analysis.contacts_pairwise import main
         main(
@@ -532,25 +532,25 @@ rule contact_pairwise:
 rule contacts_extend:
     input: 
         universe = f"{PATH_RAW}/universe",
-        pairs_full_csv = f"{PATH_CONTACTS}/pairs_full.csv",
+        contacts_pairs_csv = f"{PATH_CONTACTS}/contacts_pairs.csv",
     output: 
-        pairs_ext_csv = f"{PATH_CONTACTS}/pairs_ext.csv",
+        contacts_pairs_ext_csv = f"{PATH_CONTACTS}/contacts_pairs_ext.csv",
     run:
         from scripts_analysis.contacts_extend import main
         main(
             logfile=LOGFILE,
             universe=input.universe,
-            contacts_csv=input.pairs_full_csv,
+            contacts_csv=input.contacts_pairs_csv,
             offsets=OFFSETS,
-            outfile=output.pairs_ext_csv,
+            outfile=output.contacts_pairs_ext_csv,
         )
 
 
 rule contacts_plots:
     input: 
         universe = f"{PATH_RAW}/universe",
-        pairs_csv = f"{PATH_CONTACTS}/pairs_full.csv",
-        pairs_ext_csv = f"{PATH_CONTACTS}/pairs_ext.csv",
+        pairs_csv = f"{PATH_CONTACTS}/contacts_pairs.csv",
+        contacts_pairs_ext_csv = f"{PATH_CONTACTS}/contacts_pairs_ext.csv",
     output: 
         contacts_distance = report(f"{PATH_CONTACTS}/contacts_hist_distance.png", category="Contact analysis", labels={"sample": "{mut} {rep} Distance distribution of contacts"}),
         contacts_time = report(f"{PATH_CONTACTS}/contacts_hist_time.png", category="Contact analysis", labels={"sample": "{mut} {rep} Time distribution of contacts"}),
@@ -562,7 +562,7 @@ rule contacts_plots:
             logfile=LOGFILE,
             universe=input.universe,
             pairs_csv=input.pairs_csv,
-            pairs_ext_csv=input.pairs_ext_csv,
+            pairs_ext_csv=input.contacts_pairs_ext_csv,
             group1=GROUP1,
             group2=GROUP2,
             outfiles=dict(output)
