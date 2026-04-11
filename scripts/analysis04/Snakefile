@@ -123,14 +123,19 @@ if "hbonds" in rule_groups or rule_groups == [""]:
     all_input["hbonds_merged_per_group"] = expand(f"{PATH_HBONDS}/hbonds_merged_per_group.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["hbonds_merged_heatmap"] = expand(f"{PATH_HBONDS}/hbonds_merged_heatmap.png", struct=structures, mut=mutations, rep=reps, zip=True)
 if "wb" in rule_groups or rule_groups == [""]:
-    all_input["water_bridges"] = expand(f"{PATH_HBONDS}/waterbridges.csv", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["water_bridges_ext"] = expand(f"{PATH_HBONDS}/waterbridges_ext.csv", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["wb_per_frame"] = expand(f"{PATH_HBONDS}/water_bridges_per_frame.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["wb_per_chain"] = expand(f"{PATH_HBONDS}/water_bridges_per_chain.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["water_bridges"] = expand(f"{PATH_WB}/waterbridges.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["water_bridges_ext"] = expand(f"{PATH_WB}/waterbridges_ext.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["wb_per_frame"] = expand(f"{PATH_WB}/water_bridges_per_frame.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["wb_per_chain"] = expand(f"{PATH_WB}/water_bridges_per_chain.png", struct=structures, mut=mutations, rep=reps, zip=True)
 if "contacts" in rule_groups or rule_groups == [""]:
     all_input["timeseries_full_csv"] = expand(f"{PATH_CONTACTS}/timeseries_full.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["timeseries_full_png"] = expand(f"{PATH_CONTACTS}/timeseries_full.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["pairs_full_csv"] = expand(f"{PATH_CONTACTS}/pairs_full.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["pairs_ext_csv"] = expand(f"{PATH_CONTACTS}/pairs_ext.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["contacts_distance"] = expand(f"{PATH_CONTACTS}/contacts_hist_distance.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["contacts_time"] = expand(f"{PATH_CONTACTS}/contacts_hist_time.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["contacts_heatmap_count"] = expand(f"{PATH_CONTACTS}/contacts_heatmap_count.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["contacts_heatmap_distance"] = expand(f"{PATH_CONTACTS}/contacts_heatmap_distance.png", struct=structures, mut=mutations, rep=reps, zip=True)
 if "pca" in rule_groups or rule_groups == [""]:
     all_input["pca_proj_xvg"] = expand(f"{PATH_PCA}/proj_10.xvg", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["pca_proj_csv"] = expand(f"{PATH_PCA}/proj_10.csv", struct=structures, mut=mutations, rep=reps, zip=True)
@@ -524,6 +529,45 @@ rule contact_pairwise:
         )
 
 
+rule contacts_extend:
+    input: 
+        universe = f"{PATH_RAW}/universe",
+        pairs_full_csv = f"{PATH_CONTACTS}/pairs_full.csv",
+    output: 
+        pairs_ext_csv = f"{PATH_CONTACTS}/pairs_ext.csv",
+    run:
+        from scripts_analysis.contacts_extend import main
+        main(
+            logfile=LOGFILE,
+            universe=input.universe,
+            contacts_csv=input.pairs_full_csv,
+            offsets=OFFSETS,
+            outfile=output.pairs_ext_csv,
+        )
+
+
+rule contacts_plots:
+    input: 
+        universe = f"{PATH_RAW}/universe",
+        pairs_csv = f"{PATH_CONTACTS}/pairs_full.csv",
+        pairs_ext_csv = f"{PATH_CONTACTS}/pairs_ext.csv",
+    output: 
+        contacts_distance = report(f"{PATH_CONTACTS}/contacts_hist_distance.png", category="Contact analysis", labels={"sample": "{mut} {rep} Distance distribution of contacts"}),
+        contacts_time = report(f"{PATH_CONTACTS}/contacts_hist_time.png", category="Contact analysis", labels={"sample": "{mut} {rep} Time distribution of contacts"}),
+        contacts_heatmap_count = report(f"{PATH_CONTACTS}/contacts_heatmap_count.png", category="Contact analysis", labels={"sample": "{mut} {rep} Contact count"}),
+        contacts_heatmap_distance = report(f"{PATH_CONTACTS}/contacts_heatmap_distance.png", category="Contact analysis", labels={"sample": "{mut} {rep} Contact distance"}),
+    run:
+        from scripts_analysis.contacts_plots import main
+        main(
+            logfile=LOGFILE,
+            universe=input.universe,
+            pairs_csv=input.pairs_csv,
+            pairs_ext_csv=input.pairs_ext_csv,
+            group1=GROUP1,
+            group2=GROUP2,
+            outfiles=dict(output)
+        )
+
 
 rule water_bridges:
     threads: min(int(workflow.cores), 2)
@@ -532,7 +576,7 @@ rule water_bridges:
         tpr = f"{PATH_GMX}/md.tpr",
         xtc = f"{PATH_GMX}/md_post.xtc"
     output: 
-        water_bridges = f"{PATH_HBONDS}/waterbridges.csv"
+        water_bridges = f"{PATH_WB}/waterbridges.csv"
     run:
         from scripts_analysis.water_bridges import main
         main(
@@ -552,9 +596,9 @@ rule water_bridges:
 rule water_bridges_extend:
     input: 
         universe = f"{PATH_RAW}/universe",
-        wb_csv = f"{PATH_HBONDS}/waterbridges.csv",
+        wb_csv = f"{PATH_WB}/waterbridges.csv",
     output: 
-        wb_ext = f"{PATH_HBONDS}/waterbridges_ext.csv",
+        wb_ext = f"{PATH_WB}/waterbridges_ext.csv",
     run:
         from scripts_analysis.water_bridges_extend import main
         main(
@@ -567,12 +611,12 @@ rule water_bridges_extend:
 
 rule water_bridges_plots:
     input: 
-        wb_csv = f"{PATH_HBONDS}/waterbridges.csv",
-        wb_ext = f"{PATH_HBONDS}/waterbridges_ext.csv",
+        wb_csv = f"{PATH_WB}/waterbridges.csv",
+        wb_ext = f"{PATH_WB}/waterbridges_ext.csv",
     output: 
-        wb_per_frame = report(f"{PATH_HBONDS}/water_bridges_per_frame.png", 
+        wb_per_frame = report(f"{PATH_WB}/water_bridges_per_frame.png", 
             category="Water bridges", labels={"sample": "{mut} {rep} Water bridges per frame."}),
-        wb_per_chain = report(f"{PATH_HBONDS}/water_bridges_per_chain.png", 
+        wb_per_chain = report(f"{PATH_WB}/water_bridges_per_chain.png", 
             category="Water bridges", labels={"sample": "{mut} {rep} Water bridges per chain"})
     run:
         from scripts_analysis.water_bridges_plots import main
