@@ -157,11 +157,12 @@ def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, phos
         parts.append(group_metals)
         labels.append("Metals")
 
-    groups_input += f"""
-    {' | '.join(str(part) for part in parts)}
-    name {i} {'_'.join(labels)}
-    """
-    i += 1
+    if len(parts) > 1:
+        groups_input += f"""
+        {' | '.join(str(part) for part in parts)}
+        name {i} {'_'.join(labels)}
+        """
+        i += 1
 
     # Define chain groups if chains are specified
     logger.debug(f"Chains specified for group creation: {chains}")
