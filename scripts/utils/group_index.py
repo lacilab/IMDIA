@@ -130,13 +130,7 @@ def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, phos
         name {i} Protein_Metals
         """
         i += 1
-    #if len(nt) > 0:
-    #    groups_input += f"""
-    #    {"r " + " | r ".join(nt)}
-    #    name {i} DNA
-    #    """
-    #    group_dna = i
-    #    i += 1
+
     if phos:
         groups_input += f"""
         {group_protein} | {group_phosphate}
@@ -147,13 +141,13 @@ def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, phos
     # Define conditional group combinations
     parts = [group_protein]
     labels = ["Protein"]
-    if group_dna:
+    if dna:
         parts.append(group_dna)
         labels.append("DNA")
     if phos:
         parts.append(group_phosphate)
         labels.append("P")
-    if group_metals:
+    if len(mtl) > 0:
         parts.append(group_metals)
         labels.append("Metals")
 
