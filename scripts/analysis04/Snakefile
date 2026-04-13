@@ -136,6 +136,8 @@ if "contacts" in rule_groups or rule_groups == [""]:
     all_input["contacts_time"] = expand(f"{PATH_CONTACTS}/contacts_hist_time.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["contacts_heatmap_count"] = expand(f"{PATH_CONTACTS}/contacts_heatmap_count.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["contacts_heatmap_distance"] = expand(f"{PATH_CONTACTS}/contacts_heatmap_distance.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["contacts_bubble"] = expand(f"{PATH_CONTACTS}/contacts_bubble.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["contacts_bubble_filtered"] = expand(f"{PATH_CONTACTS}/contacts_bubble_filtered.png", struct=structures, mut=mutations, rep=reps, zip=True)
 if "pca" in rule_groups or rule_groups == [""]:
     all_input["pca_proj_xvg"] = expand(f"{PATH_PCA}/proj_10.xvg", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["pca_proj_csv"] = expand(f"{PATH_PCA}/proj_10.csv", struct=structures, mut=mutations, rep=reps, zip=True)
@@ -556,6 +558,8 @@ rule contacts_plots:
         contacts_time = report(f"{PATH_CONTACTS}/contacts_hist_time.png", category="Contact analysis", labels={"sample": "{mut} {rep} Time distribution of contacts"}),
         contacts_heatmap_count = report(f"{PATH_CONTACTS}/contacts_heatmap_count.png", category="Contact analysis", labels={"sample": "{mut} {rep} Contact count"}),
         contacts_heatmap_distance = report(f"{PATH_CONTACTS}/contacts_heatmap_distance.png", category="Contact analysis", labels={"sample": "{mut} {rep} Contact distance"}),
+        contacts_bubble = report(f"{PATH_CONTACTS}/contacts_bubble.png", category="Contact analysis", labels={"sample": "{mut} {rep} Contact bubble plot"}),
+        contacts_bubble_filtered = report(f"{PATH_CONTACTS}/contacts_bubble_filtered.png", category="Contact analysis", labels={"sample": "{mut} {rep} Contact bubble plot filtered"})
     run:
         from scripts_analysis.contacts_plots import main
         main(
