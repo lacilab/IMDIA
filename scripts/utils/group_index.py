@@ -75,6 +75,8 @@ def targets_in_index(logger, gmxdir: Path, target_groups: list[str]):
 def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, phos: bool, mtl: list[str], nt: list[str], chains=None, outfile: str = "index.ndx"):
     """Create an index file with the target groups"""
 
+    PHOSRES = ["PTR", "TPO", "SEP"]
+
     index_temp = gmxdir / "temp.ndx"
     # Get groups in the index file
     cmd = [
@@ -105,11 +107,12 @@ def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, phos
     group_water = groups.index("Water")
     group_na = groups.index("Na")
     group_cl = groups.index("Cl")
-    if dna:
+    group_phosphate = []
+    if dna and "DNA" in groups:
         group_dna = groups.index("DNA")
-
     if phos:
-        group_phosphate = groups.index("PTR")
+        group_phosphate = [str(groups.index(group)) for group in groups if group in PHOSRES]
+        logger.debug(f"list of phosphate groups found: {group_phosphate}")
 
     # Remove temp index file
     os.remove(index_temp)
@@ -131,12 +134,20 @@ def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, phos
         """
         i += 1
 
-    if phos:
+    if dna and "DNA" not in groups and len(nt) > 0:
         groups_input += f"""
-        {group_protein} | {group_phosphate}
-        name {i} Protein_P
+        {"r " + " | r ".join(nt)}
+        name {i} DNA
         """
+        group_dna = i
         i += 1
+
+    if phos and len(group_phosphate) > 0:
+            groups_input += f"""
+            {group_protein} | {" | ".join(group_phosphate)}
+            name {i} Protein_P
+            """
+            i += 1
 
     # Define conditional group combinations
     parts = [group_protein]
@@ -145,7 +156,7 @@ def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, phos
         parts.append(group_dna)
         labels.append("DNA")
     if phos:
-        parts.append(group_phosphate)
+        parts.extend(group_phosphate)
         labels.append("P")
     if len(mtl) > 0:
         parts.append(group_metals)
@@ -176,6 +187,8 @@ def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, phos
         quit
         """
     i += 1
+
+    logger.debug(f"Final group input: {groups_input}")
 
     cmd = [ "gmx", "make_ndx", 
         "-f", structurefile,
