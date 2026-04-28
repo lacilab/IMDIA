@@ -135,8 +135,8 @@ def main(logfile: Path, outdir: Path, tpr: Path, xtc: Path):
    for i, pc_x in enumerate(pcs_top):
       ax = axes[i]
       ax.plot(range(1, natoms + 1), rmsf[i*natoms:(i+1)*natoms], label=f'{pc_x} RMSF')
-      # x ticks every 10 CA atoms
-      ax.set_xticks(np.arange(0, natoms + 1, 5))
+      ax.set_xticks(np.arange(0, natoms + 1, round(natoms/30)))
+      ax.tick_params(axis='x', labelrotation=-90)
       ax.set_xlabel('CA atom')
       ax.set_ylabel('RMSF (nm)')
       ax.set_title(f'RMSF of {pc_x}', fontsize=14)
