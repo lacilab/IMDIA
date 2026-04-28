@@ -44,7 +44,20 @@ def main(logfile: Path, datadir: Path, configfile: Path, pdbpath: Path, cores: i
                 logger.debug(f"Updated chain {atom.segid} (new ID {chains['chains'][atom.segid]['new_id']}) with new starting residue number {atom.resid}")
 
     params_copy = shutil.copyfile(configfile, pdbpath.parent / "params_copy.yaml")
-    with open(params_copy, "a") as f:
+
+    with open(params_copy, "r+") as f:
+        content = f.read()
+
+        # Trim trailing whitespace/newlines
+        cleaned = content.rstrip()
+
+        # Rewrite cleaned content
+        f.seek(0)
+        f.write(cleaned)
+        f.truncate()
+
+        # Move to end and append new content
+        f.write("\n\n")
         yaml.safe_dump(chains, f)
     
     if rules is not None:
