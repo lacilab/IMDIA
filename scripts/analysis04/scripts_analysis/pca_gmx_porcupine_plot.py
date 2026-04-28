@@ -65,9 +65,6 @@ def main(logfile : str = None, tprfile : Path = None, xtcfile : Path = None, scr
     if path.isfile(f"{outdir}/porcupine.png"):
         logger.info(f"Porcupine plot generated at: {outdir}/porcupine.png")
 
-    # Clean temporary files
-    os.remove(f"{outdir}/porcupine.pml")
-    os.remove(f"{outdir}/modevectors.py")
 
 if __name__ == "__main__":
     main()
