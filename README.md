@@ -263,7 +263,7 @@ It is also possible to run one or more subsets of rules:
 - GBSA predicted free binding energy (light blue): ```gbsa```
 
 
-![Snakemake rule subsets](img/snakemake_v3.drawio.png)
+![Snakemake rule subsets](img/snakemake_v4.drawio.png)
 
 Examples:
 ```
