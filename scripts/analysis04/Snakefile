@@ -46,6 +46,7 @@ for structure in STRUCTURES:
 
 structures, mutations, reps = zip(*combinations)
 
+
 ##### CHECK INTERACTION GROUPS #####
 # Check if rules contain interaction analysis and if group1 and group2 are defined
 interaction_rules = ["hbonds", "wb", "contacts", "gbsa"]
@@ -79,8 +80,6 @@ all_input = {}
 out_rmsf = {}
 out_hbonds_plots = {}
 out_hbonds_plots_merged = {}
-if len(CHAINGROUPS) > 0: 
-    all_input["rmsf_chaingroups"] = expand(f"{PATH_QC}/rmsf_chaingroups.png", struct=structures, mut=mutations, rep=reps, zip=True)
 if "qc" in rule_groups or rule_groups == [""]:
     if DNA:
         out_rmsf["rmsf_dna"] = report(f"{PATH_QC}/rmsf_dna.png", 
@@ -97,6 +96,8 @@ if "qc" in rule_groups or rule_groups == [""]:
     all_input["rmsd_csv"] = expand(f"{PATH_QC}/rmsd.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["radius_axis_csv"] = expand(f"{PATH_QC}/radius_axis.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["rmsf_prot_csv"] = expand(f"{PATH_QC}/rmsf_prot.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    if len(CHAINGROUPS) > 0: 
+        all_input["rmsf_chaingroups"] = expand(f"{PATH_QC}/rmsf_chaingroups.png", struct=structures, mut=mutations, rep=reps, zip=True)
 if "hbonds" in rule_groups or rule_groups == [""]:
     if "gmx" in METHODS_HBONDS:
         all_input["hbonds_gmx"] = expand(f"{PATH_HBONDS}/hbonds_gmx.ndx", struct=structures, mut=mutations, rep=reps, zip=True)
