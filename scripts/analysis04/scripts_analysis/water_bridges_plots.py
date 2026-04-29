@@ -32,27 +32,57 @@ def main(logfile, wb_csv, wb_ext_csv, outfiles, group1, group2, chains):
     sele1_chains = [c for c in df_ext['sele1_chain'].unique() if c != 'UNK']
     sele2_chains = [c for c in df_ext['sele2_chain'].unique() if c != 'UNK']
     wb_chains = sorted(set(sele1_chains + sele2_chains))
-    nchains = len(wb_chains)
 
-    fig, axes = plt.subplots(nchains, 1, figsize=(12, 4 * nchains), sharey=True)
-    for i, chain in enumerate(wb_chains):
+    all_p1 = []
+    all_p2 = []
+
+    for chain in wb_chains:
+        # Atom1 (sele1)
         chain_p1 = df_ext[df_ext['sele1_chain'] == chain].copy()
-        chain_p1['sele1_resid_adj_str'] = chain_p1['sele1_resid_adj'].astype(str)
-        chain_p1 = chain_p1['sele1_resid_adj_str'].value_counts().sort_index()
-        axes[i].bar(chain_p1.index, chain_p1.values, color='skyblue', edgecolor='black')
-        chain_p2 = df_ext[df_ext['sele2_chain'] == chain].copy()
-        chain_p2['sele2_resid_adj_str'] = chain_p2['sele2_resid_adj'].astype(str)
-        chain_p2 = chain_p2['sele2_resid_adj_str'].value_counts().sort_index()
-        axes[i].bar(chain_p2.index, chain_p2.values, color='salmon', edgecolor='black', alpha=0.7)
-        axes[i].legend([f'As atom1 in interaction', 'As atom2 in interaction'])
-        axes[i].set_xlabel('Residue (adjusted)')
-        axes[i].set_ylabel('Water Bridge Count')
-        axes[i].set_title(f'Water Bridges Involving Chain {chain}')
-        axes[i].grid(True, alpha=0.3)
+        chain_p1['label'] = f"{chain}:" + chain_p1['sele1_resid_adj'].astype(str)
+        p1_counts = chain_p1['label'].value_counts().sort_index()
+        all_p1.append(p1_counts)
 
-    plt.suptitle(f'Water Bridges between {group1} and {group2} by Chain and Residue', fontsize=16, y=0.99)
-    plt.subplots_adjust(top=0.3)
+        # Atom2 (sele2)
+        chain_p2 = df_ext[df_ext['sele2_chain'] == chain].copy()
+        chain_p2['label'] = f"{chain}:" + chain_p2['sele2_resid_adj'].astype(str)
+        p2_counts = chain_p2['label'].value_counts().sort_index()
+        all_p2.append(p2_counts)
+
+    # Combine all chains
+    all_p1 = pd.concat(all_p1, axis=0).sort_index()
+    all_p2 = pd.concat(all_p2, axis=0).sort_index()
+
+    # Re‑index both to the same set of labels
+    shared_labels = all_p1.index.union(all_p2.index)
+    all_p1 = all_p1.reindex(shared_labels, fill_value=0)
+    all_p2 = all_p2.reindex(shared_labels, fill_value=0)
+
+    # Plot
+    fig, ax = plt.subplots(figsize=(max(4 * len(shared_labels)//5, 6), 6))
+    ax.bar(
+        shared_labels,
+        all_p1.values,
+        color='skyblue',
+        edgecolor='black',
+        label='As atom1 in interaction'
+    )
+    ax.bar(
+        shared_labels,
+        all_p2.values,
+        color='salmon',
+        edgecolor='black',
+        alpha=0.7,
+        label='As atom2 in interaction'
+    )
+    ax.set_xlabel('Chain:Residue (adjusted)')
+    ax.set_ylabel('Water Bridge Count')
+    ax.set_title('Water Bridge Count')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
+    plt.show()
     plt.savefig(outfiles['wb_per_chain'])
     plt.close()
 
