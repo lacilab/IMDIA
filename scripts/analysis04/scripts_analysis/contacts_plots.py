@@ -147,8 +147,7 @@ def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, grou
     ax.set_xlabel(f'{group2} Residue (adj)', fontsize=14)
     ax.set_ylabel(f'{group1} Residue (adj)', fontsize=14)
     ax.set_title(
-        f'Contacts between {group1} and {group2}\n'
-        f'Bubble size = Ratio (Count / Number of frames). Color = mean distance',        
+        f'Contacts between {group1} and {group2}',
         fontsize=20, y=1.02
     )
 
@@ -164,7 +163,7 @@ def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, grou
                                     markerfacecolor='lightgray',
                                     markersize=np.sqrt(r * size_scale),
                                     markeredgecolor='black', label=f'{r:.1f}'))
-    fig.legend(handles=size_handles, title='Ratio', 
+    fig.legend(handles=size_handles, title='Ratio (Count / Number of frames)', 
             loc='center left', bbox_to_anchor=(0.82, 0.8),
             ncol=1, frameon=True, fontsize=12,
             labelspacing=2, handletextpad=1.2, borderpad=1.5)
@@ -218,7 +217,6 @@ def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, grou
     ax.set_ylabel(f'{group1} Residue (adj)', fontsize=14)
     ax.set_title(
         f'Contacts between {group1} and {group2}\n'
-        f'Bubble size = Ratio (Count / Number of frames). Color = mean distance\n'
         f'Filtered to pairs with ratio >= {threshold:.2f} (top 75%)',
         fontsize=20, y=1.02
     )
@@ -239,7 +237,7 @@ def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, grou
                     label=f'{r:.1f}')
         )
 
-    fig.legend(handles=size_handles, title='Ratio', 
+    fig.legend(handles=size_handles, title='Ratio (Count / Number of frames)', 
             loc='center left', bbox_to_anchor=(0.82, 0.8),
             ncol=1, frameon=True, fontsize=12,
             labelspacing=2, handletextpad=1.2, borderpad=1.5)
