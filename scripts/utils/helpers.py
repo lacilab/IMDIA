@@ -3,8 +3,8 @@ import os
 import re
 from pathlib import Path
 
-# Generate command-line flags from argument dictionary
 def gen_flags(args):
+    """ Generate command-line flags from argument dictionary. """
     flags = []
 
     for name, value in args.items():
@@ -16,6 +16,8 @@ def gen_flags(args):
             if type(value) != bool:
                 flags.append(str(value))
     return flags
+
+
 
 def count_lines(file, *names):
     counts = {name: 0 for name in names}
@@ -31,6 +33,8 @@ def count_lines(file, *names):
                 counts[name] += len(pattern.findall(line))
 
     return [counts[name] for name in names]
+
+
 
 def setup_logger(name: str, logfile: Path, level=logging.DEBUG):
     logger = logging.getLogger(name)

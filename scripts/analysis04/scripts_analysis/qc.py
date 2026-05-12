@@ -36,25 +36,20 @@ def radgyr(atomgroup, masses, total_mass=None):
 
 def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles : dict = {}, 
          with_dna: bool = False, offsets: dict = None, domains: dict = {}, chaingroups: list = {}):
-    # Arguments
-    # parser = argparse.ArgumentParser(description="Quality control analysis of MD simulation")
-    # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
-    # parser.add_argument("-u", "--universe", help="Path to the Universe object")
-    # parser.add_argument("-d", "--outdir", help="Output directory")
-    # parser.add_argument("--dna", action='store_true', dest='with_dna', help="DNA is present in the system")
-    # parser.add_argument("--offsets", type=dict, default=None, help="Offset for residue numbering per chain")
-    # parser.add_argument("--domains", type=list, default=[], help="Protein domain definitions.")
-# 
-    # if len(sys.argv) < 4:
-    #     parser.print_help()
-    #     sys.exit(0)
-# 
-    # args = parser.parse_args()
-    # universe = args.universe
-    # outdir = args.outdir
-    # with_dna = args.with_dna
-    # offsets = args.offsets
-    # domains = args.domains
+    """
+    Quality control analysis MD results.
+
+    Arguments:
+        logfile     : Path to the log file.
+        universe    : Path to the Universe object generated with MDAnalysis, containing the processed MD system.
+        outdir      : Output directory for results (e.g. rep1/analysis/qc).
+        outfiles    : Dictionary of the files to be generated, assigned to labels/keys.
+        with_dna    : True if DNA is present in the system.
+        offsets     : Dictionary specifying residue numbering offsets per chain.
+        domains     : Dictionary of domains in the structure.
+        chaingroups : Dictionary of groups and chains in them.
+    """
+
 
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)

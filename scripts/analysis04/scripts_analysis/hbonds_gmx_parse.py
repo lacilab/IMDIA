@@ -4,18 +4,16 @@ import pandas as pd
 from scripts.utils.helpers import setup_logger
 
 def main(logfile: str = None, hbonds_gmx: str = None, hbonds_gmx_parsed: str = None, group1: str = None, group2: str = None):
-    # # Arguments
-    # parser = argparse.ArgumentParser(description="Parse GROMACS hydrogen bonds output into a CSV file.")
-    # parser.add_argument("-i", "--ingmx", help="Input file, from the GROMACS hbond analysis.")
-    # parser.add_argument("-o", "--outcsv", help="Output path to save the parsed CSV file.")
-# 
-    # if len(sys.argv)==1:
-    #     parser.print_help()
-    #     sys.exit(0)
-# 
-    # args = parser.parse_args()
-    # hbonds_gmx = args.ingmx
-    # hbonds_gmx_parsed = args.outcsv
+    """
+    Predict hydrogen bonds between two groups using GROMACS analysis tools.
+
+    Arguments:
+        logfile           : Path to the log file.
+        hbonds_gmx        : Path to GROMACS .ndx file generated during the hbond analysis (e.g. analysis/hbonds/hbonds_gmx.ndx)
+        hbonds_gmx_parsed : Output .csv file with donor,hydrogen,acceptor,frame fields.
+        group1            : First group used in hydrogen bond analysis.
+        group2            : Second group used in hydrogen bond analysis.
+    """
 
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)

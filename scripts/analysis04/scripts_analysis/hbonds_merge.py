@@ -7,6 +7,15 @@ from scripts.utils.helpers import setup_logger
 
 
 def main(logfile, hbonds_files, outfile):
+    """ 
+    Merge hydrogen bond prediction results from different tools / .csv files. 
+    
+    Arguments:
+        logfile       : Path to the log file.
+        hbonds_files  : List of .csv files to merge.
+        outfile       : Output .csv file.
+    """
+
     
     # Initialize logger
     logger = setup_logger("analysis", logfile)

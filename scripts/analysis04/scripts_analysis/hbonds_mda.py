@@ -24,25 +24,28 @@ def main(logfile: str = None, universe: str = None,
          cores : int = 1,
          start: int = 0, stop: int = None,
          group1: str = None, group2: str = None, dna : bool = False):
-    # # Arguments
-    # parser = argparse.ArgumentParser(description="Parse MDAnalysis hydrogen bonds output into a CSV file.")
-    # parser.add_argument("-u", "--universe", help="MDAnalysis universe file.")
-    # parser.add_argument("-t", "--tpr", help="Path to the TPR file.")
-    # parser.add_argument("-x", "--xtc", help="Path to the XTC file.")
-    # parser.add_argument("--dna", action='store_true', dest='with_dna', help="DNA is present in the system")
-    # parser.add_argument("-d", "--outdir", help="Output directory.")
-    # parser.add_argument("-o", "--outcsv", help="Output path to save the parsed CSV file.")
-# 
-    # args = parser.parse_args()
-    # if len(sys.argv)==1:
-    #     parser.print_help()
-    #     sys.exit(0)
-# 
-    # universe = args.universe
-    # tprfile = args.tpr
-    # xtcfile = args.xtc
-    # outdir = args.outdir
-    # hbonds_mda_parsed = args.outcsv
+
+    """
+    Predict hydrogen bonds between two groups using MDAnalysis.
+
+    Arguments:
+        logfile           : Path to the log file.
+        universe          : Path to the Universe object generated with MDAnalysis, containing the processed MD system.
+        tprfile           : GROMACS run input file (.tpr) containing topology and run parameters.
+        xtcfile           : GROMACS trajectory file (.xtc) containing atomic coordinates over time.
+        outdir            : Output directory for results (e.g. rep1/analysis/hbonds).
+        hbonds_mda_parsed : Output .csv with the parsed results, with fields frame,donor,hydrogen,acceptor,distance,angle.
+
+        cores             : Number of CPU cores to use for parallel processing.
+
+        start             : Start frame for analysis window.
+        stop              : End frame for analysis window.
+       
+        group1            : First atom group for hydrogen bond analysis.
+        group2            : Second atom group for hydrogen bond analysis.
+
+        dna               : True if DNA is present in the system.
+    """
 
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)

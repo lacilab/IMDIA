@@ -39,19 +39,26 @@ def water_bridge_factory(u, start, stop, sel1, sel2, distance, angle):
 def main(logfile : str = None, universe : str = None, tprfile: str = None, xtcfile: str = None, outcsv : str = None, cores : int = 1,
          group1: str = None, group2: str = None, 
          start: int = None, stop: int = None, dna : bool = False):
-    # Arguments
-    # parser = argparse.ArgumentParser(description="Analyze water bridges between protein and nucleic acids.")
-    # parser.add_argument("-u", "--universe", help="Path to the Universe object")
-    # parser.add_argument("--dna", action='store_true', dest='with_dna', help="DNA is present in the system")
-    # parser.add_argument("-o", "--wb_csv", help="Output CSV file with water bridges data.")
+    """
+    Analyze water-mediated bridges between target groups in an MD trajectory.
 
-    # if len(sys.argv)==1:
-    #     parser.print_help()
-    #     sys.exit(0)
- 
-    # args = parser.parse_args()
-    # universe = args.universe
-    # wb_csv = args.wb_csv
+    Arguments:
+        logfile   : Path to the log file.
+        universe  : Path to the Universe object generated with MDAnalysis, containing the processed MD system.
+        tprfile   : GROMACS run input file (.tpr) containing topology and run parameters.
+        xtcfile   : GROMACS trajectory file (.xtc) containing trajectory data.
+        outcsv    : Output .csv file containing water bridge analysis results.
+
+        cores     : Number of CPU cores used for parallel processing.
+
+        group1    : First atom selection group for analysis.
+        group2    : Second atom selection group for analysis.
+
+        start     : Starting frame index for analysis.
+        stop      : Ending frame index for analysis.
+
+        dna       : True if DNA is present in the system.
+    """
 
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)

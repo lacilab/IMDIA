@@ -22,9 +22,12 @@ def get_total_cores():
     # Fallback: physical cores
     return multiprocessing.cpu_count() // 2
 
-# helper to set parameter files. args: <custom_path_var> <filename>
-# if -em, --nvt, --npt, --md options are provided, copy those files instead of the default ones to $outdir. Else, copy the default files
 def param_mdp(logger, filename: str, outdir: Path, custom_path: Path = None):
+    """
+    Set parameter files. args: <custom_path_var> <filename>
+    If -em, --nvt, --npt, --md options are provided, copy those files instead of the default ones to $outdir. 
+    Else, copy the default files
+    """
     if custom_path is not None:
         if custom_path.is_file():
             shutil.copy(custom_path, outdir / filename)
@@ -36,8 +39,11 @@ def param_mdp(logger, filename: str, outdir: Path, custom_path: Path = None):
         shutil.copy(Path(f"scripts/md02/{filename}"), outdir / filename)
         logger.debug(f"No custom parameter file provided for {filename}. Using default.")
 
-# Helper to read last N lines of the file (adapted from GeeksforGeeks)
 def LastNlines(fname, N):
+    """
+    Helper to read last N lines of the file 
+    (adapted from GeeksforGeeks)
+    """
     lines = []
     with open(fname) as file:
         for line in (file.readlines()[-N:]):
@@ -45,6 +51,13 @@ def LastNlines(fname, N):
     return lines
 
 def check_finished(step_short: str, outdir: Path):
+    """
+    Check .gro and .log files to check if a mdrun completed successfully.
+
+    Arguments:
+        stepshort : Short name of the step, e.g. em, nvt, npt, md.
+        outdir    : Path to the directory with the MD results (e.g. rep1/gromacs).
+    """
     if (outdir / f"{step_short}.gro").is_file() and (outdir / f"{step_short}.log").is_file() and "Finished mdrun" in " ".join(LastNlines(outdir / f"{step_short}.log", 20)):
         return True
     else:
@@ -56,16 +69,32 @@ def log_process_output(process, step_name, logger):
     elif process.stdout:
         logger.debug(f"{step_name} output:\n {process.stdout}")   
 
-# to check the step outputs.
+
 def check_step(logger, step_short: str, step_name: str, outdir: Path):
+    """
+    Log step completion. 
+
+    Arguments:
+        logger        : Logger object.
+        stepshort : Short name of the step, e.g. em, nvt, npt, md.
+        step_name : Long name of the step, e.g. energy minimization.
+        outdir    : Path to the directory with the MD results (e.g. rep1/gromacs).
+    """
     if check_finished(step_short, outdir):
         logger.info(f"{step_name} completed.")
     else:
         logger.error(f"{step_name} failed. Check {outdir}/{step_short}.log for details.")
         sys.exit(1)
 
-def get_grid_size(logger, stage:str, dump):    
-    # Parse separate fourier variables (your format)
+def get_grid_size(logger, stage:str, dump): 
+    """ 
+    Get fourier grid dimensions and use them to compute the box size.
+
+    Arguments:
+        logger  : Logger object.
+        dump    : gmx dump output from tpr file.
+    """   
+    # Parse separate fourier variables
     fourierspacing_match = re.search(r'fourierspacing\s*=\s*([\d.]+)', dump)
     fourier_nx_match = re.search(r'fourier-nx\s*=\s*(\d+)', dump)
     fourier_ny_match = re.search(r'fourier-ny\s*=\s*(\d+)', dump)
@@ -90,16 +119,32 @@ def get_grid_size(logger, stage:str, dump):
     return box_nm
 
 def get_natoms(logger, dump):
+    """
+    Extract the number of atoms from a GROMACS dump output.
+
+    Arguments:
+        logger  : Logger object.
+        dump    : gmx dump output from tpr file.
+
+    Returns:
+        natoms  : Number of atoms parsed from the dump. Defaults to 10000 if not found.
+    """
     natoms_match = re.search(r'natoms\s*=\s*(\d+)', dump)
     natoms = int(natoms_match.group(1)) if natoms_match else 10000
     logger.debug(f"Parsed number of atoms: {natoms}")
     return natoms
 
 def get_mincellsize(logger, logfile: Path):
-    """Extract minimum cell size from EM log"""
+    """
+    Extract minimum cell size from EM log.
+    
+    Arguments:
+        logger  : Logger object.
+        logfile : mdrun log file from an MD step (usually EM)
+    """
 
     if not logfile.is_file():
-        logger.warning(f"EM log file '{logfile}' not found. Cannot extract minimum cell size for scaling decisions.")
+        logger.warning(f"Log file '{logfile}' not found. Cannot extract minimum cell size for scaling decisions.")
         return None
 
     with logfile.open('r') as f:
@@ -132,6 +177,27 @@ def get_mincellsize(logger, logfile: Path):
     return None
 
 def get_scaling(logger, tpr_file: Path, stage: str, total_cores = None):
+    """
+    Determine optimal parallelization settings (ntmpi and ntomp) for a GROMACS simulation stage
+    based on available computational resources and system properties.
+
+    This function parses the input .tpr file using `gmx dump` to extract information such as
+    the simulation box size and number of atoms, and optionally uses the minimum cell size
+    from the energy minimization log. It then computes a safe and efficient combination of
+    MPI ranks (ntmpi) and OpenMP threads (ntomp) to balance performance and avoid domain
+    decomposition errors.
+
+    Arguments:
+        logger       : Logger object for debug output.
+        tpr_file     : Path to the GROMACS .tpr file.
+        stage        : Simulation stage (e.g., "em", "nvt", "npt", "md").
+        total_cores  : Total number of CPU cores available (default: auto-detected).
+
+    Returns:
+        ntmpi        : Number of MPI ranks.
+        ntomp        : Number of OpenMP threads per rank.
+    """
+    
     if total_cores is None:
         total_cores = get_total_cores()
     logger.debug(f"Determining scaling for {stage} stage with total available cores: {total_cores}")

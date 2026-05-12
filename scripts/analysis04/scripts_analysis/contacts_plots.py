@@ -24,6 +24,18 @@ def label_sort_key(label):
             return (label, 0)         # names last
 
 def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, group1: str, group2: str, outfiles: dict):
+    """
+    Plot pairwise contact prediction results.
+
+    Arguments:
+        logfile   : Path to the log file.
+        universe  : Path to the Universe object generated with MDAnalysis, containing the processed MD system.
+        pairs_csv : Path to the .csv file with the pairwise contact results.
+        group1            : First atom group for hydrogen bond analysis.
+        group2            : Second atom group for hydrogen bond analysis.
+        outfiles    : Dictionary of the files to be generated, assigned to labels/keys.
+    """
+
     # Initialize logger
     logger = setup_logger("analysis", logfile)
     logger.debug("Parsing contact analysis results.")

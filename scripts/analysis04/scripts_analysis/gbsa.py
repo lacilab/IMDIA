@@ -12,6 +12,7 @@ from scripts.utils.helpers import setup_logger
 from scripts.utils.group_index import group_index
 
 def prep_mmpbsain(logger, infile, start, stop, dna, phos, ffs):
+    """ Prepare mmpbsa.in parameter file for GBSA. """
     # get GROMACS path with which gmx. Take part before "bin"
     gmx_path = shutil.which("gmx").split("/gmx")[0]
     logger.debug(f"Detecting GROMACS path using 'which gmx' command: {gmx_path}")
@@ -66,6 +67,34 @@ def main(logfile: str = None, scriptdir: str = None, gmxdir: str = None, outdir:
          start: int = None, stop: int = None, 
          dna: bool = False, phos: bool = False,
          index_group1: str = None, index_group2: str = None, ffs: list = None):
+
+    """
+    Run MM/GBSA free binding energy calculations on MD trajectories.
+
+    Arguments:
+        logfile        : Path to the log file.
+        scriptdir      : Directory containing mmpbsa.in.
+        gmxdir         : Path to the directory with the MD results (e.g. rep1/gromacs).
+        outdir         : Output directory for MM/GBSA results (e.g. rep1/analysis/gbsa).
+
+        index          : GROMACS index file (.ndx) defining atom groups.
+        tprfile        : GROMACS run input file (.tpr) containing topology and run parameters.
+        xtcfile        : GROMACS trajectory file (.xtc) containing trajectory data.
+        topfile        : GROMACS topology file (.top).
+
+        cores          : Number of CPU cores used for parallel computation.
+
+        start          : Starting frame index for trajectory analysis.
+        stop           : Ending frame index for trajectory analysis.
+
+        dna            : True if DNA is present in the system.
+        phos           : True if phosphorylated residues are present.
+
+        index_group1   : First index group for binding energy calculation.
+        index_group2   : Second index group for binding energy calculation.
+
+        ffs            : List of force fields used in the MM/GBSA setup.
+    """
     # Initialize logger
     logger = setup_logger("analysis", logfile)
     logger.debug("Starting GBSA analysis")

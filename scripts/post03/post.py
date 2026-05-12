@@ -7,11 +7,22 @@ from scripts.utils.helpers import setup_logger
 from scripts.utils.group_index import group_index
 
 def main(logfile: Path, repdir: Path, dna: bool = False, phos: bool = False):
-    # parser = argparse.ArgumentParser(description="Perform MD simulation steps: minimization, NVT, NPT, and production MD.")
-    # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
-    # parser.add_argument('--repdir', '-n', dest='repdir', type=str, default=None, help='Directory containing the MD results for this replicate.')
-    # parser.add_argument('--dna', dest='with_dna', action='store_true', help='Use if the system contains DNA. Adds DNA.bsc1 force field.')
-    # parser.add_argument('--phos', dest='with_phosphate', action='store_true', help='Use if the system contains phosphorylated residues.')
+    """
+    Post-process MD results to make them ready for analysis and visualization.
+
+    Steps:
+       1.Remove PBC artifacts.
+       2.Cluster complex.
+       3.Fit the system to reference structure (using Backbone).
+       4.Cleanup intermediate files.
+       5.Output post-processed trajectories and PDBs at frame 10.
+
+    Arguments:
+       logfile : Path to the log file.
+       repdir  : Directory containing the MD results for this replicate.
+       dna     : True if the system contains DNA.
+       phos    : True if the system contains phosphorylated residues.
+    """
 
     # Initialize logger
     logger = setup_logger("post", logfile)

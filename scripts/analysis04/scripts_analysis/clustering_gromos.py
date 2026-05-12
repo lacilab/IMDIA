@@ -4,11 +4,18 @@ from pathlib import Path
 import subprocess
 from scripts.utils.helpers import setup_logger
 
-# outdir OUTDIR   Output directory for GROMACS files   (required)
-# tpr TPRFILE     TPR file for the system               (required)
-# xtc XTCFILE     XTC file for the system               (required)
 
 def main(logfile: str, outdir: Path, tpr: Path, xtc: Path):
+    """
+    Run clustering with gromos algorithm in GROMACS.
+
+    Arguments:
+        logfile   : Path to the log file.
+        outdir    : Output directory for results (e.g. rep1/analysis/clust).
+        tpr       : GROMACS run input file (.tpr) containing topology and run parameters.
+        xtc       : GROMACS trajectory file (.xtc) containing atomic coordinates over time.
+    """
+
     # Initialize logger
     logger = setup_logger("analysis", logfile) 
 

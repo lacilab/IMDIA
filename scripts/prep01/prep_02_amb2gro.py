@@ -10,16 +10,17 @@ from scripts.utils.helpers import setup_logger
 from pathlib import Path
 
 def main(logfile: Path, prmtop: Path, inpcrd: Path, top: Path, gro: Path):
-    # parser = argparse.ArgumentParser(description="Convert Amber files to GROMACS format.")
-    # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
-    # parser.add_argument("--prmtop", "-p", dest="prmtop", type=str, required=True,
-    #                     help="Prmtop file")
-    # parser.add_argument("--inpcrd", "-c", dest="inpcrd", type=str, required=True,
-    #                     help="Inpcrd file")
-    # parser.add_argument("--top", "-t", dest="top", type=str, required=True,
-    #                     help="GROMACS top file")
-    # parser.add_argument("--gro", "-g", dest="gro", type=str, required=True,
-    #                     help="GROMACS gro file")
+
+    """
+    Convert Amber files to GROMACS format.
+
+    Arguments:
+        logfile     : Path to the log file
+        prmtop      : Path to the Prmtop file
+        inpcrd      : Path to the Inpcrd file 
+        top         : Path to the GROMACS topology (.top) file 
+        gro         : Path to the GROMACS structure (.gro) file
+    """
  
     gmxdir = top.parent
 

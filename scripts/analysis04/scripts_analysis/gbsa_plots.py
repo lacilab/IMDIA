@@ -58,6 +58,16 @@ def load_delta_decomp(logger, energyfile: Path):
     return df
 
 def main(logfile: str, energy_total: Path, energy_decomp: Path, offsets: dict, outdir: Path):
+    """ 
+    Plot GBSA result.
+
+    Arguments:
+        logfile        : Path to the log file.
+        energy_total   : Path to .csv file with total energy MM/GBSA results, e.g. rep1/analysis/gbsa/FINAL_ENERGY.csv
+        energy_decomp  : Path to .csv file with MM/GBSA results decomposed by residue, e.g. rep1/analysis/gbsa/FINAL_ENERGY_DECOMP.csv
+        offsets        : Dictionary specifying residue numbering offsets per chain.
+        outdir         : Output directory for MM/GBSA results (e.g. rep1/analysis/gbsa)
+    """
     # Initialize logger
     logger = setup_logger("analysis", logfile)
     logger.debug("Plotting GBSA results")

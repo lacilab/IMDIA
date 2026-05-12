@@ -12,7 +12,8 @@ from scripts.md02 import md
 
 
 def main(pipe: Pipeline, steps: list):
-
+    """ Perform MD simulation steps: minimization, NVT, NPT, and production MD. """ 
+    
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     logdir = pipe.paths.mutdir / "logs"
     logdir.mkdir(parents=True, exist_ok=True)  # Ensure dir exists

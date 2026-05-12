@@ -16,7 +16,16 @@ def log_process_output(logger, process, step_name):
         logger.debug(f"{step_name} output:\n {process.stdout}")   
 
 def get_name_main(logger, structurefile: Path = None, dna: bool = False, phos: bool = False):
-    """Build the main group name based on the presence of DNA, phosphate groups, and metal ions in the structure file"""
+    """
+    Build the main group name based on the presence of DNA, phosphate groups, and metal ions in the structure file.
+    
+    Arguments:
+        logger        : Logger object.
+        structurefile : Path to PDB structure file.
+        dna           : True if DNA is present in the system.
+        phos          : True if the system contains phosphorylated residues.
+    """
+    
     # Identify metals from list present in the structure file
     METALS = ['ZN','MG','FE2','FE3','CA','MN','CU','NI','CO','CD','PB','HG','LI']
 
@@ -52,7 +61,14 @@ def get_name_main(logger, structurefile: Path = None, dna: bool = False, phos: b
     return group_main, group_protein, present_metals, present_nucleotides
 
 def targets_in_index(logger, gmxdir: Path, target_groups: list[str]):
-    """Check if an index file with the target groups already exists"""
+    """
+    Check if an index file with the target groups already exists.
+    
+    Arguments:
+        logger        : Logger object.
+        gmxdir        : Path to the directory with the MD results (e.g. rep1/gromacs).
+        target_groups : List of target groups.
+    """
     targets_comp = target_groups.copy()
     targets_comp.append('Water_Ions')
     index_ori = (gmxdir / "index.ndx")
@@ -73,7 +89,20 @@ def targets_in_index(logger, gmxdir: Path, target_groups: list[str]):
             return False
         
 def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, phos: bool, mtl: list[str], nt: list[str], chains=None, outfile: str = "index.ndx"):
-    """Create an index file with the target groups"""
+    """
+    Create an index file with the target groups.
+    
+    Arguments:
+        logger        : Logger object.
+        gmxdir        : Path to the directory with the MD results (e.g. rep1/gromacs).
+        structurefile : Path to PDB structure file.
+        dna           : True if DNA is present in the system.
+        phos          : True if the system contains phosphorylated residues.
+        mtl           : List of unique metals present in the system.
+        nt            : List of unique nucleotides present in the system.
+        chains        : List of chain IDs for which to create groups (e.g. ['A', 'B'])
+        outfile       : Path to output .ndx file.
+    """
 
     PHOSRES = ["PTR", "TPO", "SEP"]
 
@@ -205,7 +234,18 @@ def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, phos
     return 
 
 def group_index(gmxdir: Path = None, logfile: Path = None, logname: str = 'log', structurefile: Path = None, dna: bool = False, phos: bool = False):
-        
+    """
+    Get the group name of the main complex, insert it into .mdp parameter files 
+    and call create_index_file to generate index with required groups.
+    
+    Arguments:
+        gmxdir        : Path to the directory with the MD results (e.g. rep1/gromacs).
+        logfile   : Path to the log file.
+        logname   : Name of the logger.
+        structurefile : Path to PDB structure file.
+        dna           : True if DNA is present in the system.
+        phos          : True if the system contains phosphorylated residues.
+    """    
     ##### INITIALIZE LOG
     logger = setup_logger(logname, logfile)
 
@@ -233,6 +273,22 @@ def group_index(gmxdir: Path = None, logfile: Path = None, logname: str = 'log',
 
 def group_index_interactions(gmxdir: str = None, logfile: str = None, logname: str = 'log', structurefile: str = None, indexfile: str = None,
                              group1: str = None, group2: str = None, dna: bool = False, phos: bool = False, chains: dict = None): 
+    """
+    Get the group name of the main complex, insert it into .mdp parameter files 
+    and call create_index_file to generate index with required groups.
+    
+    Arguments:
+        gmxdir        : Path to the directory with the MD results (e.g. rep1/gromacs).
+        logfile   : Path to the log file.
+        logname   : Name of the logger.
+        structurefile : Path to PDB structure file.
+        indexfile : Path to output .ndx file to generate, e.g. interaction_group1_group2.ndx
+        group1    : First atom group for hydrogen bond analysis.
+        group2    : Second atom group for hydrogen bond analysis.
+        dna           : True if DNA is present in the system.
+        phos          : True if the system contains phosphorylated residues.
+        chains          : Dictionary of original ID chains and corresponding updated IDs, and offsets.
+    """    
     
     ##### INITIALIZE LOG
     logger = setup_logger(logname, logfile)

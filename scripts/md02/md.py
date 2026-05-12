@@ -15,6 +15,29 @@ def setup(logfile: Path, gmxdir: Path, outdir: Path, repn: int,
          ntmpi: int, ntomp: int, nb: str, pme: str, npme: int, 
          ngpu: int, gputasks: str, em: Path, nvt: Path, npt: Path, md: Path):
 
+    """
+    Set up the resources and files to be used in MD.
+
+    Arguments:
+        logfile  : Path to the log file.
+        gmxdir   : Directory containing input GROMACS files (e.g., .gro, .top).
+        outdir   : Output directory for simulation results.
+        repn     : Replicate number.
+
+        ntmpi    : Number of MPI ranks (process-level parallelism).
+        ntomp    : Number of OpenMP threads per MPI rank (thread-level parallelism).
+        nb       : Non-bonded interaction scheme (e.g., "cpu", "gpu").
+        pme      : PME (Particle Mesh Ewald) electrostatics method execution (e.g., "cpu", "gpu").
+        npme     : Number of PME-only ranks (used for load balancing in parallel runs).
+        ngpu     : Number of GPUs to use.
+        gputasks : Mapping of GPU tasks to ranks (controls GPU assignment, e.g. "0011").
+
+        em       : Path to energy minimization .mdp file.
+        nvt      : Path to NVT equilibration .mdp file.
+        npt      : Path to NPT equilibration .mdp file.
+        md       : Path to production MD .mdp file.
+    """
+
     ##### INITIALIZE LOG
     logger = setup_logger("md", logfile)
 
@@ -82,6 +105,15 @@ def setup(logfile: Path, gmxdir: Path, outdir: Path, repn: int,
 ##### MD STEPS #####
 ### 1. Energy Minimization
 def minimization(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
+    """
+    Run energy minimization (EM) and output sanity check plots.
+
+    Arguments:
+        logfile  : Path to the log file.
+        gmxdir   : Directory containing input GROMACS files (e.g., .gro, .top).
+        outdir   : Output directory for simulation results.
+        flag_nb_gpu : Non-bonded interaction scheme (e.g. ["-nb", "gpu"])
+    """
     
     ##### INITIALIZE LOG
     logger = setup_logger("md", logfile)
@@ -99,7 +131,6 @@ def minimization(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
             "-po", outdir / "em_out.mdp",
             "-quiet", "-maxwarn", "1"]
         subprocess.run(cmd, check=True, text=True)
-        # log_process_output(process, "gmx grompp EM")
 
         # Calculate resource use
         em_ntmpi, em_ntomp = get_scaling(logger, outdir / "em.tpr", 'em')
@@ -107,7 +138,6 @@ def minimization(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
 
         cmd = ["gmx", "mdrun", "-v", "-deffnm", outdir / "em", "-ntmpi", str(em_ntmpi), "-ntomp", str(em_ntomp), "-quiet"] + flag_nb_gpu
         subprocess.run(cmd, check=True, text=True)
-        # log_process_output(process, "gmx mdrun EM")
         check_step(logger, "em", "Energy Minimization", outdir)
 
     # Check EM convergence and energy
@@ -162,6 +192,15 @@ def minimization(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
 
 
 def equilibration(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
+    """
+    Run equilibration (NVT and NPT) and output sanity check plots.
+
+    Arguments:
+        logfile  : Path to the log file.
+        gmxdir   : Directory containing input GROMACS files (e.g., .gro, .top).
+        outdir   : Output directory for simulation results.
+        flag_nb_gpu : Non-bonded interaction scheme (e.g. ["-nb", "gpu"])
+    """
     
     ##### INITIALIZE LOG
     logger = setup_logger("md", logfile)
@@ -312,6 +351,20 @@ def equilibration(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
 
 
 def production(logfile: Path, gmxdir: Path, outdir: Path, ntmpi: int, ntomp: int, flag_nb_gpu: list, flag_pme_gpu: list, flag_gpu_tasks: list):
+    """
+    Run production molecular dynamics (MD) and output sanity check plots.
+
+    Arguments:
+        logfile        : Path to the log file.
+        gmxdir         : Directory containing input GROMACS files (e.g., .gro, .top).
+        outdir         : Output directory for simulation results.
+
+        ntmpi          : Number of MPI ranks (process-level parallelism).
+        ntomp          : Number of OpenMP threads per MPI rank (thread-level parallelism).
+        flag_nb_gpu    : Non-bonded interaction scheme (e.g. ["-nb", "gpu"])
+        flag_pme_gpu   : PME (Particle Mesh Ewald) electrostatics method execution e.g. ["-pme", "gpu"])
+        flag_gpu_tasks : Mapping of GPU tasks to ranks (controls GPU assignment, e.g. ["-gputasks", "0011"]).
+    """
     
     ##### INITIALIZE LOG
     logger = setup_logger("md", logfile)

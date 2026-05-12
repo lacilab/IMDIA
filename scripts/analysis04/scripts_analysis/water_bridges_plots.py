@@ -7,6 +7,18 @@ from matplotlib import pyplot as plt
 from scripts.utils.helpers import setup_logger
 
 def main(logfile, wb_csv, wb_ext_csv, outfiles, group1, group2, chains):
+    """
+    Plot water-bridge analysis results between groups.
+
+    Arguments:
+        logfile      : Path to the log file.
+        wb_csv       : Path to .csv file containing raw water-bridge results.
+        wb_ext_csv   : Path to .csv file with extended water bridge results.
+        outfiles     : Dictionary of the files to be generated, assigned to labels/keys.
+        group1       : First atom group for hydrogen bond analysis.
+        group2       : Second atom group for hydrogen bond analysis.
+        chains       : Dictionary of original ID chains and corresponding updated IDs, and offsets.
+    """
 
     # Initialize logger
     logger = setup_logger("analysis", logfile)

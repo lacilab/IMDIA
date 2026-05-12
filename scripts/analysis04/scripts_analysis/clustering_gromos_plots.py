@@ -8,13 +8,17 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from scripts.utils.helpers import setup_logger
 
-# Arguments
-# parser = argparse.ArgumentParser(description="Project gromos clustering on GROMACS PCA data.")
-# parser.add_argument("-s", "--timescale", type=str, help="Path to the 2D projection timescale of the PCA (CSV file).")
-# parser.add_argument("-n","--index", type=str, help="Path to the clusters index file (NDX file).")
-# parser.add_argument("-d", "--outdir", type=str, help="Output directory")
 
 def main(logfile: str, csv: Path, ndx: Path, outdir: Path):
+    """
+    Plot gromos clustering results.
+
+    Arguments:
+        logfile   : Path to the log file.
+        csv       : Path to .csv file containing PCA results.
+        ndx       : Path to GROMACS .ndx file generating during gromos clustering (e.g. analysis/clust/gromos_clusters.ndx)
+        outdir    : Output directory for results (e.g. rep1/analysis/clust).
+    """
 
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)

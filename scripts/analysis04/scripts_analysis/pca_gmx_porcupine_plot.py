@@ -8,6 +8,17 @@ import subprocess
 from scripts.utils.helpers import setup_logger
 
 def main(logfile : str = None, tprfile : Path = None, xtcfile : Path = None, scriptdir: Path = None, outdir : Path = None):
+    """
+    Run principal component analysis (PCA) on MD results using GROMACS.
+
+    Arguments:
+        logfile   : Path to the log file.
+        tprfile   : GROMACS run input file (.tpr) containing topology and run parameters.
+        xtcfile   : GROMACS trajectory file (.xtc) containing atomic coordinates over time.
+        scriptdir : Path to the directory containing scripts porcupine.pml and modevectors.py.
+        outdir    : Output directory for results (e.g. rep1/analysis/pca).
+   """
+
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)
     logger.debug(f"The working directory is: {os.getcwd()}")

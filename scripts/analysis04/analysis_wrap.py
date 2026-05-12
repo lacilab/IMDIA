@@ -7,7 +7,8 @@ from scripts.pipeconfig import Pipeline
 from scripts.analysis04 import analysis
 
 def main(pipe: Pipeline):
-
+    """ Run analysis module. """
+    
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     logdir = pipe.paths.mutdir / "logs"
     logdir.mkdir(parents=True, exist_ok=True)  # Ensure dir exists

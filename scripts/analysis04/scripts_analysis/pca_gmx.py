@@ -8,13 +8,15 @@ import pandas as pd
 from scripts.utils.helpers import setup_logger
 
 def main(logfile: Path, outdir: Path, tpr: Path, xtc: Path):
-   """ Usage: pca_gmx.sh --outdir OUTDIR --tpr TPRFILE --xtc XTCFILE
+   """
    Run principal component analysis (PCA) on MD results using GROMACS.
-   Options:
-   --outdir OUTDIR   Output directory for GROMACS files   (required)
-   --tpr TPRFILE     TPR file for the system               (required)
-   --xtc XTCFILE     XTC file for the system               (required)
-   -h, --help        Show this help message and exit"""
+
+   Arguments:
+      logfile  : Path to the log file.
+      outdir   : Output directory for results (e.g. rep1/analysis/pca).
+      tpr  : GROMACS run input file (.tpr) containing topology and run parameters.
+      xtc  : GROMACS trajectory file (.xtc) containing atomic coordinates over time.
+   """
 
    if not logfile.is_file():
       print(f"Log file {logfile} does not exist.")
@@ -31,17 +33,10 @@ def main(logfile: Path, outdir: Path, tpr: Path, xtc: Path):
       logger.error(f"XTC file {xtc} does not exist.")
       sys.exit(1)
 
-   # 1: build and diagonalize the covariance matrix
+   # Build and diagonalize the covariance matrix
    cmd = ["gmx", "covar", "-f", str(xtc), "-s", str(tpr), "-o", str(outdir / "eigenval.xvg"), 
           "-v", str(outdir / "eigenvec.trr"), "-av", str(outdir / "average.pdb"), "-l", str(outdir / "covar.log"), "-quiet"]
    subprocess.run(cmd, check=True, text=True, input="C-alpha\nC-alpha\n")
-   
-   # 2: project an MD trajectory along the first 2 PCs
-   # cmd = ["gmx", "anaeig", "-f", str(xtc), 
-   #        "-v", str(outdir / "eigenvec.trr"), "-eig", str(outdir / "eigenval.xvg"), "-s", str(tpr), 
-   #        "-proj", str(outdir / "proj_1_2.xvg"), "-b", "0", "-first", "1", "-last", "2", "-quiet"]
-   # subprocess.run(cmd, check=True, text=True, input="C-alpha\nC-alpha\n")
-   # logger.info(f"Generated PCA projection of PC1 and PC2: {outdir / 'proj_1_2.xvg'}")
 
    # Analyze cosine content
    cmd = ["gmx", "anaeig", "-f", str(xtc), 

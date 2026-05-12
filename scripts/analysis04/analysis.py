@@ -10,18 +10,18 @@ import yaml
 from scripts.utils.helpers import setup_logger
 
 def main(logfile: Path, datadir: Path, configfile: Path, pdbpath: Path, cores: int = None, rules: list[str] = None, unlock: bool = False):
-    # parser = argparse.ArgumentParser(description="Analyse MD simulation results.")
-    # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
-    # parser.add_argument('--datadir', '-d', dest='datadir', default=None, help='Path to the data directory.')
-    # parser.add_argument('--configfile', '-c', dest='configfile', type=str, default=None, 
-    #                     help='Path to the YAML configuration file to be used in snakefile.')
-    # parser.add_argument('--cores', '-n', dest='cores', default="1", 
-    #                     help='Number of cores to use for analysis. Default: all available CPUs.')
-    # parser.add_argument('--rules', dest='rules', nargs='+', default=None, 
-    #                     help='Snakefile rules to be executed.')
-    # parser.add_argument('--ffs', dest='ffs', type=str, default=None,
-    #                     help='Force fields used in GBSA.')
-    # parser.add_argument('--unlock', dest='unlock', action='store_true', help='Unlock snakemake workflow if it is locked.')
+    """
+    Analyse MD results using a Snakemake-based workflow.
+
+    Arguments:
+        logfile    : Path to the log file.
+        datadir    : Path to the directory containing simulation data.
+        pdbpath    : Path to the starting PDB structure.
+        configfile : Path to the YAML configuration file used by the Snakemake workflow.
+        cores      : Number of CPU cores to use.
+        rules      : List of Snakemake rules to execute.
+        unlock     : Unlock Snakemake workflow if it is locked.
+    """
 
     # Initialize logger
     logger = setup_logger("analysis", logfile)
@@ -90,12 +90,6 @@ def main(logfile: Path, datadir: Path, configfile: Path, pdbpath: Path, cores: i
             "--config",
             *config_args
         ]
-
-    # process = subprocess.run(cmd, text=True, check=True, capture_output=True)
-    # if process.returncode != 0:
-    #     logger.error(f"snakemake error:\n {process.stderr}")
-    # elif process.stdout:
-    #     logger.debug(f"snakemake output:\n {process.stdout}")  
 
     subprocess.run(cmd, check=True)
 
