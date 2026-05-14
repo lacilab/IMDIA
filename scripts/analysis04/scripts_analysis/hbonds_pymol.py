@@ -24,13 +24,13 @@ def main(logfile: str = None, hbonds_ext: str = None, hbonds_pymol: str = None):
     hbonds_top = hbonds_df[hbonds_df['frame%'] > 10]
 
     # 1. Extract unique combinations for acceptors and donors
-    acceptor_combinations = hbonds_top[['acceptor_section', 'acceptor_res_num', 'acceptor_type', 'acceptor_chain']].drop_duplicates()
-    donor_combinations = hbonds_top[['donor_section', 'donor_res_num', 'donor_type', 'donor_chain']].drop_duplicates()
+    acceptor_combinations = hbonds_top[['acceptor_section', 'acceptor_res_num_adjusted', 'acceptor_type', 'acceptor_chain']].drop_duplicates()
+    donor_combinations = hbonds_top[['donor_section', 'donor_res_num_adjusted', 'donor_type', 'donor_chain']].drop_duplicates()
 
     # Combine all unique residues (acceptors and donors might overlap)
     all_residues = pd.concat([
-        acceptor_combinations.rename(columns={'acceptor_res_num': 'res_num', 'acceptor_chain': 'chain'}),
-        donor_combinations.rename(columns={'donor_res_num': 'res_num', 'donor_chain': 'chain'})
+        acceptor_combinations.rename(columns={'acceptor_res_num_adjusted': 'res_num', 'acceptor_chain': 'chain'}),
+        donor_combinations.rename(columns={'donor_res_num_adjusted': 'res_num', 'donor_chain': 'chain'})
     ]).drop_duplicates()
 
 
