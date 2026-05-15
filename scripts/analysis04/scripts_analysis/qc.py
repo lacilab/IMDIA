@@ -259,14 +259,14 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
                 else:
                     logger.warning(f"Chain {chain} not found in rmsf_all.")
                 # Color by protein domains
-                if group in domains.keys():
+                if j == 0 and group in domains.keys():
                     group_domains = [domain for domain in domains[group]]
                     for domain in group_domains:
                         start = domain['start']
                         end = domain['end']
                         axes[i].axvspan(start, end, zorder=0, alpha=0.2, color=domain['color'], label=domain['label'])
-                if j == 0:
-                    axes[i].legend()
+            axes[i].legend()
+            axes[i].grid(True, alpha=0.3)
             axes[i].set_xlabel('Residue number (adjusted)')
             axes[i].set_ylabel('RMSF (Å)')
             axes[i].set_title(f'RMSF of chain group {group}')
