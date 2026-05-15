@@ -114,6 +114,7 @@ The following parameters are parsed from ```params.yml```:
 | phos           | bool | Specify if the protein contains phosphorilated residues.                  | prep, md, post, an |        | False   | True  |
 | range_a        | str  | Range of residues in DNA chain A that are paired with chain B. 0 indexed. | prep |        | [0,-1] (full chain)  | [2,-1]  |
 | range_b        | str  | Range of residues in DNA chain B that are paired with chain A. 0 indexed. | prep |        | [0,-1] (full chain)  | [2,-2]  |
+| md_time: 2000  | int  | Duration of the MD production simulation in ps (overwrites md.mdp). If the MD was previously ran and did not reach this target duration, the simulation will be extended from the last checkpoint, independently of whether it was previously completed or not. Bear in mind that an md_time greater than the latest checkpoint will cause an error.       | md | | | 10000 | 20000 (for 20 ns) |
 | em             | str  | Path to the .mdp file with custom energy minimization parameters          | md |        | None (use default) | myscripts/em.mdp |
 | nvt            | str  | Path to the .mdp file with custom NVT equilibration parameters            | md |        | None (use default) | myscripts/nvt.mdp |
 | npt            | str  | Path to the .mdp file with custom NPT equilibration parameters            | md |        | None (use default) | myscripts/npt.mdp |

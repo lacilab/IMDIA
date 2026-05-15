@@ -237,3 +237,44 @@ def get_scaling(logger, tpr_file: Path, stage: str, total_cores = None):
        ntomp = max(1, total_cores // ntmpi)
        logger.debug(f"Calculated ntmpi {ntmpi} and ntomp {ntomp} based on box size {box_nm} and min cell size {mincellsize} for step {stage}.")
        return ntmpi, ntomp
+
+def log_subprocess(logger, process):
+    """
+    Stream and log output from a subprocess in grouped blocks.
+
+    Reads lines from the subprocess stdout in real time, buffering them
+    and emitting them to the logger as multi-line messages separated by
+    blank lines. This avoids fragmented log entries and preserves the
+    structure of program output (e.g., GROMACS logs).
+
+    Args:
+        logger (logging.Logger): Logger instance used to record the output.
+        process (subprocess.Popen): Running subprocess with stdout=PIPE
+            and text mode enabled.
+
+    Raises:
+        subprocess.CalledProcessError: If the subprocess exits with a
+            non-zero return code.
+    """
+    buffer = []
+
+    for line in process.stdout:
+        stripped = line.rstrip()
+
+        # Group blocks separated by empty lines
+        if stripped == "":
+            if buffer:
+                message = "\n".join(buffer)
+                logger.debug("\n" + message)
+                buffer = []
+        else:
+            buffer.append(stripped)
+
+    # flush remaining buffer
+    if buffer:
+        logger.debug("\n" + "\n".join(buffer))
+
+    process.wait()
+
+    if process.returncode != 0:
+        raise subprocess.CalledProcessError(process.returncode, process.args)

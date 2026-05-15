@@ -23,6 +23,10 @@ repn: [1, 2]
 # npt: 'myscripts/npt.mdp'
 # md: 'myscripts/md.mdp'
 
+# Duration of the MD production simulation in ps (overwrites md.mdp)
+# 1 ns = 1000 ps
+# md_time: 100000
+
 ### MD computational resource use 
 # ntmpi: "2"
 # ntomp: "16"

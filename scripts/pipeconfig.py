@@ -23,6 +23,7 @@ class SystemConfig:
 
 @dataclass
 class RunConfig:
+    md_time: int
     ntmpi: int
     ntomp: int
     nb: str
@@ -107,6 +108,7 @@ class Pipeline:
         )
 
         run = RunConfig(
+            md_time=params.get("md_time", 10000), # Default duration 10 ns
             ntmpi=params.get("ntmpi", 0),
             ntomp=params.get("ntomp", 0),
             nb=params.get("nb", "auto"),
