@@ -74,62 +74,67 @@ def main(logfile : str =None, hbonds_parsed: str = None, hbonds_ext : str =None,
             )
             axes[i].legend()
         # If group is a predefined group (e.g., "Protein", "DNA")
-        elif group == "Protein" or group == "DNA":
+        elif group in ["Protein", "DNA"]:
             donor_df = hbonds_df[hbonds_df['donor_group'] == group]
             acceptor_df = hbonds_df[hbonds_df['acceptor_group'] == group]
+
             group_domains = group if group in domains.keys() else None
+
             chains_donor = donor_df['donor_chain'].unique().tolist()
             chains_acceptor = acceptor_df['acceptor_chain'].unique().tolist()
-            tab10_colors = plt.cm.tab10(np.linspace(0, 1, 10))  # Get all 10 colors
-            discrete_cmap = ListedColormap(tab10_colors[:max(len(chains_donor), len(chains_acceptor))])
-            axes[i].scatter(donor_df['donor_res_num_adjusted'], 
-                            donor_df['frame%'], 
-                            c=[chains_donor.index(chain) for chain in donor_df['donor_chain']], 
-                            cmap=discrete_cmap,  # ← Only first N colors
-                            s=30)
-            chain_idx_acceptor = [chains_acceptor.index(chain) for chain in acceptor_df['acceptor_chain']]
-            # Convert indices to RGBA colors (same length as data points)
-            if len(chains_acceptor) == 1:
-                norm_indices = np.array([0])
-            else:
-                idx = [chains_acceptor.index(chain) for chain in acceptor_df['acceptor_chain']]
-                norm_indices = np.array(idx) / (len(chains_acceptor) - 1)
-            edge_colors = discrete_cmap(norm_indices)
-            axes[i].scatter(
-                acceptor_df['acceptor_res_num_adjusted'], 
-                acceptor_df['frame%'],
-                facecolors='none', 
-                edgecolors=edge_colors,
-                marker='o', 
-                s=30
-            )
-            # Legend for BOTH donors (filled) and acceptors (outlines)
-            legend_elements = []
-            logger.debug(f"Range: {len(chains_donor)} for donors, {len(chains_acceptor)} for acceptors")
-            for i in range(len(chains_donor)):
-                legend_elements.append(Line2D([0], [0], marker='o', color='w', 
-                                            markerfacecolor=f'C{i}',
-                                            markersize=8, 
-                                            label=f'Donor Chain {chains_donor[i]}'))
 
-            # Acceptor chains (outline markers)  
-            for i in range(len(chains_acceptor)):
-                legend_elements.append(Line2D([0], [0], marker='o', color='w', 
-                                            markerfacecolor='none',
-                                            markeredgecolor=f'C{i}', markeredgewidth=2,
-                                            markersize=8, 
-                                            label=f'Acceptor Chain {chains_acceptor[i]}'))
+            # Consistent color mapping for BOTH donor and acceptor
+            tab10_colors = plt.cm.tab10.colors
+            all_chains = sorted(set(chains_donor) | set(chains_acceptor))
 
-            axes[i].legend(handles=legend_elements, ncol=1)
-        axes[i].set_xlabel('Residue Number (Adjusted)')
-        axes[i].set_ylabel('Frame %')
-        axes[i].set_title(f'Hydrogen Bonds for {group}')
-        axes[i].grid(True, alpha=0.3)
+            chain_to_color = {
+                chain: tab10_colors[i % 10]
+                for i, chain in enumerate(all_chains)
+            }
+
+            # -------------------
+            # Donors
+            # -------------------
+            for chain in chains_donor:
+                mask = donor_df['donor_chain'] == chain
+                color = chain_to_color[chain]
+
+                axes[i].scatter(
+                    donor_df.loc[mask, 'donor_res_num_adjusted'],
+                    donor_df.loc[mask, 'frame%'],
+                    facecolors=color,
+                    edgecolors=color,
+                    marker='o',
+                    s=30,
+                    label=f"Donor {chain}"
+                )
+
+            # -------------------
+            # Acceptors
+            # -------------------
+            for chain in chains_acceptor:
+                mask = acceptor_df['acceptor_chain'] == chain
+                color = chain_to_color[chain]
+
+                axes[i].scatter(
+                    acceptor_df.loc[mask, 'acceptor_res_num_adjusted'],
+                    acceptor_df.loc[mask, 'frame%'],
+                    facecolors='none',
+                    edgecolors=color,
+                    marker='o',
+                    s=30,
+                    label=f"Acceptor {chain}"
+                )
+
         # Color by domain if available
         if group_domains and group_domains in domains.keys():
             for domain in domains[group_domains]:
                 axes[i].axvspan(domain['start'], domain['end'], zorder=0, alpha=0.2, color=domain['color'], label=domain['label'])
-
+        axes[i].set_xlabel('Residue Number (Adjusted)')
+        axes[i].set_ylabel('Frame %')
+        axes[i].set_title(f'Hydrogen Bonds for {group}')
+        axes[i].grid(True, alpha=0.3)
+        axes[i].legend()
     plt.tight_layout()
     plt.savefig(outfiles["hbonds_per_group"])
     plt.close()
@@ -158,12 +163,12 @@ def main(logfile : str =None, hbonds_parsed: str = None, hbonds_ext : str =None,
                     axes[i].set_ylabel('Frame %')
                     axes[i].set_title(f'Hydrogen Bonds for Chain {chain}')
                     axes[i].grid(True, alpha=0.3)
-                    axes[i].legend()
                     # Color by domain if available
                     chain_group = get_chaingroup(chain, chaingroups)
                     if chain_group and chain_group in domains.keys():
                             for domain in domains[chain_group]:
                                     axes[i].axvspan(domain['start'], domain['end'], zorder=0, alpha=0.2, color=domain['color'], label=domain['label'])    
+                    axes[i].legend()
                 plt.tight_layout()
                 plt.savefig(outfiles[f"hbonds_prot_chains"])
                 plt.close()
@@ -181,12 +186,12 @@ def main(logfile : str =None, hbonds_parsed: str = None, hbonds_ext : str =None,
                     axes[i].set_ylabel('Frame %')
                     axes[i].set_title(f'Hydrogen Bonds for Chain {chain}')
                     axes[i].grid(True, alpha=0.3)
-                    axes[i].legend()
                     # Color by domain if available
                     chain_group = get_chaingroup(chain, chaingroups)
                     if chain_group and chain_group in domains.keys():
                             for domain in domains[chain_group]:
                                     axes[i].axvspan(domain['start'], domain['end'], zorder=0, alpha=0.2, color=domain['color'], label=domain['label'])    
+                    axes[i].legend()
                 plt.tight_layout()
                 plt.savefig(outfiles[f"hbonds_dna_chains"])
                 plt.close()
