@@ -87,13 +87,14 @@ From this initial directory system, the scripts generate the necessary directori
 │   │   │   ├── gromacs_common
 │   │   │   ├── rep{i}
 │   │   │   │   ├── analysis
-│   │   │   │   │   ├── 000_raw/
-│   │   │   │   │   ├── 001_qc/
-│   │   │   │   │   ├── 002_hbonds_{sele1}_{sele2}/
-│   │   │   │   │   ├── 003_pca/
-│   │   │   │   │   ├── 004_contacts_{sele1}_{sele2}/
-│   │   │   │   │   ├── 005_clustering/
-│   │   │   │   │   └── 006_gbsa_{sele1}_{sele2}/
+│   │   │   │   │   ├── raw/
+│   │   │   │   │   ├── qc/
+│   │   │   │   │   ├── pca/
+│   │   │   │   │   ├── clustering/
+│   │   │   │   │   ├── hbonds_{group1}_{group2}/
+│   │   │   │   │   └── water_bridges_{group1}_{group2}/
+│   │   │   │   │   ├── contacts_{group1}_{group2}/
+│   │   │   │   │   └── gbsa_{group1}_{group2}/
 │   │   │   │   └── gromacs
 ```
 
