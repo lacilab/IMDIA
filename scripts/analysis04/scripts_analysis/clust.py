@@ -10,6 +10,15 @@ from scripts.utils.helpers import setup_logger
 
 
 def main(logfile: Path, outdir: Path, csv: Path):
+    """
+    Run clustering with k-means and hierarchical clustering algorithms in scikit-learn and plot results.
+
+    Arguments:
+        logfile   : Path to the log file.
+        outdir    : Output directory for results (e.g. rep1/analysis/clust).
+        csv       : Path to .csv file containing PCA results.
+    """
+
     if not logfile.is_file():
       print(f"Log file {logfile} does not exist.")
       sys.exit(1)

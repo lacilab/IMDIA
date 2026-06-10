@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 from MDAnalysis.analysis import rms, align
 from scripts.utils.helpers import setup_logger
 
@@ -35,25 +36,20 @@ def radgyr(atomgroup, masses, total_mass=None):
 
 def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles : dict = {}, 
          with_dna: bool = False, offsets: dict = None, domains: dict = {}, chaingroups: list = {}):
-    # Arguments
-    # parser = argparse.ArgumentParser(description="Quality control analysis of MD simulation")
-    # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
-    # parser.add_argument("-u", "--universe", help="Path to the Universe object")
-    # parser.add_argument("-d", "--outdir", help="Output directory")
-    # parser.add_argument("--dna", action='store_true', dest='with_dna', help="DNA is present in the system")
-    # parser.add_argument("--offsets", type=dict, default=None, help="Offset for residue numbering per chain")
-    # parser.add_argument("--domains", type=list, default=[], help="Protein domain definitions.")
-# 
-    # if len(sys.argv) < 4:
-    #     parser.print_help()
-    #     sys.exit(0)
-# 
-    # args = parser.parse_args()
-    # universe = args.universe
-    # outdir = args.outdir
-    # with_dna = args.with_dna
-    # offsets = args.offsets
-    # domains = args.domains
+    """
+    Quality control analysis MD results.
+
+    Arguments:
+        logfile     : Path to the log file.
+        universe    : Path to the Universe object generated with MDAnalysis, containing the processed MD system.
+        outdir      : Output directory for results (e.g. rep1/analysis/qc).
+        outfiles    : Dictionary of the files to be generated, assigned to labels/keys.
+        with_dna    : True if DNA is present in the system.
+        offsets     : Dictionary specifying residue numbering offsets per chain.
+        domains     : Dictionary of domains in the structure.
+        chaingroups : Dictionary of groups and chains in them.
+    """
+
 
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)
@@ -81,44 +77,69 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
     ########## RMSD ##########
     rmsd_analysis = rms.RMSD(u, select='backbone', groupselections=['name CA', 'protein'])
     rmsd_analysis.run()
+
+    rmsd_time_ns = rmsd_analysis.results.rmsd[:, 1] / 1000.0
     logger.debug(f"rmsd_analysis.results.rmsd.shape: {rmsd_analysis.results.rmsd.shape}")
     rmsd_df = pd.DataFrame(rmsd_analysis.results.rmsd[:, 2:],
                     columns=['Backbone', 'C-alphas', 'Protein'],
-                    index=rmsd_analysis.results.rmsd[:, 1])
-    rmsd_df.index.name = 'Time (ps)'
+                    index=rmsd_time_ns)
+    rmsd_df.index.name = 'Time (ns)'
 
     rmsd_df.to_csv(outfiles['rmsd_csv'])
 
-    rmsd_df.plot(title='RMSD')
-    plt.ylabel('RMSD (Å)')
+    fig, ax = plt.subplots(figsize=(7, 5))
+    rmsd_df.plot(title='RMSD', legend=True, ax=ax)
+    ax.set_ylabel('RMSD (Å)')
+    ax.set_xlabel('Time (ns)')
+    ax.xaxis.set_major_locator(MaxNLocator(nbins=10))
+    ax.grid(True, alpha=0.3)
     plt.savefig(outfiles['rmsd'])
     plt.close()
 
-    rmsd_df_bb = pd.DataFrame(rmsd_analysis.results.rmsd[:, 2],
-                    columns=['Backbone'],
-                    index=rmsd_analysis.results.rmsd[:, 1])
-    rmsd_df_bb.index.name = 'Time (ps)'
 
-    rmsd_df_ca = pd.DataFrame(rmsd_analysis.results.rmsd[:, 3],
-                        columns=['C-alphas'],
-                        index=rmsd_analysis.results.rmsd[:, 1])
-    rmsd_df_ca.index.name = 'Time (ps)'
+    rmsd_df_bb = pd.DataFrame(
+        rmsd_analysis.results.rmsd[:, 2],
+        columns=['Backbone'],
+        index=rmsd_time_ns
+    )
+    rmsd_df_bb.index.name = 'Time (ns)'
 
-    rmsd_df_prot = pd.DataFrame(rmsd_analysis.results.rmsd[:, 4],
-                        columns=['Protein'],
-                        index=rmsd_analysis.results.rmsd[:, 1])
-    rmsd_df_prot.index.name = 'Time (ps)'
+    rmsd_df_ca = pd.DataFrame(
+        rmsd_analysis.results.rmsd[:, 3],
+        columns=['C-alphas'],
+        index=rmsd_time_ns
+    )
+    rmsd_df_ca.index.name = 'Time (ns)'
 
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5))  # 1 row, 3 columns
+    rmsd_df_prot = pd.DataFrame(
+        rmsd_analysis.results.rmsd[:, 4],
+        columns=['Protein'],
+        index=rmsd_time_ns
+    )
+    rmsd_df_prot.index.name = 'Time (ns)'
+
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
     rmsd_df_bb.plot(title='RMSD Backbone', ax=axes[0], legend=False)
     rmsd_df_ca.plot(title='RMSD C-alphas', ax=axes[1], legend=False, c='orange')
     rmsd_df_prot.plot(title='RMSD Protein', ax=axes[2], legend=False, c='green')
+
+    for ax in axes:
+        ax.xaxis.set_major_locator(MaxNLocator(nbins=10))
+        ax.set_xlabel('Time (ns)')
+        ax.grid(True, alpha=0.3)
+
     plt.tight_layout()
     plt.savefig(outfiles['rmsd_cats'])
     plt.close()
 
-    rmsd_df_bb.plot(title='RMSD Backbone', legend=False)
-    plt.ylabel('RMSD (Å)')
+    fig, ax = plt.subplots(figsize=(7, 5))
+    rmsd_df_bb.plot(title='RMSD Backbone', legend=False, ax=ax)
+    ax.set_ylabel('RMSD (Å)')
+    ax.set_xlabel('Time (ns)')
+    ax.xaxis.set_major_locator(MaxNLocator(nbins=10))
+    ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
     plt.savefig(outfiles['rmsd_bb'])
     plt.close()
 
@@ -151,7 +172,6 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
     plt.xlabel("RMSD Backbone (Å)")
     plt.ylabel("Radius of gyration (Å)")
     plt.title("RMSD vs Radius of gyration")
-    plt.legend()
     plt.savefig(outfiles['radius_rmsd'])
     plt.close()
 
@@ -216,6 +236,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
     plt.ylabel('RMSF (Å)')
     plt.title('RMSF of Protein Chains')
     plt.legend()
+    plt.grid(True, alpha=0.3)
     plt.savefig(outfiles['rmsf_prot'])
     plt.close()
 
@@ -232,22 +253,23 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
         for i, group in enumerate(chaingroups.keys()):
             logger.debug(f"Plotting chaingroup {group} with chains: {chaingroups[group]}")
             chain_list = chaingroups[group]
-            for chain in chain_list:
+            for j, chain in enumerate(chain_list):
                 if chain in rmsf_all:
                     axes[i].plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f'Chain {chain}')
                 else:
                     logger.warning(f"Chain {chain} not found in rmsf_all.")
                 # Color by protein domains
-                if group in domains.keys():
+                if j == 0 and group in domains.keys():
                     group_domains = [domain for domain in domains[group]]
                     for domain in group_domains:
                         start = domain['start']
                         end = domain['end']
                         axes[i].axvspan(start, end, zorder=0, alpha=0.2, color=domain['color'], label=domain['label'])
+            axes[i].legend()
+            axes[i].grid(True, alpha=0.3)
             axes[i].set_xlabel('Residue number (adjusted)')
             axes[i].set_ylabel('RMSF (Å)')
             axes[i].set_title(f'RMSF of chain group {group}')
-            axes[i].legend()
         for i, chain in enumerate(chains_without_groups):
             j = len(chaingroups) + i
             axes[j].plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f'Chain {chain}')
@@ -296,6 +318,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
         plt.ylabel('RMSF (Å)')
         plt.title('RMSF of DNA Chains')
         plt.legend()
+        plt.grid(True, alpha=0.3)
         plt.savefig(outfiles['rmsf_dna'])
         plt.close()
 

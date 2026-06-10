@@ -8,6 +8,20 @@ from scripts.utils.helpers import setup_logger
 
 
 def main(logfile: str, universe: str, contacts_csv: Path, offsets: dict, outfile: Path):
+    """
+    Extend pairwise contact prediction results with data about the atoms, corresponding residues and domains.
+
+    Arguments:
+        logfile   : Path to the log file.
+        universe  : Path to the Universe object generated with MDAnalysis, containing the processed MD system.
+        contacts_csv : Path to .csv file with pairwise contact analysis results.
+        offsets     : Dictionary specifying residue numbering offsets per chain.
+        outfile : Path to output .csv file with fields: 
+                    sele1_resnm,sele1_resid_adj,sele1_chain,
+                    sele2_resnm,sele2_resid_adj,sele2_chain,
+                    count,distance_avg,ratio
+    """
+
     # Initialize logger
     logger = setup_logger("analysis", logfile)
     logger.debug("Parsing contact analysis results.")

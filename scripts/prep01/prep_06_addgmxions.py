@@ -14,11 +14,14 @@ from scripts.utils.helpers import count_lines, setup_logger
 from pathlib import Path
 
 def main(logfile: Path, gmxdir: Path, ions: Path = Path("scripts/prep01/ions.mdp")):
-    # parser = argparse.ArgumentParser(description="Add GROMACS ions to the system to neutralize it and reach target concentration.")
-    # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
-    # parser.add_argument("--gmxdir", '-g', dest='gmxdir', type=str, required=True,
-    #                     help='Path to the GROMACS directory (containing gromacs.gro and topol.top)')
-    # parser.add_argument("--ions", "-i", dest='ions', type=str, default="scripts/prep01/ions.mdp", help="Path to the GROMACS parameter file to add ions.")
+    """
+    Add GROMACS ions to the system to neutralize it and reach target concentration.
+
+    Arguments:
+        logfile : Path to the log file.
+        gmxdir  : Path to the GROMACS directory (containing gromacs.gro and topol.top)
+        ions    : Path to the GROMACS parameter file to add ions (default: scripts/prep01/ions.mdp)
+    """
 
     ##### Initialize logger
     logger = setup_logger("prep", logfile)

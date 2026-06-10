@@ -15,20 +15,31 @@ from scripts.prep01 import prep_04_removeamberions as removeamberions
 from scripts.prep01 import prep_05_restraindnahbonds as restraindnahbonds
 from scripts.prep01 import prep_06_addgmxions as addgmxions
 
-# parser = argparse.ArgumentParser(description="Prepare a PDB structure for MD simulations.")
-# parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
-# parser.add_argument('--datadir', '-g', dest='datadir', default='.', help='Directory that contains the input PDB file.')
-# parser.add_argument('--filename', '-f', dest='filename', default=None, help='Name of the PDB file (with or without .pdb).')
-# parser.add_argument('--dna', dest='with_dna', action='store_true', help='Use if the system contains DNA. Adds DNA.bsc1 force field.')
-# parser.add_argument('--phos', dest='with_phosphate', action='store_true', help='Use if the system contains phosphorylated residues.')
-# parser.add_argument('--range_a', dest='range_a', type=str, default=None, help='Range of residues to consider for DNA strand A (e.g., 1,20). Default is full length.')
-# parser.add_argument('--range_b', dest='range_b', type=str, default=None, help='Range of residues to consider for DNA strand B (e.g., 1,20). Default is full length.')
-# parser.add_argument('--ffs', dest='ffs', type=str, default=[], help='Space-separated list of force fields to use in LEaP. Default: protein.ff19SB water.opc.')
 
 def main(logfile: Path, datadir: Path, filename: str,
     dna : bool = False, phos : bool = False,
     range_a : str = None, range_b : str = None,
     ffs : str = None):
+    """
+    Prepare a PDB structure for MD simulations.
+
+    Steps:
+        1.Amber preparation: setup forcefields, add hydrogens.
+        2.Conversion from Amber to GROMACS.
+        3.Extract .itp files from .top topology file.
+        4.Remove ions added with Amber.
+        5.Add ions with GROMACS to neutralize the system and reach target concentration.
+
+    Arguments:
+        logfile  : Path to the log file.
+        datadir  : Directory containing the input PDB file.
+        filename : Name of the PDB file (with or without .pdb)
+        dna      : True if the system contains DNA. Adds DNA.bsc1 force field.
+        phos     : True if the system contains phosphorylated residues.
+        range_a  : Range of residues for DNA A (0-indexed) (default: [0, -1], full length)
+        range_b  : Range of residues for DNA B (0-indexed) (default: [0, -1], full length)
+        ffs      : List of force fields to use in LEaP (default: protein.ff19SB, water.opc)
+    """
 
     ##### INITIALIZE LOG
     logger = setup_logger("prep", logfile)
@@ -41,8 +52,7 @@ def main(logfile: Path, datadir: Path, filename: str,
     if not datadir.is_dir():
         logger.error(f"datadir '{datadir}' does not exist or is not a directory.")
         sys.exit(1)
-    # remove trailing / from datadir
-    # datadir = datadir.rstrip("/")
+
     
     # check input PDB file exists
     path_pdb = datadir / f"{file}.pdb"
@@ -70,12 +80,6 @@ def main(logfile: Path, datadir: Path, filename: str,
     subprocess.run(["parmed", "--version"])
 
     logger.info(f"Preparing {datadir}/{file}.pdb")
-
-    # Check for checkpoint files
-    #if glob.glob(f"{datadir}/check_01_prep_*.done"):
-    #    logger.warning("Checkpoint file found. Skipping preparation.")
-    #    print(f"To rerun these steps, please remove the checkpoint file(s): {datadir}/check_01_prep_*.done")
-    #    sys.exit(0)
 
     # Check if datadir/amber already exists.
     path_amber = datadir / "amber"
@@ -153,15 +157,9 @@ def main(logfile: Path, datadir: Path, filename: str,
     extractitp.main(logfile=logfile, top=path_top, dna=dna)
 
     ### 4. Remove the 2 ions added with AmberTools from .gro files
-    # cmd = [sys.executable, "-m", "scripts.prep01.prep_04_removeamberions", "--logfile", f"{logfile}","--gmxdir", f"{gmxdir}"]
-    # subprocess.run(cmd, check=True)
-
     removeamberions.main(logfile=logfile, gmxdir=gmxdir)
 
     ### 5. Add ions with GROMACS (neutralize and reach target concentration)
-    # cmd = [sys.executable, "-m", "scripts.prep01.prep_06_addgmxions", "--logfile", f"{logfile}", "--gmxdir", f"{gmxdir}"]
-    # subprocess.run(cmd, check=True)
-
     addgmxions.main(logfile=logfile, gmxdir=gmxdir)
 
     ### 6. Add DNA H-bonds restraints if DNA is present
@@ -169,7 +167,7 @@ def main(logfile: Path, datadir: Path, filename: str,
         path_top = gmxdir / "topol.top"
         restraindnahbonds.main(logfile=logfile, gmxdir=gmxdir, topol=path_top, range_a=range_a, range_b=range_b)
     else:
-        print("The complex does not include DNA. Skipping DNA H-bond restraints. If this is incorrect, rerun with the --dna flag.")
+        logger.debug("The complex does not include DNA. Skipping DNA H-bond restraints. If this is incorrect, rerun with dna: True in params.yml.")
 
     logger.info("Preparation completed successfully.")
 

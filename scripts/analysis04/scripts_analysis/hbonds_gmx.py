@@ -16,6 +16,26 @@ def frame2ps(u, frame):
 
 def main(logfile: str =None, universe: str = None, gmxdir : str = None, outdir : str =None, indexfile : str = None,
          group1: str = None, group2: str = None, start: str = None, stop: str = None, dna : bool = False, phos : bool = False):
+    """
+    Predict hydrogen bonds between two groups using GROMACS.
+
+    Arguments:
+        logfile    : Path to the log file.
+        universe   : Path to the Universe object generated with MDAnalysis, containing the processed MD system.
+        gmxdir     : Path to the directory with the MD results (e.g. rep1/gromacs).
+        outdir     : Output directory for results (e.g. rep1/analysis/hbonds).
+        indexfile  : GROMACS index file (.ndx) defining atom groups.
+
+        group1     : First atom group for hydrogen bond analysis.
+        group2     : Second atom group for hydrogen bond analysis.
+
+        start      : Start frame index for analysis window.
+        stop       : End frame ndex for analysis window.
+
+        dna        : True if DNA is present in the system.
+        phos       : True if phosphorylated residues are present in the system.
+    """
+    
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)
 

@@ -7,13 +7,36 @@ import datetime
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-from scripts.utils.md_helpers import param_mdp, check_finished, check_step, get_scaling
+from scripts.utils.md_helpers import param_mdp, check_finished, check_step, get_scaling, log_subprocess
 from scripts.utils.helpers import setup_logger
 from scripts.utils.group_index import group_index
 
 def setup(logfile: Path, gmxdir: Path, outdir: Path, repn: int,
          ntmpi: int, ntomp: int, nb: str, pme: str, npme: int, 
          ngpu: int, gputasks: str, em: Path, nvt: Path, npt: Path, md: Path):
+
+    """
+    Set up the resources and files to be used in MD.
+
+    Arguments:
+        logfile  : Path to the log file.
+        gmxdir   : Directory containing input GROMACS files (e.g., .gro, .top).
+        outdir   : Output directory for simulation results.
+        repn     : Replicate number.
+
+        ntmpi    : Number of MPI ranks (process-level parallelism).
+        ntomp    : Number of OpenMP threads per MPI rank (thread-level parallelism).
+        nb       : Non-bonded interaction scheme (e.g., "cpu", "gpu").
+        pme      : PME (Particle Mesh Ewald) electrostatics method execution (e.g., "cpu", "gpu").
+        npme     : Number of PME-only ranks (used for load balancing in parallel runs).
+        ngpu     : Number of GPUs to use.
+        gputasks : Mapping of GPU tasks to ranks (controls GPU assignment, e.g. "0011").
+
+        em       : Path to energy minimization .mdp file.
+        nvt      : Path to NVT equilibration .mdp file.
+        npt      : Path to NPT equilibration .mdp file.
+        md       : Path to production MD .mdp file.
+    """
 
     ##### INITIALIZE LOG
     logger = setup_logger("md", logfile)
@@ -28,11 +51,11 @@ def setup(logfile: Path, gmxdir: Path, outdir: Path, repn: int,
         logger.info(f"Created output directory: {outdir}")
 
     # Check for checkpoint files
-    checkpoint_files = list(outdir.glob(f"check_02_md_*.done"))
-    if len(checkpoint_files) > 0:
-        logger.warning("Checkpoint file found. Skipping MD steps: minimization, NVT, NPT and production MD.")
-        logger.debug(f"To rerun these steps, please remove the checkpoint file(s): {outdir}/check_02_md_*.done")
-        sys.exit(0)
+    # checkpoint_files = list(outdir.glob(f"check_02_md_*.done"))
+    # if len(checkpoint_files) > 0:
+    #     logger.warning("Checkpoint file found. Skipping MD steps: minimization, NVT, NPT and production MD.")
+    #     logger.debug(f"To rerun these steps, please remove the checkpoint file(s): {outdir}/check_02_md_*.done")
+    #     sys.exit(0)
 
 
     ##### RESOURCE SETUP #####
@@ -82,6 +105,15 @@ def setup(logfile: Path, gmxdir: Path, outdir: Path, repn: int,
 ##### MD STEPS #####
 ### 1. Energy Minimization
 def minimization(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
+    """
+    Run energy minimization (EM) and output sanity check plots.
+
+    Arguments:
+        logfile  : Path to the log file.
+        gmxdir   : Directory containing input GROMACS files (e.g., .gro, .top).
+        outdir   : Output directory for simulation results.
+        flag_nb_gpu : Non-bonded interaction scheme (e.g. ["-nb", "gpu"])
+    """
     
     ##### INITIALIZE LOG
     logger = setup_logger("md", logfile)
@@ -98,16 +130,28 @@ def minimization(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
             "-o", outdir / "em.tpr",
             "-po", outdir / "em_out.mdp",
             "-quiet", "-maxwarn", "1"]
-        subprocess.run(cmd, check=True, text=True)
-        # log_process_output(process, "gmx grompp EM")
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+        log_subprocess(logger, process)
 
         # Calculate resource use
         em_ntmpi, em_ntomp = get_scaling(logger, outdir / "em.tpr", 'em')
         logger.debug(f"Running EM with: gmx mdrun -ntmpi {em_ntmpi} -ntomp {em_ntomp}")
 
         cmd = ["gmx", "mdrun", "-v", "-deffnm", outdir / "em", "-ntmpi", str(em_ntmpi), "-ntomp", str(em_ntomp), "-quiet"] + flag_nb_gpu
-        subprocess.run(cmd, check=True, text=True)
-        # log_process_output(process, "gmx mdrun EM")
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+        log_subprocess(logger, process)
         check_step(logger, "em", "Energy Minimization", outdir)
 
     # Check EM convergence and energy
@@ -149,7 +193,18 @@ def minimization(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
     # Plot EM potential
     if (outdir / "em.edr").is_file() and not (outdir / "em_potential.png").is_file():
         cmd = ["gmx", "energy", "-f", outdir / "em.edr", "-o", outdir / "em_potential.xvg", "-quiet"]
-        subprocess.run(cmd, check=True, text=True, input="Potential\n0\n")
+        process = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+        process.stdin.write("Potential\n0\n")
+        process.stdin.flush()
+        process.stdin.close()
+        log_subprocess(logger, process)
     if (outdir / "em_potential.xvg").is_file() and not (outdir / "em_potential.png").is_file():
         x, y = np.loadtxt(outdir / "em_potential.xvg",comments=["@", "#"],unpack=True)
         plt.plot(x, y)
@@ -162,6 +217,15 @@ def minimization(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
 
 
 def equilibration(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
+    """
+    Run equilibration (NVT and NPT) and output sanity check plots.
+
+    Arguments:
+        logfile  : Path to the log file.
+        gmxdir   : Directory containing input GROMACS files (e.g., .gro, .top).
+        outdir   : Output directory for simulation results.
+        flag_nb_gpu : Non-bonded interaction scheme (e.g. ["-nb", "gpu"])
+    """
     
     ##### INITIALIZE LOG
     logger = setup_logger("md", logfile)
@@ -183,15 +247,33 @@ def equilibration(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
         subprocess.run(cmd, check=True, text=True)
         # log_process_output(process, "gmx grompp NVT")
         nvt_ntmpi, nvt_ntomp = get_scaling(logger, outdir / "nvt.tpr", 'nvt')
-        subprocess.run(["gmx", "mdrun", "-v", "-deffnm", outdir / "nvt", "-ntmpi", str(nvt_ntmpi), "-ntomp", str(nvt_ntomp), "-quiet"] 
-                    + flag_nb_gpu, check=True, text=True)
+        cmd = ["gmx", "mdrun", "-v", "-deffnm", outdir / "nvt", "-ntmpi", str(nvt_ntmpi), "-ntomp", str(nvt_ntomp), "-quiet"] + flag_nb_gpu
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+        log_subprocess(logger, process)
         # log_process_output(process, "gmx mdrun NVT")
         check_step(logger, "nvt", "NVT Equilibration", outdir)
 
     # Plot NVT Temperature
     if (outdir / "nvt.edr").is_file() and not (outdir / "nvt_temp.xvg").is_file():
         cmd = ["gmx", "energy", "-f", outdir / "nvt.edr", "-o", outdir / "nvt_temp.xvg", "-quiet"]
-        subprocess.run(cmd, check=True, text=True, input="Temperature\n0\n")
+        process = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+        process.stdin.write("Temperature\n0\n")
+        process.stdin.flush()
+        process.stdin.close()
+        log_subprocess(logger, process)
 
     x, y = np.loadtxt(outdir / "nvt_temp.xvg",comments=["@", "#"],unpack=True)
     final_seg_start = math.floor(max(x) / 3) * 2
@@ -237,18 +319,43 @@ def equilibration(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
             "-po", outdir / "npt_out.mdp",
             "-n", outdir / "index.ndx",
             "-quiet", "-maxwarn", "1"]
-        subprocess.run(cmd, check=True, text=True)
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+        log_subprocess(logger, process)
         # log_process_output(process, "gmx grompp NPT")
         npt_ntmpi, npt_ntomp = get_scaling(logger, outdir / "npt.tpr", 'npt')
-        subprocess.run(["gmx", "mdrun", "-v", "-deffnm", outdir / "npt", "-ntmpi", str(npt_ntmpi), "-ntomp", str(npt_ntomp), "-quiet"] 
-                    + flag_nb_gpu, check=True, text=True)
+        cmd = ["gmx", "mdrun", "-v", "-deffnm", outdir / "npt", "-ntmpi", str(npt_ntmpi), "-ntomp", str(npt_ntomp), "-quiet"] + flag_nb_gpu
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+        log_subprocess(logger, process)
         # log_process_output(process, "gmx mdrun NPT")
         check_step(logger, "npt", "NPT Equilibration", outdir)
 
     # Plot NPT Pressure
     if (outdir / "npt.edr").is_file() and not (outdir / "npt_pressure.xvg").is_file():
         cmd = ["gmx", "energy", "-f", outdir / "npt.edr", "-o", outdir / "npt_pressure.xvg", "-quiet"]
-        subprocess.run(cmd, check=True, text=True, input="Pressure\n0\n")
+        process = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+        process.stdin.write("Pressure\n0\n")
+        process.stdin.flush()
+        process.stdin.close()
+        log_subprocess(logger, process)
 
     x, y = np.loadtxt(outdir / "npt_pressure.xvg",comments=["@", "#"],unpack=True)
     final_seg_start = math.floor(max(x) / 3) * 2
@@ -282,7 +389,18 @@ def equilibration(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
     # Plot NPT Density
     if not (outdir / "npt_density.xvg").is_file():
         cmd = ["gmx", "energy", "-f", outdir / "npt.edr", "-o", outdir / "npt_density.xvg", "-quiet"]
-        subprocess.run(cmd, check=True, text=True, input="Density\n0\n")
+        process = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+        process.stdin.write("Density\n0\n")
+        process.stdin.flush()
+        process.stdin.close()
+        log_subprocess(logger, process)
 
     x, y = np.loadtxt(outdir / "npt_density.xvg",comments=["@", "#"],unpack=True)
     final_seg_start = math.floor(max(x) / 3) * 2
@@ -311,31 +429,33 @@ def equilibration(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
 
 
 
-def production(logfile: Path, gmxdir: Path, outdir: Path, ntmpi: int, ntomp: int, flag_nb_gpu: list, flag_pme_gpu: list, flag_gpu_tasks: list):
+def production(logfile: Path, gmxdir: Path, outdir: Path, 
+                    md_time: int, ntmpi: int, ntomp: int, 
+                    flag_nb_gpu: list, flag_pme_gpu: list, flag_gpu_tasks: list):
+    """
+    Run production molecular dynamics (MD) of the input duration,
+    and output sanity check plots.
+
+    Arguments:
+        logfile        : Path to the log file.
+        gmxdir         : Directory containing input GROMACS files (e.g., .gro, .top).
+        outdir         : Output directory for simulation results.
+        md_time        : Simulation time (ps).
+        ntmpi          : Number of MPI ranks (process-level parallelism).
+        ntomp          : Number of OpenMP threads per MPI rank (thread-level parallelism).
+        flag_nb_gpu    : Non-bonded interaction scheme (e.g. ["-nb", "gpu"])
+        flag_pme_gpu   : PME (Particle Mesh Ewald) electrostatics method execution e.g. ["-pme", "gpu"])
+        flag_gpu_tasks : Mapping of GPU tasks to ranks (controls GPU assignment, e.g. ["-gputasks", "0011"]).
+    """
     
     ##### INITIALIZE LOG
     logger = setup_logger("md", logfile)
 
     ### 5. Production MD
-    if check_finished("md", outdir):
-        logger.warning("md.log indicates production MD already completed and md.gro exists. Skipping production MD.")
-    else:
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        logfile = os.path.join(outdir, f"md_{timestamp}.log")
-        if os.path.isfile(f"{outdir}/md.cpt"):
-            if ntmpi == 0 or ntomp == 0:
-                logger.warning("ntmpi or ntomp is set to 0. Calculating safe defaults based on system size and available resources.")
-                ntmpi, ntomp = get_scaling(logger, outdir / "md.tpr", 'md')
-                logger.debug(f"Calculated scaling for production MD: ntmpi={ntmpi}, ntomp={ntomp}")
-            logger.debug(f"Resuming production MD from checkpoint {outdir}/md.cpt...")
-            cmd = ["gmx", "mdrun", 
-                "-ntmpi", str(ntmpi), 
-                "-ntomp", str(ntomp)] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + [
-                    "-cpi", outdir / "md.cpt", "-append", "-v", "-deffnm", outdir / "md", "-quiet"]
-            subprocess.run(cmd, check=True, text=True)
-        else:
-            logger.debug("Starting production MD...")
-            cmd = ["gmx", "grompp",
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    logfile = os.path.join(outdir, f"md_{timestamp}.log")
+    if not os.path.isfile(f"{outdir}/md.tpr"):
+        cmd = ["gmx", "grompp",
                 "-f", outdir / "md.mdp",
                 "-c", outdir / "npt.gro",
                 "-r", outdir / "npt.gro",
@@ -345,23 +465,60 @@ def production(logfile: Path, gmxdir: Path, outdir: Path, ntmpi: int, ntomp: int
                     "-po", outdir / "md_out.mdp",
                 "-n", outdir / "index.ndx",
                 "-quiet", "-v", "-maxwarn", "1"]
-            subprocess.run(cmd, check=True, text=True)
-            if ntmpi == 0 or ntomp == 0:
-                logger.warning("ntmpi or ntomp is set to 0. Calculating safe defaults based on system size and available resources.")
-                ntmpi, ntomp = get_scaling(logger, outdir / "md.tpr", 'md')
-                logger.debug(f"Calculated scaling for production MD: ntmpi={ntmpi}, ntomp={ntomp}")
-            cmd = ["gmx", "mdrun", "-ntmpi", str(ntmpi), "-ntomp", str(ntomp)
-                ] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + ["-v", "-deffnm", outdir / "md", "-quiet"]
-            logger.debug(f"Production MD command: {cmd}")
-            subprocess.run(cmd, check=True, text=True)
-            # log_process_output(process, "gmx mdrun MD")
-        check_step(logger, "md", "Production MD", outdir)
-
-    # Create checkpoint file
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    checkpoint = outdir / f"check_02_md_{timestamp}.done"
-    checkpoint.parent.mkdir(exist_ok=True, parents=True)
-    with checkpoint.open('w') as f:
-        f.write("MD completed successfully.\n")
-        logger.info("MD steps completed successfully. Checkpoint created: " + str(checkpoint))
-        return
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+        log_subprocess(logger, process)
+    # Adjust md.tpr to target duration
+    cmd = ["gmx", "convert-tpr", 
+            "-s", outdir / "md.tpr", 
+            "-until", md_time, 
+            "-o", outdir / "md_ext.tpr"]
+    process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+    log_subprocess(logger, process)
+    # Assign ntmpi and ntomp if not given
+    if ntmpi == 0 or ntomp == 0:
+        logger.warning("ntmpi or ntomp is set to 0. Calculating safe defaults based on system size and available resources.")
+        ntmpi, ntomp = get_scaling(logger, outdir / "md.tpr", 'md')
+        logger.debug(f"Calculated scaling for production MD: ntmpi={ntmpi}, ntomp={ntomp}")
+    # If there is a checkpoint from a previous run (completed or not), restart from it
+    if os.path.isfile(f"{outdir}/md.cpt"):
+        logger.debug(f"Running production MD from checkpoint {outdir}/md.cpt until target duration {md_time} ps.")
+        cmd = ["gmx", "mdrun", "-s", outdir / "md_ext.tpr",
+                "-ntmpi", str(ntmpi), 
+                "-ntomp", str(ntomp)] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + [
+                    "-cpi", outdir / "md.cpt", "-append", "-v", "-deffnm", outdir / "md", "-quiet"]
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+        log_subprocess(logger, process)
+    # else, start a new simulation
+    else:
+        logger.debug("Starting production MD until target duration {md_time} ps.")
+        cmd = ["gmx", "mdrun", "-s", outdir / "md_ext.tpr", 
+                "-ntmpi", str(ntmpi), "-ntomp", str(ntomp)
+            ] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + ["-v", "-deffnm", outdir / "md", "-quiet"]
+        logger.debug(f"Production MD command: {cmd}")
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+        log_subprocess(logger, process)
+    check_step(logger, "md", "Production MD", outdir)

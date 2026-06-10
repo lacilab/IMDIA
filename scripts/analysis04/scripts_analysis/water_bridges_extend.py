@@ -22,6 +22,18 @@ def get_original_chain_id(universe, atom_number, chain_dict):
 
 
 def main(logfile: str, universe: str, wb_csv: Path, offsets: dict, outfile: Path):
+    """
+    Extend water bridge prediction results with data about the residues and chains.
+
+    Arguments:
+        logfile   : Path to the log file.
+        universe  : Path to the Universe object generated with MDAnalysis, containing the processed MD system.
+        wb_csv    : Path to .csv file containing water bridge analysis results.
+        offsets   : Dictionary specifying residue numbering offsets per chain.
+        outfile   : Path to output .csv file with fields: 
+                    sele1_index,sele2_index,sele1_chain,sele2_chain,sele1_resid,sele2_resid,
+                    sele1_resid_adj,sele2_resid_adj,sele1_resnm,sele2_resnm,count
+    """
 
     # Initialize logger
     logger = setup_logger("analysis", logfile)

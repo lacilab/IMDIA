@@ -4,7 +4,6 @@ import os
 # ------------------------
 # Load configuration file
 # ------------------------
-# print("Loading configuration and setting up parameters...")
 LOGFILE        = config.get("logfile", None)
 DATADIR        = config.get("datadir", "data")
 rule_groups    = config.get("rule_groups", "").split(' ')
@@ -46,6 +45,7 @@ for structure in STRUCTURES:
 
 structures, mutations, reps = zip(*combinations)
 
+
 ##### CHECK INTERACTION GROUPS #####
 # Check if rules contain interaction analysis and if group1 and group2 are defined
 interaction_rules = ["hbonds", "wb", "contacts", "gbsa"]
@@ -79,8 +79,6 @@ all_input = {}
 out_rmsf = {}
 out_hbonds_plots = {}
 out_hbonds_plots_merged = {}
-if len(CHAINGROUPS) > 0: 
-    all_input["rmsf_chaingroups"] = expand(f"{PATH_QC}/rmsf_chaingroups.png", struct=structures, mut=mutations, rep=reps, zip=True)
 if "qc" in rule_groups or rule_groups == [""]:
     if DNA:
         out_rmsf["rmsf_dna"] = report(f"{PATH_QC}/rmsf_dna.png", 
@@ -97,6 +95,8 @@ if "qc" in rule_groups or rule_groups == [""]:
     all_input["rmsd_csv"] = expand(f"{PATH_QC}/rmsd.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["radius_axis_csv"] = expand(f"{PATH_QC}/radius_axis.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["rmsf_prot_csv"] = expand(f"{PATH_QC}/rmsf_prot.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    if len(CHAINGROUPS) > 0: 
+        all_input["rmsf_chaingroups"] = expand(f"{PATH_QC}/rmsf_chaingroups.png", struct=structures, mut=mutations, rep=reps, zip=True)
 if "hbonds" in rule_groups or rule_groups == [""]:
     if "gmx" in METHODS_HBONDS:
         all_input["hbonds_gmx"] = expand(f"{PATH_HBONDS}/hbonds_gmx.ndx", struct=structures, mut=mutations, rep=reps, zip=True)
@@ -223,7 +223,7 @@ rule universe:
         )
 
 
-
+# Quality control: RMSD, RMSF, radius of gyration
 rule qc:
     params:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/qc"
@@ -262,7 +262,7 @@ rule qc:
 
 
 
-# Get interaction group names in the index file
+# Create index file with the target groups and return their names in the index.
 rule interaction_index:
     params:
         gmxdir = lambda wc: f"{PATH_GMX_WC(wc)}",
@@ -293,7 +293,7 @@ rule interaction_index:
             )
 
 
-
+# Hydrogen bond prediction with GROMACS
 rule hbonds_gmx:
     params:
         gmxdir = lambda wc: f"{PATH_GMX_WC(wc)}",
@@ -324,7 +324,7 @@ rule hbonds_gmx:
         )
 
 
-
+# Parse GROMACS hydrogen bond prediction results from hbonds_gmx.ndx
 rule hbonds_gmx_parse:
     params:
         index_group1 = lambda wc, input: __import__("json").load(open(input.groups))["group1"],
@@ -345,7 +345,7 @@ rule hbonds_gmx_parse:
         )
 
 
-
+# Hydrogen bond prediction with MDAnalysis
 rule hbonds_mda:
     params:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/hbonds_{GROUP1}_{GROUP2}"
@@ -374,7 +374,7 @@ rule hbonds_mda:
         )
 
 
-
+# Extend hydrogen bond prediction results with data about the donor and acceptor atoms, corresponding residues and domains
 rule hbonds_extend:
     input: 
         universe = f"{PATH_RAW}/universe",
@@ -399,6 +399,8 @@ rule hbonds_extend:
             chains=OFFSETS,
         )
 
+
+# Merge the extended results of multiple hydrogen bond prediction methods into a single .csv        
 rule hbonds_merge:
     input: 
         hbonds_ext = expand(f"{PATH_HBONDS}/hbonds_{{method}}_ext.csv", method=METHODS_HBONDS, struct=structures, mut=mutations, rep=reps, zip=True)
@@ -413,7 +415,7 @@ rule hbonds_merge:
         )
 
 
-
+# Plot extended hydrogen bond prediction results
 rule hbonds_plots:
     params:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/hbonds_{GROUP1}_{GROUP2}"
@@ -440,7 +442,7 @@ rule hbonds_plots:
         )
 
 
-
+# Plot together the extended results of multiple hydrogen bond prediction methods 
 rule hbonds_merged_plots:
     params:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/hbonds_{GROUP1}_{GROUP2}"
@@ -467,6 +469,7 @@ rule hbonds_merged_plots:
         )
 
 
+# Generate PyMOL commands to highlight residues predicted to participate in hydrogen bonds        
 rule hbonds_pymol:
     input: 
         hbonds_ext = f"{PATH_HBONDS}/hbonds_{{method}}_ext.csv",
@@ -481,7 +484,7 @@ rule hbonds_pymol:
         )
 
         
-
+# Calculate fraction of contacts (within a radius of 5 Å) present in the reference structure with MDAnalysis
 rule contact_ratio:
     input: 
         universe = f"{PATH_RAW}/universe",
@@ -505,7 +508,7 @@ rule contact_ratio:
         )
 
 
-
+# Compute a distance array with the pairwise distances between the atoms in the two selections, across time, within 5 Å, with MDAnalysis
 rule contact_pairwise:
     input: 
         universe = f"{PATH_RAW}/universe",
@@ -531,6 +534,7 @@ rule contact_pairwise:
         )
 
 
+# Extend pairwise contact prediction results with data about the atoms, corresponding residues and domains
 rule contacts_extend:
     input: 
         universe = f"{PATH_RAW}/universe",
@@ -547,7 +551,7 @@ rule contacts_extend:
             outfile=output.contacts_pairs_ext_csv,
         )
 
-
+# Plot pairwise contact prediction results
 rule contacts_plots:
     input: 
         universe = f"{PATH_RAW}/universe",
@@ -573,6 +577,7 @@ rule contacts_plots:
         )
 
 
+# Predict water bridges with MDAnalysis        
 rule water_bridges:
     threads: min(int(workflow.cores), 2)
     input: 
@@ -597,6 +602,8 @@ rule water_bridges:
             dna=DNA
         )
 
+
+# Extend water bridge prediction results with data about the residues and chains
 rule water_bridges_extend:
     input: 
         universe = f"{PATH_RAW}/universe",
@@ -613,6 +620,8 @@ rule water_bridges_extend:
             outfile=output.wb_ext,
         )
 
+
+# Plot water bridge prediction results        
 rule water_bridges_plots:
     input: 
         wb_csv = f"{PATH_WB}/waterbridges.csv",
@@ -635,6 +644,7 @@ rule water_bridges_plots:
         )
 
 
+# Run principal component analysis
 rule pca:
     params:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/pca"
@@ -666,7 +676,7 @@ rule pca:
         )
 
 
-
+# Generate a 3D porcupine plot visualization of PC1 on PyMOL
 rule pca_porcupine:
     params:
         gmxdir = lambda wc: Path(f"{PATH_GMX_WC(wc)}"),
@@ -693,7 +703,7 @@ rule pca_porcupine:
         )
 
 
-
+# Run clustering with k-means and hierarchical clustering algorithms in scikit-learn and plot results
 rule clustering_kmeans_hierarchical:
     params:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/clustering"
@@ -723,7 +733,7 @@ rule clustering_kmeans_hierarchical:
         )
 
 
-
+# Run clustering with gromos algorithm in GROMACS
 rule clustering_gromos:
     params:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/clustering"
@@ -756,7 +766,7 @@ rule clustering_gromos:
 
 
 
-
+# Plot gromos clustering results
 rule clustering_gromos_plots:
     params:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/clustering"
@@ -788,7 +798,7 @@ rule clustering_gromos_plots:
         )
 
 
-        
+# Run MM/GBSA (Molecular Mechanics/Generalized Born Surface Area) free binding energy calculations        
 rule gbsa:
     params:
         index_group1 = lambda wc, input: __import__("json").load(open(input.groups))["group1"],
@@ -830,6 +840,8 @@ rule gbsa:
             ffs=FFS
         )
 
+
+# Plot GBSA results       
 rule gbsa_plots:
     params:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/gbsa_{GROUP1}_{GROUP2}"

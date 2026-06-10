@@ -11,32 +11,22 @@ from pathlib import Path
 
 def main(logfile: Path, gmxdir: Path, topol: Path = Path("./topol.top"), range_a: list = [0, -1], range_b: list = [0, -1],
          type: int = 1, type2: int = 2, low: float = 0.0, up1: float = 0.3, up2: float = 0.4, fac: float = 1.0):
-    # parser = argparse.ArgumentParser(description="Calculate distance restraints for DNA H-bonds and append them to a topology file.")
-    # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
-    # parser.add_argument("--gmxdir", '-g', dest='gmxdir', type=str, required=True,
-    #                     help='Directory containing GROMACS files')
-    # parser.add_argument("--topol", "-t", dest="topol", type=str, default="./topol.top",
-    #                     help="Topology file to append restraints to")
-    # parser.add_argument("--dna_a", dest="dna_a", type=str, default="./toppar/molecule_3.itp",
-    #                     help="DNA chain A topology file (.itp)")
-    # parser.add_argument("--dna_b", dest="dna_b", type=str, default="./toppar/molecule_4.itp",
-    #                     help="DNA chain B topology file (.itp)")
-    # parser.add_argument("--range_a", dest="range_a", type=str, default="0,-1",
-    #                     help="Range of residues to consider for DNA A. 1-indexed (e.g., [1,10]). Default: full length.")
-    # parser.add_argument("--range_b", dest="range_b", type=str, default="0,-1",
-    #                     help="Range of residues to consider for DNA B. 1-indexed (e.g., [1,10]). Default: full length.")
-    # parser.add_argument("--type", dest="type", type=int, default=1,
-    #                     help="Restraint type. Default: 1")
-    # parser.add_argument("--type2", dest="type2", type=int, default=2,
-    #                     help="Secondary restraint type. Default: 2")
-    # parser.add_argument("--low", dest="low", type=float, default=0.0,
-    #                     help="Lower bound distance (Å). Default: 0.0")
-    # parser.add_argument("--up1", dest="up1", type=float, default=0.3,
-    #                     help="Upper bound distance 1 (Å). Default: 0.3")
-    # parser.add_argument("--up2", dest="up2", type=float, default=0.4,
-    #                     help="Upper bound distance 2 (Å). Default: 0.4")
-    # parser.add_argument("--fac", dest="fac", type=float, default=1.0,
-    #                     help="Force constant scaling factor. Default: 1.0")
+    """
+    Calculate distance restraints for DNA H-bonds and append them to a topology file.
+
+    Arguments:
+        logfile : Path to the log file.
+        gmxdir  : Directory containing GROMACS files
+        topol   : Topology file to append restraints to (default: ./topol.top)
+        range_a : Range of residues for DNA A (0-indexed) (default: [0, -1], full length)
+        range_b : Range of residues for DNA B (0-indexed) (default: [0, -1], full length)
+        type    : Restraint type (default: 1)
+        type2   : Secondary restraint type (default: 2)
+        low     : Lower bound distance (Å) (default: 0.0)
+        up1     : Upper bound distance 1 (Å) (default: 0.3)
+        up2     : Upper bound distance 2 (Å) (default: 0.4)
+        fac     : Force constant scaling factor (default: 1.0)
+    """
 
     ##### Initialize logger
     logger = setup_logger("prep", logfile)

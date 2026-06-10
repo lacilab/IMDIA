@@ -12,6 +12,7 @@ from scripts.utils.helpers import setup_logger
 
 
 def remove_hydrogens(filename: str, logger_name: str, logfile: Path):
+	""" Remove hydrogens from the structure and prepare it with pdb4amber. """
 	logger = setup_logger(logger_name, logfile)
 	logger.debug(f"Removing hydrogens from {filename} using pdb4amber.")
 	outfile = filename.replace('.pdb', '_noH.pdb')
@@ -65,8 +66,6 @@ def gen_chains(complex_file: Path, logger_name: str, logfile: Path, chains: list
 	files = []
 
 	for chain in chains:
-		# chain_file = complex_file.replace(complex_name, f'{chain}_noH.pdb')
-
 		chain_file = complex_name + f'_{chain}_noH.pdb'
 
 		# Run pdb_selchain.py command for chain
@@ -158,15 +157,23 @@ def solvate_gen_parm(complex_file: Path, logger_name: str, logfile: Path, chains
 
 def main(logfile: Path = None, pdbpath: Path = None,
 	dna : bool = False, phos : bool = False, ffs: list = None):
+
+	"""
+    Prepare system using AmberTools. Add solvent and ions, generate prmtop
+    and inpcrd files based on force fields.
+
+    Arguments:
+        logfile	    : Path to the log file.
+        path-pdb    : Input pdb file path
+        dna         : True if the system contains DNA. Adds DNA.bsc1 force field.
+        phos        : True if the system contains phosphorylated residues. Adds phosaa19SB force field.
+        ffs         : List of force fields to use from the list
+                        available in LEaP. Avoid using clashing force fields.
+                        Default: protein.ff19SB, water.opc
+    """
+
 	start_time = time.time()
 
-	# parser = argparse.ArgumentParser(description="Prepare system using AmberTools. Add solvent and ions, generate prmtop and inpcrd files based on force fields.")
-	# parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
-	# parser.add_argument('--path-pdb', dest='path_pdb', help='Input pdb file path', required=True)
-	# parser.add_argument('--dna', dest='with_dna', action='store_true', help='Use if the system contains DNA. Adds DNA.bsc1 force field.')
-	# parser.add_argument('--phos', dest='with_phosphate', action='store_true', help='Use if the system contains phosphorylated residues. Adds phosaa19SB force field.')
-	# parser.add_argument('--ffs', dest='ffs', help='Comma separated list of force fields to use from the list available in LEaP. Avoid using clashing force fields. Default: protein.ff19SB,water.opc')
-	
 	##### Initialize logger
 	logger_name = 'prep'
 	logger = setup_logger(logger_name, logfile)
@@ -213,18 +220,14 @@ def main(logfile: Path = None, pdbpath: Path = None,
 	if phos:
 		logger.debug("Flag --phos used. This system contains phosphorylated residues.")
 		ff_default.append('phosaa19SB')
-	#else:
-	#	ff_default.append('protein.ff19SB')
 
 	if ffs:
 		logger.debug(f"Custom force fields provided: {ffs}")
-		# ffs = ffs.split(",")
 	else:
 		logger.debug(f"No custom force fields provided. Using default: {ff_default}")
 		ffs = ff_default
 
 	# Prepare the complex (make sure the hydrogens naming matches amber)
-
 	noH_complex = remove_hydrogens(pdbfile, logger_name, logfile)
 	logger.debug(f"Hydrogens removed from {pdbpath}, saved as {noH_complex}")
 	protonated_complex = add_hydrogens(noH_complex, logger_name, logfile, ffs)

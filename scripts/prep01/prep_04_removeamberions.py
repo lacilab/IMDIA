@@ -13,11 +13,14 @@ from scripts.utils.helpers import count_lines, setup_logger
 
 
 def main(logfile: Path, gmxdir: Path):
-    # parser = argparse.ArgumentParser(description="Remove Amber ions from the GROMACS topology files.")
-    # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
-    # parser.add_argument("--gmxdir", '-g', dest='gmxdir', type=str, required=True,
-    #                     help='Path to the GROMACS directory (containing gromacs.gro and topol.top)')
-    # )
+    """
+    Remove Amber ions from the GROMACS topology files.
+
+    Arguments:
+        logfile : Path to the log file.
+        gmxdir  : Path to the GROMACS directory
+                  (containing gromacs.gro and topol.top)
+    """
 
     ##### Initialize logger
     logger = setup_logger("prep", logfile)
@@ -130,7 +133,6 @@ def main(logfile: Path, gmxdir: Path):
 
             # extraction of mol_number + mol_name
             # mol looks like "   12Na" → number+text glued
-            # Find first non-digit (fast loop, avoids regex)
             s = cols[0].lstrip()
             j = 0
             while j < len(s) and s[j].isdigit():

@@ -24,6 +24,18 @@ def label_sort_key(label):
             return (label, 0)         # names last
 
 def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, group1: str, group2: str, outfiles: dict):
+    """
+    Plot pairwise contact prediction results.
+
+    Arguments:
+        logfile   : Path to the log file.
+        universe  : Path to the Universe object generated with MDAnalysis, containing the processed MD system.
+        pairs_csv : Path to the .csv file with the pairwise contact results.
+        group1            : First atom group for hydrogen bond analysis.
+        group2            : Second atom group for hydrogen bond analysis.
+        outfiles    : Dictionary of the files to be generated, assigned to labels/keys.
+    """
+
     # Initialize logger
     logger = setup_logger("analysis", logfile)
     logger.debug("Parsing contact analysis results.")
@@ -120,7 +132,7 @@ def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, grou
     step = math.ceil((max_ratio - min_ratio) / 4)
 
     # Size scaling
-    size_scale = 1400 / max_ratio
+    size_scale = 1200 / max_ratio
     sizes = ratio_vals * size_scale
     padding = 0.6
 
@@ -129,11 +141,11 @@ def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, grou
     sc = ax.scatter(xx, yy, s=sizes, c=dist_vals, cmap='rocket', alpha=0.9,
                     edgecolors='lightgray', linewidths=0.5)
 
-    # EXPLICIT tight limits (removes big margins)
+    # Tight limits (removes big margins)
     ax.set_xlim(-0.5 - padding, len(x_labels)-0.5 + padding)
     ax.set_ylim(-0.5 - padding, len(y_labels)-0.5 + padding)
 
-    # Set ticks FIRST
+    # Set ticks
     ax.set_xticks(np.arange(len(x_labels)))
     ax.set_xticklabels(x_labels, rotation=-90)
     ax.set_yticks(np.arange(len(y_labels)))
@@ -142,13 +154,11 @@ def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, grou
     # Invert Y-axis
     ax.invert_yaxis()
 
-
     # Labels/title
     ax.set_xlabel(f'{group2} Residue (adj)', fontsize=14)
     ax.set_ylabel(f'{group1} Residue (adj)', fontsize=14)
     ax.set_title(
-        f'Contacts between {group1} and {group2}\n'
-        f'Bubble size = Ratio (Count / Number of frames). Color = mean distance',        
+        f'Contacts between {group1} and {group2}',
         fontsize=20, y=1.02
     )
 
@@ -156,18 +166,18 @@ def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, grou
     cbar = plt.colorbar(sc, ax=ax, shrink=0.4)
     cbar.set_label('Mean Distance (Å)', fontsize=14)
 
-
-    # Size legend (adjust bbox_to_anchor if needed)
+    # Size legend
     size_handles = []
     for r in np.arange(min_ratio + step, max_ratio + step, step):
         size_handles.append(plt.Line2D([0], [0], marker='o', color='w',
                                     markerfacecolor='lightgray',
                                     markersize=np.sqrt(r * size_scale),
                                     markeredgecolor='black', label=f'{r:.1f}'))
-    fig.legend(handles=size_handles, title='Ratio', 
-            loc='center left', bbox_to_anchor=(0.82, 0.8),
+    fig.legend(handles=size_handles, title='Ratio\n(Count/Number of frames)', 
+            loc='center left', bbox_to_anchor=(0.9, 0.2),
             ncol=1, frameon=True, fontsize=12,
-            labelspacing=2, handletextpad=1.2, borderpad=1.5)
+            labelspacing=2, handletextpad=1.1, borderpad=1.3)
+
 
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
@@ -200,34 +210,33 @@ def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, grou
     sc = ax.scatter(x_dense, y_dense, s=sizes_filtered, c=dist_filtered,
                     cmap='rocket', alpha=0.9, edgecolors='lightgray', linewidths=0.5)
 
-    # 1. MANUAL padding (margins conflicts with set_xlim/ylim)
+    # Padding (margins conflicts with set_xlim/ylim)
     ax.set_xlim(-0.5-padding, len(unique_x)-0.5+padding)
     ax.set_ylim(-0.5-padding, len(unique_y)-0.5+padding)
 
-    # 2. Set ticks FIRST (before inversion)
+    # Set ticks (before inversion)
     ax.set_xticks(np.arange(len(unique_x)))
     ax.set_xticklabels([x_labels[i] for i in unique_x], rotation=-90)
     ax.set_yticks(np.arange(len(unique_y)))
     ax.set_yticklabels([y_labels[i] for i in unique_y])
 
-    # 3. Invert Y-axis AFTER ticks
+    # Invert Y-axis
     ax.invert_yaxis()
 
-    # 4. Labels/title
+    # Labels/title
     ax.set_xlabel(f'{group2} Residue (adj)', fontsize=14)
     ax.set_ylabel(f'{group1} Residue (adj)', fontsize=14)
     ax.set_title(
         f'Contacts between {group1} and {group2}\n'
-        f'Bubble size = Ratio (Count / Number of frames). Color = mean distance\n'
         f'Filtered to pairs with ratio >= {threshold:.2f} (top 75%)',
         fontsize=20, y=1.02
     )
 
-    # 5. Colorbar
+    # Colorbar
     cbar = plt.colorbar(sc, ax=ax, shrink=0.4)
     cbar.set_label('Mean Distance (Å)', fontsize=14)
 
-    # 6. Size legend (moved LEFT side to avoid colorbar overlap)
+    # Size legend (moved LEFT side to avoid colorbar overlap)
     step = math.ceil((max_ratio - threshold) / 3)
     size_handles = []
     for r in np.arange(threshold, max_ratio + step, step):
@@ -239,12 +248,12 @@ def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, grou
                     label=f'{r:.1f}')
         )
 
-    fig.legend(handles=size_handles, title='Ratio', 
-            loc='center left', bbox_to_anchor=(0.82, 0.8),
+    fig.legend(handles=size_handles, title='Ratio\n(Count/Number of frames)', 
+            loc='center left', bbox_to_anchor=(0.9, 0.2),
             ncol=1, frameon=True, fontsize=12,
-            labelspacing=2, handletextpad=1.2, borderpad=1.5)
+            labelspacing=2, handletextpad=1.1, borderpad=1.3)
 
-    # 7. Layout LAST (no conflicts)
+    # Layout
     plt.tight_layout()
     plt.grid(True, alpha=0.3)
     plt.savefig(outfiles['contacts_bubble_filtered'], bbox_inches='tight', dpi=300)

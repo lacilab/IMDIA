@@ -11,6 +11,7 @@ from scripts.pipeconfig import Pipeline
 from scripts.post03 import post
 
 def main(pipe: Pipeline):
+    """ Run postprocessing module to make MD results ready for analysis and visualization. """
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     logdir = pipe.paths.mutdir / "logs"

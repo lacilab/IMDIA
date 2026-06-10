@@ -13,11 +13,15 @@ from pathlib import Path
 
 
 def main(logfile: Path, top: Path, dna: bool = False):
-    # parser = argparse.ArgumentParser(description="Generate .itp files from topology file.")
-    # parser.add_argument('--logfile', '-l', dest='logfile', default=None, help='Path to the log file.')
-    # parser.add_argument("--top", '-p', dest='top', type=str, default='topol.top',
-    #                     help='Path to the GROMACS topology file (e.g. topol.top)')
-    # parser.add_argument('--dna', dest='with_dna', action='store_true', help='Use if the system contains DNA.')
+
+    """
+    Generate separate .itp files from a GROMACS topology file.
+
+    Arguments:
+        logfile     : Path to the log file.
+        top         : Path to the GROMACS topology file
+        dna         : True if the system contains DNA.
+    """
 
     gmxdir = top.parent
     path_toppar = gmxdir / "toppar"

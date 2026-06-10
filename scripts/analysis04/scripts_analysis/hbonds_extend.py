@@ -14,8 +14,8 @@ from scripts.utils.helpers import setup_logger
 
 ######## HELPER FUNCTIONS ########
 
-# Map atom index to domain/section
 def get_section(res_group, res_num, domains):
+    """Map atom index to domain/section."""
     if res_group not in domains:
         return 'None'
     else:
@@ -25,14 +25,14 @@ def get_section(res_group, res_num, domains):
     return 'None'
 
 
-# Check if an atom is in the DNA backbone
 def is_backbone_atom(atom_name, backbone_atoms = {'P', 'OP1', 'OP2'}):
+    """Check if an atom is in the DNA backbone."""
     # Check if atom is P, OP1, OP2 or contains a prime
     return atom_name in backbone_atoms or "'" in atom_name
 
 
-# Map atom index to residue number, residue name and atom name
 def get_atom_info(structure_file, atom_ids, chains):
+    """Map atom index to residue number, residue name and atom name."""
     u = mda.Universe(structure_file)
     atom_info = {}
     for atom in atom_ids:
@@ -47,6 +47,7 @@ def get_atom_info(structure_file, atom_ids, chains):
     return atom_info
 
 def get_ori_chain(chain_new, chains):
+    """ Get original chain ID from updated ID."""
     for chain, info in chains.items():
         if info['new_id'] == chain_new:
             return chain
@@ -60,24 +61,30 @@ def main(logfile: str = None, pdbfile: str = None, universe: str = None,
          hbonds_perframe : str = None,
          offsets : dict = None, domains : dict = {}, chaingroups : dict = {}, chains : dict = {}):
 
-    # # Arguments
-    # parser = argparse.ArgumentParser(description="Extend hydrogen bonds data with additional information.")
-    # parser.add_argument("-f", "--pdb", help="PDB file.")
-    # parser.add_argument("-u", "--universe", help="MDAnalysis universe file.")
-    # parser.add_argument("-p", "--hbonds_parsed", help="Input. Parsed hydrogen bonds CSV file.")
-    # parser.add_argument("-o", "--hbonds_ext", help="Output. Extended hydrogen bonds file.")
-    # parser.add_argument("-r", "--hbonds_perframe", help="Output. Hydrogen bonds per frame file.")
+    """
+    Extend hydrogen bond prediction results with data about the donor and acceptor atoms, corresponding residues and domains
 
-    # if len(sys.argv)==1:
-    #     parser.print_help()
-    #     sys.exit(0)
- 
-    # args = parser.parse_args()
-    # pdbfile = args.pdb
-    # universe = args.universe
-    # hbonds_parsed = args.hbonds_parsed
-    # hbonds_ext = args.hbonds_ext
-    # hbonds_perframe = args.hbonds_perframe
+    Arguments:
+        logfile         : Path to the log file.
+        pdbfile         : Path to input PDB file used for structural reference.
+        universe        : Path to the Universe object generated with MDAnalysis, containing the processed MD system.
+
+        hbonds_parsed   : Path to parsed hydrogen bond prediction results.
+        hbonds_ext      : Path to output .csv file with extended data about donor and acceptor. Fields: 
+                            donor,hydrogen,acceptor,count,frame%,
+                            donor_res_name,donor_res_num,donor_atom_name,donor_chain,
+                            acceptor_res_name,acceptor_res_num,acceptor_atom_name,acceptor_chain,
+                            donor_type,acceptor_type,donor_res_num_adjusted,acceptor_res_num_adjusted
+                            ,donor_group,acceptor_group,donor_section,acceptor_section
+
+        hbonds_perframe : Path to output .png plot.
+
+        offsets         : Dictionary specifying residue numbering offsets per chain.
+        domains         : Dictionary of domains in the structure.
+        chaingroups     : Dictionary of groups and chains in them.
+        chains          : Dictionary of original ID chains and corresponding updated IDs, and offsets.
+    """
+
 
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)
@@ -87,20 +94,6 @@ def main(logfile: str = None, pdbfile: str = None, universe: str = None,
     with open(universe, 'rb') as f:
         u = pickle.load(f)
     u.trajectory[0]
-
-    # Select atoms by chain
-    # dimer = u.select_atoms("segid A B")  
-    #monoA = u.select_atoms("segid A")   
-    #monoB = u.select_atoms("segid B")   
-    # dna = u.select_atoms("segid C D")   
-    #dnaC = u.select_atoms("segid C") 
-    #dnaD = u.select_atoms("segid D") 
-
-    # Save indices
-    # monoA_indices = set(monoA.indices)  
-    # monoB_indices = set(monoB.indices)  
-    # dnaC_indices = set(dnaC.indices) 
-    # dnaD_indices = set(dnaD.indices) 
 
     # Define backbone atom criteria
     backbone_atoms = {'P', 'OP1', 'OP2'}  # Phosphate atoms without prime

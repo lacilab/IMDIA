@@ -12,7 +12,8 @@ from scripts.md02 import md
 
 
 def main(pipe: Pipeline, steps: list):
-
+    """ Perform MD simulation steps: minimization, NVT, NPT, and production MD. """ 
+    
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     logdir = pipe.paths.mutdir / "logs"
     logdir.mkdir(parents=True, exist_ok=True)  # Ensure dir exists
@@ -64,7 +65,9 @@ def main(pipe: Pipeline, steps: list):
             group_index(gmxdir=outdir, logfile=LOGFILE, logname='md', structurefile=outdir / "em.gro", dna=pipe.system.dna, phos=pipe.system.phos)
             md.equilibration(logfile=LOGFILE, gmxdir=pipe.paths.gmxdir, outdir=outdir, flag_nb_gpu=flag_nb_gpu)
         if "md_prod" in steps or "md" in steps:
+            print(f"LOGFILE type: {type(LOGFILE)}, value: {LOGFILE}")
+            print(f"gmxdir type: {type(pipe.paths.gmxdir)}, value: {pipe.paths.gmxdir}")
+            print(f"outdir type: {type(outdir)}, value: {outdir}")
+            print(f"md_time type: {type(pipe.run.md_time)}, value: {pipe.run.md_time}")
             group_index(gmxdir=outdir, logfile=LOGFILE, logname='md', structurefile=outdir / "em.gro", dna=pipe.system.dna, phos=pipe.system.phos)
-            md.production(logfile=LOGFILE, gmxdir=pipe.paths.gmxdir, outdir=outdir, ntmpi=pipe.run.ntmpi, ntomp=pipe.run.ntomp, 
-                          flag_nb_gpu=flag_nb_gpu, flag_pme_gpu=flag_pme_gpu, flag_gpu_tasks=flag_gpu_tasks)
-
+            md.production(logfile=LOGFILE, gmxdir=pipe.paths.gmxdir, outdir=outdir, md_time=str(pipe.run.md_time), ntmpi=pipe.run.ntmpi, ntomp=pipe.run.ntomp, flag_nb_gpu=flag_nb_gpu, flag_pme_gpu=flag_pme_gpu, flag_gpu_tasks=flag_gpu_tasks)
