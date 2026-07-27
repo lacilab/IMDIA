@@ -216,16 +216,16 @@ def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, grou
 
     # Set ticks (before inversion)
     ax.set_xticks(np.arange(len(unique_x)))
-    ax.set_xticklabels([x_labels[i] for i in unique_x], rotation=-90)
+    ax.set_xticklabels([x_labels[i] for i in unique_x], rotation=-90, fontsize=14)
     ax.set_yticks(np.arange(len(unique_y)))
-    ax.set_yticklabels([y_labels[i] for i in unique_y])
+    ax.set_yticklabels([y_labels[i] for i in unique_y], fontsize=14)
 
     # Invert Y-axis
     ax.invert_yaxis()
 
     # Labels/title
-    ax.set_xlabel(f'{group2} Residue (adj)', fontsize=14)
-    ax.set_ylabel(f'{group1} Residue (adj)', fontsize=14)
+    ax.set_xlabel(f'{group2} Residue (adj)', fontsize=16)
+    ax.set_ylabel(f'{group1} Residue (adj)', fontsize=16)
     ax.set_title(
         f'Contacts between {group1} and {group2}\n'
         f'Filtered to pairs with ratio >= {threshold:.2f} (top 75%)',
