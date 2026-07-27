@@ -247,6 +247,75 @@ def main(logfile : str =None, hbonds_parsed: str = None, hbonds_ext : str =None,
     plt.close()
     logger.info(f"Plot of hydrogen bonds heatmap saved as {outfiles[f'hbonds_heatmap']}")
 
+    ##### HEATMAP (DNA base only) ####
+
+    if "DNA" in [group1, group2]:
+        total_frames = hbonds_ori['frame'].nunique()
+        chains_df = hbonds_df.copy()
+
+        # keep only interactions involving a base section on either side
+        chains_df = chains_df[
+            (chains_df['donor_section'] == 'base') |
+            (chains_df['acceptor_section'] == 'base')
+        ].copy()
+
+        for group in [group1, group2]:
+            # If group is a chain ID
+            if len(group) == 1 and group.isalpha():
+                chains_df[f'{group}'] = np.where(
+                    chains_df['donor_chain'] == group,
+                    chains_df['donor_res_num_adjusted'],
+                    chains_df['acceptor_res_num_adjusted']
+                )
+
+            # If group is a predefined group (e.g., "Protein", "DNA")
+            elif group == "Protein" or group == "DNA":
+                chains_df[f'{group}'] = np.where(
+                    chains_df['donor_group'] == group,
+                    chains_df.apply(
+                        lambda row: format_residue(row['donor_chain'], row['donor_res_num_adjusted']),
+                        axis=1
+                    ),
+                    chains_df.apply(
+                        lambda row: format_residue(row['acceptor_chain'], row['acceptor_res_num_adjusted']),
+                        axis=1
+                    )
+                )
+
+        df_pivot = chains_df.pivot_table(
+            index=f'{group1}',
+            columns=f'{group2}',
+            values='count',
+            aggfunc='sum',
+        ) / total_frames
+
+        df_pivot = df_pivot.reindex(
+            index=sorted(df_pivot.index, key=lambda x: label_sort_key(str(x))),
+            columns=sorted(df_pivot.columns, key=lambda x: label_sort_key(str(x)))
+        )
+
+        fig, ax = plt.subplots(figsize=(12, 8))
+        sns.heatmap(
+            df_pivot,
+            cmap='rocket_r',
+            annot=False,
+            linewidths=0.5,
+            linecolor='lightgray',
+            cbar_kws={'label': 'predicted bond count / total frames'},
+            ax=ax
+        )
+        ax.tick_params(axis='x', rotation=-90)
+        ax.tick_params(axis='y', rotation=0)
+        ax.set_xlabel(group2, fontsize=14)
+        ax.set_ylabel(group1, fontsize=14)
+        ax.set_title(f'Hydrogen Bonds between {group1} and {group2} (base only)', fontsize=16)
+
+        plt.tight_layout()
+        plt.savefig(outfiles["hbonds_heatmap_base"], dpi=300)
+        plt.close()
+
+        logger.info(f"Plot of hydrogen bonds heatmap saved as {outfiles['hbonds_heatmap_base']}")
+
       
 if __name__ == "__main__":
     main()

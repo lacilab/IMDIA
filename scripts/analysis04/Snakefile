@@ -114,12 +114,17 @@ if "hbonds" in rule_groups or rule_groups == [""]:
         out_hbonds_plots["hbonds_dna_chains"] = report(f"{PATH_HBONDS}/hbonds_{{method}}_dna_perchain.png", category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} DNA hydrogen bonds"})
         all_input["hbonds_dna_chains_merged"] = expand(f"{PATH_HBONDS}/hbonds_merged_dna_perchain.png", struct=structures, mut=mutations, rep=reps, zip=True)
         out_hbonds_plots_merged["hbonds_dna_chains"] = report(f"{PATH_HBONDS}/hbonds_merged_dna_perchain.png", category="Hbonds",  labels={"sample": "{mut} {rep} DNA hydrogen bonds"})
+        all_input["hbonds_heatmap_base"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_heatmap_base.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
+        out_hbonds_plots["hbonds_heatmap_base"] = report(f"{PATH_HBONDS}/hbonds_{{method}}_heatmap_base.png", category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} Hydrogen bonds with DNA bases"})
+        all_input["hbonds_heatmap_base_merged"] = expand(f"{PATH_HBONDS}/hbonds_merged_heatmap_base.png", struct=structures, mut=mutations, rep=reps, zip=True)
+        out_hbonds_plots_merged["hbonds_heatmap_base"] = report(f"{PATH_HBONDS}/hbonds_merged_heatmap_base.png", category="Hbonds",  labels={"sample": "{mut} {rep} Hydrogen bonds with DNA bases"})
     all_input["hbonds_perframe"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_perframe.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
     all_input["hbonds_ext"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_ext.csv", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
     all_input["hbonds_per_group"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_per_group.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
     all_input["hbonds_heatmap"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_heatmap.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
     all_input["hbonds_pymol"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_pymol.txt", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
-    all_input["hbonds_merged"] = expand(f"{PATH_HBONDS}/hbonds_ext_merged.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["hbonds_pymol_merged"] = expand(f"{PATH_HBONDS}/hbonds_merged_pymol.txt", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["hbonds_merged"] = expand(f"{PATH_HBONDS}/hbonds_merged_ext.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["hbonds_merged_per_group"] = expand(f"{PATH_HBONDS}/hbonds_merged_per_group.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["hbonds_merged_heatmap"] = expand(f"{PATH_HBONDS}/hbonds_merged_heatmap.png", struct=structures, mut=mutations, rep=reps, zip=True)
 if "wb" in rule_groups or rule_groups == [""]:
@@ -405,13 +410,13 @@ rule hbonds_merge:
     input: 
         hbonds_ext = expand(f"{PATH_HBONDS}/hbonds_{{method}}_ext.csv", method=METHODS_HBONDS, struct=structures, mut=mutations, rep=reps, zip=True)
     output: 
-        hbonds_ext_merged = f"{PATH_HBONDS}/hbonds_ext_merged.csv"
+        hbonds_merged_ext = f"{PATH_HBONDS}/hbonds_merged_ext.csv"
     run:
         from scripts_analysis.hbonds_merge import main
         main(
             logfile=LOGFILE,
             hbonds_files=input.hbonds_ext,
-            outfile=output.hbonds_ext_merged
+            outfile=output.hbonds_merged_ext
         )
 
 
@@ -443,11 +448,11 @@ rule hbonds_plots:
 
 
 # Plot together the extended results of multiple hydrogen bond prediction methods 
-rule hbonds_merged_plots:
+rule hbonds_plots_merged:
     params:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/hbonds_{GROUP1}_{GROUP2}"
     input: 
-        hbonds_merged = f"{PATH_HBONDS}/hbonds_ext_merged.csv",
+        hbonds_merged = f"{PATH_HBONDS}/hbonds_merged_ext.csv",
         hbonds_parsed = f"{PATH_HBONDS}/hbonds_gmx_parsed.csv", # to get the number of frames
     output: 
         hbonds_per_group = report(f"{PATH_HBONDS}/hbonds_merged_per_group.png", 
@@ -483,6 +488,19 @@ rule hbonds_pymol:
             hbonds_pymol=output.hbonds_pymol
         )
 
+
+rule hbonds_pymol_merged:
+    input: 
+        hbonds_ext = f"{PATH_HBONDS}/hbonds_merged_ext.csv",
+    output: 
+        hbonds_pymol = f"{PATH_HBONDS}/hbonds_merged_pymol_.txt",
+    run:
+        from scripts_analysis.hbonds_pymol import main
+        main(
+            logfile=LOGFILE,
+            hbonds_ext=input.hbonds_ext,
+            hbonds_pymol=output.hbonds_pymol
+        )
         
 # Calculate fraction of contacts (within a radius of 5 Å) present in the reference structure with MDAnalysis
 rule contact_ratio:
