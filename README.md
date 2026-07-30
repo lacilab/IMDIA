@@ -271,7 +271,7 @@ It is also possible to run one or more subsets of rules:
 - GBSA predicted free binding energy (light blue): ```gbsa```
 
 
-![Snakemake rule subsets](img/snakemake_v4.drawio.png)
+![Snakemake rule subsets](img/snakemake_v5.drawio.png)
 
 Examples:
 ```
@@ -330,7 +330,8 @@ Time (ns) | Backbone | C-alphas | Protein
 
 ```rmsd.png```
 
-![RMSD plotted across time](usecase_8RM6/qc/rmsd.png)
+<img src="usecase_8RM6/qc/rmsd.png" alt="RMSD plotted across time" width="600">
+
 
 ```rmsd_cats.png```
 
@@ -338,7 +339,8 @@ Time (ns) | Backbone | C-alphas | Protein
 
 ```rmsd_bb.png```
 
-![RMSD plotted across time for backbone](usecase_8RM6/qc/rmsd_bb.png)
+<img src="usecase_8RM6/qc/rmsd_bb.png" alt="RMSD plotted across time for backbone" width="600">
+
 
 ```radius_axis.csv```
 
@@ -355,7 +357,7 @@ Frame | all | x-axis | y-axis | z-axis
 
 ```radius_rmsd.png```
 
-![Radius of gyration plotted against RMSD](usecase_8RM6/qc/radius_rmsd.png)
+<img src="usecase_8RM6/qc/radius_rmsd.png" alt="Radius of gyration plotted against RMSD" width="600">
 
 ```rmsf_prot.csv```
 
@@ -389,7 +391,7 @@ Residue | Chain | RMSF | Residue | Chain | RMSF
 
 ```rmsf_dna.png```
 
-![RMSF per DNA residue and chain](usecase_8RM6/qc/rmsf_dna.png)
+<img src="usecase_8RM6/qc/rmsf_dna.png" alt="RMSF per DNA residue and chain" width="600">
 
 
 ### Principal component analysis (PCA)
@@ -485,7 +487,7 @@ Time(ps) | Frame | PC1 | PC2 | PC3 | PC4 | PC5 | PC6 | PC7 | PC8 | PC9 | PC10 | 
 
 ```clust_silhouette.png``` 
 
-![Cluster quality based on silhouette score](usecase_8RM6/clustering/clust_silhouette.png)
+<img src="usecase_8RM6/clustering/clust_silhouette.png" alt="Cluster quality based on silhouette score" width="600">
 
 Silhouette score plotted against number of clusters (k), comparing clustering quality for k-means and hierarchical methods. K-means shows a clear peak at k = 3, while hierarchical clustering decreases steadily with no distinct maximum. 
 
@@ -495,7 +497,7 @@ Summary of hierarchical and k-means clustering results.
 
 ```clust_hierarchical.png```
 
-![Hierarchical k=2 (Medoids)](usecase_8RM6/clustering/clust_hierarchical.png)
+<img src="usecase_8RM6/clustering/clust_hierarchical.png" alt="Hierarchical k=2 (Medoids)" width="600">
 
 PC1 vs PC2 scatterplot colored by hierarchical clustering assignments, showing the distribution of conformations in reduced space. Cluster medoids are marked as stars to represent representative structures. 
 
@@ -507,52 +509,52 @@ Number of frames per hierarchical cluster, showing the population of each identi
 
 ```clust_hierarchical_time.png```   
 
-![Hierarchical k=2 (Ward) vs time](usecase_8RM6/clustering/clust_hierarchical_time.png)
+<img src="usecase_8RM6/clustering/clust_hierarchical_time.png" alt="Hierarchical k=2 (Ward) vs time" width="600">
 
 Hierarchical cluster IDs distributed across time frames. Each point indicates the cluster assignment at a given frame, showing state persistence, transitions, and temporal stability of the identified conformational states.
 
 ```clust_kmeans.png```     
 
-![KMeans k=3 (Centroids)](usecase_8RM6/clustering/clust_kmeans.png)
+<img src="usecase_8RM6/clustering/clust_kmeans.png" alt="KMeans k=3 (Centroids)" width="600">
+
 
 PC1 vs PC2 scatterplot colored by k-means clustering assignments, showing the distribution of conformations in reduced space. Cluster centroids are marked as stars to represent representative structures.
 
 ```clust_kmeans_sizes.png``` 
 
-<img src="usecase_8RM6/clustering/clust_kmeans_sizes.png" alt="KMeans cluster sizes" width="500">
+<img src="usecase_8RM6/clustering/clust_kmeans_sizes.png" alt="KMeans cluster sizes" width="600">
 
-![KMeans cluster sizes](usecase_8RM6/clustering/clust_kmeans_sizes.png)
 
 Number of frames per k-means cluster, showing the population of each identified state.
 
 ```clust_kmeans_time.png```
 
-![KMeans k=3 vs Time](usecase_8RM6/clustering/clust_kmeans_time.png)
+<img src="usecase_8RM6/clustering/clust_kmeans_time.png" alt="KMeans k=3 vs Time" width="600">
 
 K-means cluster IDs distributed across time frames. Each point indicates the cluster assignment at a given frame, showing state persistence, transitions, and temporal stability of the identified conformational states.
  
 ```pca_gromos_clusters.png```
 
-![PC1 vs PC2 colored by gromos cluster](usecase_8RM6/clustering/pca_gromos_clusters.png)
+<img src="usecase_8RM6/clustering/pca_gromos_clusters.png" alt="PC1 vs PC2 colored by gromos cluster" width="600">
 
 PC1 vs PC2 scatterplot colored by GROMOS clustering assignments using a 0.1 nm neighbor cutoff, showing the distribution of conformations in reduced space. 
 
 ```pca_gromos_clusters_top10.png```
 
-![PC1 vs PC2 colored by gromos cluster (Clusters 1-10 in blue)](usecase_8RM6/clustering/pca_gromos_clusters_top10.png)
+<img src="usecase_8RM6/clustering/pca_gromos_clusters_top10.png" alt="PC1 vs PC2 colored by gromos cluster (Clusters 1-10 in blue)" width="600">
 
 PC1 vs PC2 scatterplot with the frames assigned to the ten most populated GROMOS clusters colored blue. 
 
 
 ```gromos_rmsd_dist.png```  
 
-![RMSD Distance distribution](usecase_8RM6/clustering/gromos_rmsd_dist.png)
+<img src="usecase_8RM6/clustering/gromos_rmsd_dist.png" alt="RMSD Distance distribution" width="600">
 
 RMSD distance versus frame pair counts, showing the distribution of structural differences across all frame pairs. The bell-shaped distribution peaking at ~0.15 nm indicates that most conformations are moderately similar, with fewer very close or highly distinct structures. In the context of GROMOS clustering, a cutoff below the peak (e.g., 0.1 nm) selects only closely related neighbors, leading to smaller, more specific clusters, while higher cutoffs would merge more conformations into larger clusters.
 
 ```gromos_clusters_freq.png```  
 
-![Gromos cluster frequencies](usecase_8RM6/clustering/gromos_clusters_freq.png)
+<img src="usecase_8RM6/clustering/gromos_clusters_freq.png" alt="Gromos cluster frequencies" width="600">
 
 GROMOS cluster frequencies plotted as a percentage of frames versus cluster ID, showing the relative population of each cluster. 
 
@@ -609,13 +611,13 @@ donor | hydrogen | acceptor | count | frame% | donor_res_name | donor_res_num | 
 
 ```hbondsmerged_heatmap.png```
 
-![Heatmap of hydrogen bonds between Protein and DNA](usecase_8RM6/hbonds_Protein_DNA/hbondsmerged_heatmap.png)
+<img src="usecase_8RM6/hbonds_Protein_DNA/hbondsmerged_heatmap.png" alt="Heatmap of hydrogen bonds between Protein and DNA" width="600">
 
 Protein–DNA hydrogen bonds across residues, combining GROMACS and MDAnalysis results. Each cell represents a residue–residue interaction, colored by the fraction of simulation frames in which the hydrogen bond is present, highlighting persistent and transient interactions.
 
 ```hbondsmerged_heatmap_base.png```
 
-<img src="usecase_8RM6/hbonds_Protein_DNA/hbondsmerged_heatmap_base.png" alt="Heatmap of hydrogen bonds between Protein and DNA (base only)" width="600">
+<img src="usecase_8RM6/hbonds_Protein_DNA/hbondsmerged_heatmap_base.png" alt="Heatmap of hydrogen bonds between Protein and DNA (base only)" width="700">
 
 Protein–DNA hydrogen bonds across residue pairs, combining GROMACS and MDAnalysis results, filtered by hydrogen bonds with the DNA bases. Each cell represents a residue–residue interaction, colored by the fraction of simulation frames in which the hydrogen bond is present. Hydrogen bonds formed directly with bases are key to binding specificity.
 
@@ -677,7 +679,7 @@ time | sele1_index | sele2_index | sele1_resnm | sele1_resid | sele1_atom | sele
 
 ```waterbridges_per_frame.png```
 
-![Water bridge count between protein and DNA](usecase_8RM6/water_bridges_Protein_DNA/water_bridges_per_frame.png)
+<img src="usecase_8RM6/water_bridges_Protein_DNA/water_bridges_per_frame.png" alt="Water bridge count between protein and DNA" width="600">
 
 Time evolution of water-mediated interactions between protein and DNA, showing fluctuations in the solvent contribution to the stability of the complex.
 
@@ -721,7 +723,7 @@ Columns and example values:
 
 ```contacts_timeseries.png```
 
-![Native contacts across time](usecase_8RM6/contacts_Protein_DNA/contacts_timeseries.png)
+<img src="usecase_8RM6/contacts_Protein_DNA/contacts_timeseries.png" alt="Native contacts across time" width="600">
 
 Fraction of contacts between protein and DNA within a radius of 5 Å  that are also present in the reference structure, across simulation time. This metric provides insight into stability and conformational changes.
 
@@ -741,25 +743,25 @@ ALA | 549 | A | DT | 3 | C | 2 | 4.872682469790483 | 0.001
 
 ```contacts_hist_distance.png```
 
-![Distance distribution of contacts between protein and DNA](usecase_8RM6/contacts_Protein_DNA/contacts_hist_distance.png)
+<img src="usecase_8RM6/contacts_Protein_DNA/contacts_hist_distance.png" alt="Distance distribution of contacts between protein and DNA" width="600">
 
 Distribution of protein–DNA contact distances. Counts are normalized by the number of frames, showing an increasing trend toward the 5 Å cutoff, reflecting the higher number of contacts detected at larger distances.
 
 ```contacts_hist_time.png```
 
-![Time distribution of contacts between protein and DNA](usecase_8RM6/contacts_Protein_DNA/contacts_hist_time.png)
+<img src="usecase_8RM6/contacts_Protein_DNA/contacts_hist_time.png" alt="Time distribution of contacts between protein and DNA" width="600">
 
 Number of protein–DNA contacts across simulation frames. The total contact count per frame illustrates the temporal fluctuations and overall interaction stability.
 
 ```contacts_heatmap_count.png```
 
-![heatmap of ontact count bwteen protein and DNA by residue pair](usecase_8RM6/contacts_Protein_DNA/contacts_heatmap_count.png)
+<img src="usecase_8RM6/contacts_Protein_DNA/contacts_heatmap_count.png" alt="Heatmap of ontact count between protein and DNA by residue pair" width="600">
 
 Protein–DNA contacts (≤5 Å) across residue pairs. Each cell represents a residue–residue interaction, colored by the fraction of frames in which the contact is observed, with darker values indicating more persistent interactions.
 
 ```contacts_heatmap_distance.png```
 
-![Heatmap of mean contact distance between protein and DNA by residue pair](usecase_8RM6/contacts_Protein_DNA/contacts_heatmap_distance.png)
+<img src="usecase_8RM6/contacts_Protein_DNA/contacts_heatmap_distance.png" alt="Heatmap of mean contact distance between protein and DNA by residue pair" width="600">
 
 Mean protein–DNA contact distances (≤5 Å) across residue pairs. Each cell represents a residue–residue interaction, colored by the average distance over frames, with darker values indicating closer and more stable contacts.
 
