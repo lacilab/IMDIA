@@ -371,7 +371,7 @@ Residue | Chain | RMSF | Residue | Chain | RMSF
 
 ```rmsf_chaingroups.png```
 
-![RMSF defined group and chain](usecase_8RM6/qc/rmsf_chaingroups.png)
+<img src="usecase_8RM6/qc/rmsf_chaingroups.png" alt="RMSF defined group and chain" width="600">
 
 Lines are colored by chain. Colored shaded areas represent the protein domains as indicated in the input parameter file. 
 
@@ -427,14 +427,14 @@ Pairwise scatter plots of principal components colored by simulation time, showi
 
 ```pc_rmsf.png```
 
-![RMSF per PC](usecase_8RM6/pca/pc_rmsf.png)
+<img src="usecase_8RM6/pca/pc_rmsf.png" alt="RMSF per PC" width="600">
 
 RMSF per Cα atom projected along principal components 1–4. Each panel displays residue-level fluctuations associated with an individual PC, highlighting how different each PC contributes to local flexibility.
 
 
 ```pc1_pc2.png```
 
-![PC1 vs PC2 colored by time](usecase_8RM6/pca/pc1_pc2.png)
+<img src="usecase_8RM6/pca/pc1_pc2.png" alt="PC1 vs PC2 colored by time" width="600">
 
 PC1 vs PC2 scatterplot colored by simulation time, showing the distribution of conformations in reduced principal component space. The color gradient reflects temporal progression along the trajectory. This helps reveal clustering and transitions between states.
 
@@ -501,7 +501,7 @@ PC1 vs PC2 scatterplot colored by hierarchical clustering assignments, showing t
 
 ```clust_hierarchical_sizes.png``` 
 
-![Hierarchical cluster sizes](usecase_8RM6/clustering/clust_hierarchical_sizes.png)
+<img src="usecase_8RM6/clustering/clust_hierarchical_sizes.png" alt="Hierarchical cluster sizes" width="500">
 
 Number of frames per hierarchical cluster, showing the population of each identified state. 
 
@@ -518,6 +518,8 @@ Hierarchical cluster IDs distributed across time frames. Each point indicates th
 PC1 vs PC2 scatterplot colored by k-means clustering assignments, showing the distribution of conformations in reduced space. Cluster centroids are marked as stars to represent representative structures.
 
 ```clust_kmeans_sizes.png``` 
+
+<img src="usecase_8RM6/clustering/clust_kmeans_sizes.png" alt="KMeans cluster sizes" width="500">
 
 ![KMeans cluster sizes](usecase_8RM6/clustering/clust_kmeans_sizes.png)
 
@@ -556,7 +558,7 @@ GROMOS cluster frequencies plotted as a percentage of frames versus cluster ID, 
 
 ```gromos_clusters.png``` 
 
-![RMS Deviation / Cluster Index](usecase_8RM6/clustering/gromos_clusters.png)
+<img src="usecase_8RM6/clustering/gromos_clusters.png" alt="RMS Deviation / Cluster Index" width="600">
 
 Pairwise RMSD values across time frames. Each cell reflects structural similarity between two frames, with the upper triangle showing continuous RMSD values and the lower triangle indicating cluster membership, overall showing state persistence, transitions, and temporal stability of conformational states. 
 
@@ -613,25 +615,25 @@ Protein–DNA hydrogen bonds across residues, combining GROMACS and MDAnalysis r
 
 ```hbondsmerged_heatmap_base.png```
 
-![Heatmap of hydrogen bonds between Protein and DNA (base only)](usecase_8RM6/hbonds_Protein_DNA/hbondsmerged_heatmap_base.png)
+<img src="usecase_8RM6/hbonds_Protein_DNA/hbondsmerged_heatmap_base.png" alt="Heatmap of hydrogen bonds between Protein and DNA (base only)" width="600">
 
 Protein–DNA hydrogen bonds across residue pairs, combining GROMACS and MDAnalysis results, filtered by hydrogen bonds with the DNA bases. Each cell represents a residue–residue interaction, colored by the fraction of simulation frames in which the hydrogen bond is present. Hydrogen bonds formed directly with bases are key to binding specificity.
 
 ```hbondsmerged_per_group.png```
 
-![Heatmap of hydrogen bonds between Protein and DNA](usecase_8RM6/hbonds_Protein_DNA/hbondsmerged_per_group.png)
+<img src="usecase_8RM6/hbonds_Protein_DNA/hbondsmerged_per_group.png" alt="Heatmap of hydrogen bonds between Protein and DNA" width="600">
 
 Hydrogen bonds between protein and DNA, combining GROMACS and MDAnalysis results. Each point represents a donor-acceptor pair. The top panel shows protein residues and the bottom panel DNA residues, with points colored by chain and marker style indicating donor (filled) or acceptor (open) roles. The panels are complementary, with donors in one panel forming bonds with acceptors in the other. Shaded regions correspond to protein domains as indicated in the input parameters.
 
 ```hbondsmerged_protein_perchain.png```
 
-![Heatmap of hydrogen bonds between Protein and DNA](usecase_8RM6/hbonds_Protein_DNA/hbondsmerged_protein_perchain.png)
+<img src="usecase_8RM6/hbonds_Protein_DNA/hbondsmerged_protein_perchain.png" alt="Heatmap of hydrogen bonds between Protein and DNA" width="600">
 
 Hydrogen bonds between protein and DNA, combining GROMACS and MDAnalysis results, per protein chain and residue. Each point represents a donor-acceptor pair, colored by chain and marker style indicating donor (filled) or acceptor (open) roles. Shaded regions correspond to protein domains as indicated in the input parameters.
 
 ```hbondsmerged_dna_perchain.png```
 
-![Heatmap of hydrogen bonds between Protein and DNA](usecase_8RM6/hbonds_Protein_DNA/hbondsmerged_dna_perchain.png)
+<img src="usecase_8RM6/hbonds_Protein_DNA/hbondsmerged_dna_perchain.png" alt="Heatmap of hydrogen bonds between Protein and DNA" width="600">
 
 Hydrogen bonds between protein and DNA, combining GROMACS and MDAnalysis results, per DNA chain and residue. Each point represents a donor-acceptor pair, colored by chain and marker style indicating donor (filled) or acceptor (open) roles.
 
@@ -682,7 +684,8 @@ Time evolution of water-mediated interactions between protein and DNA, showing f
 
 ```water_bridges_per_chain.png```
 
-![Water bridge count per chain](usecase_8RM6/water_bridges_Protein_DNA/water_bridges_per_chain.png)
+<img src="usecase_8RM6/water_bridges_Protein_DNA/water_bridges_per_chain.png" alt="Water bridge count per chain" width="500">
+
 
 Protein–DNA water bridge counts by chain and residue. Each bar represents the number of water-mediated interactions for a given residue, colored by the role of the participating atoms.
 
@@ -816,7 +819,7 @@ Frame # | Residue | Internal | van der Waals | Electrostatic | Polar Solvation |
 
 ```gbsa_full_totalenergy.png```
 
-![GBSA Total Energy Breakdown](usecase_8RM6/gbsa_Protein_DNA/gbsa_full_totalenergy.png)
+<img src="usecase_8RM6/gbsa_Protein_DNA/gbsa_full_totalenergy.png" alt="GBSA Total Energy Breakdow" width="500">
 
 Decomposition of protein–DNA binding free energy into energetic components. Contributions include bonded terms (BOND, ANGLE, DIHED), nonbonded interactions (VDWAALS: van der Waals; EEL: electrostatic; 1–4 VDW/EEL: intramolecular short-range interactions), and solvation terms (EGB: generalized Born energy; ESURF: solvent accessible surface area). Aggregate terms GGAS (gas-phase energy), GSOLV (solvation energy), and TOTAL summarize the overall binding energetics.
 
