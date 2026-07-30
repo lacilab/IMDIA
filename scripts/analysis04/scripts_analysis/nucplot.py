@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """DNA-focused hydrogen bond plot: full-duplex NUCPLOT-style schematic only.
 
-This is a trimmed-down version of the original DNA h-bond plotting module,
-keeping only what is needed to produce the full-duplex NUCPLOT-style figure
-(``plot_nucplot_full``). It reuses data already produced by the hbonds
-pipeline and never recomputes bonds:
+Adapted from https://github.com/RomanLas/NUCPLOT
+
+It reuses data already produced by the hbonds pipeline and never recomputes bonds:
 
   - ``hbonds_{method}_ext.csv`` : one row per unique (donor, hydrogen, acceptor)
                                    bond with occupancy (``frame%``/``count``),
