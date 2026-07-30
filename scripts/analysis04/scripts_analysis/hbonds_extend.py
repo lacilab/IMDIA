@@ -102,15 +102,19 @@ def main(logfile: str = None, pdbfile: str = None, universe: str = None,
     hbonds_df = pd.read_csv(hbonds_parsed)
 
     # Plot hbonds per frame
-    hbonds_per_frame = hbonds_df.groupby('frame').size()
-    plt.figure(figsize=(10, 6))
-    hbonds_per_frame.plot(kind='bar', color='skyblue')
-    plt.xlabel('Frame')
-    plt.ylabel('Number of Hydrogen Bonds')
-    plt.title('Number of Hydrogen Bonds per Frame')
-    plt.xticks(ticks=np.arange(0, len(hbonds_per_frame), 100), rotation=0)
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
-    plt.tight_layout()
+    if hbonds_df.empty:
+        plt.text(0.5, 0.5, "No hydrogen bonds found", ha='center', va='center')
+        plt.axis('off')
+    else:
+        hbonds_per_frame = hbonds_df.groupby('frame').size()
+        plt.figure(figsize=(10, 6))
+        hbonds_per_frame.plot(kind='bar', color='skyblue')
+        plt.xlabel('Frame')
+        plt.ylabel('Number of Hydrogen Bonds')
+        plt.title('Number of Hydrogen Bonds per Frame')
+        plt.xticks(ticks=np.arange(0, len(hbonds_per_frame), 100), rotation=0)
+        plt.grid(axis='y', linestyle='--', alpha=0.7)
+        plt.tight_layout()
     plt.savefig(hbonds_perframe)
     plt.close()
 
