@@ -1,0 +1,75 @@
+# This file was created Wed Apr 29 18:17:42 2026
+# Created by:
+#               :-) GROMACS - gmx cluster, 2024.3-conda_forge (-:
+# 
+# Executable:   /data/leuven/359/vsc35916/miniconda3/envs/pipemd_test2/bin.AVX2_256/gmx
+# Data prefix:  /data/leuven/359/vsc35916/miniconda3/envs/pipemd_test2
+# Working dir:  /lustre1/project/stg_00187/users/Irati/thesis_main
+# Command line:
+#   gmx cluster -f data/8rm6/WT/rep1/gromacs/md_post.xtc -s data/8rm6/WT/rep1/gromacs/md.tpr -method gromos -cutoff 0.1 -o data/8rm6/WT/rep1/analysis/clustering/gromos_clusters.xpm -g data/8rm6/WT/rep1/analysis/clustering/gromos_clusters.log -clndx data/8rm6/WT/rep1/analysis/clustering/gromos_clusters.ndx -dist data/8rm6/WT/rep1/analysis/clustering/gromos_clusters_rmsd_dist.xvg -clid data/8rm6/WT/rep1/analysis/clustering/gromos_clust_ids.xvg -sz data/8rm6/WT/rep1/analysis/clustering/gromos_clust_size.xvg -quiet
+# gmx cluster is part of G R O M A C S:
+#
+# Good ROcking Metal Altar for Chronical Sinners
+#
+@    title "Cluster Sizes"
+@    xaxis  label "Cluster #"
+@    yaxis  label "# Structures"
+@TYPE xy
+@g0 type bar
+       1      307
+       2      258
+       3      163
+       4      161
+       5      125
+       6      101
+       7       90
+       8       87
+       9       87
+      10       72
+      11       51
+      12       46
+      13       45
+      14       44
+      15       37
+      16       34
+      17       33
+      18       32
+      19       21
+      20       21
+      21       19
+      22       17
+      23       14
+      24       12
+      25       12
+      26       11
+      27       11
+      28        8
+      29        7
+      30        6
+      31        6
+      32        6
+      33        5
+      34        5
+      35        5
+      36        4
+      37        4
+      38        4
+      39        3
+      40        3
+      41        3
+      42        3
+      43        2
+      44        2
+      45        2
+      46        1
+      47        1
+      48        1
+      49        1
+      50        1
+      51        1
+      52        1
+      53        1
+      54        1
+      55        1
+      56        1
+      57        1

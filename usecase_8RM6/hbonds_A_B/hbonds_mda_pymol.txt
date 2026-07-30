@@ -1,0 +1,5 @@
+color grey80, all
+select bonding_residues, resi 583 and chain B or resi 579 and chain B or resi 580 and chain B or resi 578 and chain B or resi 577 and chain B or resi 593 and chain B or resi 583 and chain A or resi 579 and chain A or resi 578 and chain A or resi 577 and chain A or resi 593 and chain A or resi 581 and chain A or resi 585 and chain A or resi 590 and chain A or resi 593 and chain A or resi 581 and chain B or resi 585 and chain B or resi 590 and chain B or resi 593 and chain B
+show sticks, bonding_residues
+color green, bonding_residues
+util.cnc("bonding_residues",_self=cmd)

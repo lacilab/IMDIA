@@ -1,0 +1,118 @@
+# This file was created Wed Apr 29 18:17:42 2026
+# Created by:
+#               :-) GROMACS - gmx cluster, 2024.3-conda_forge (-:
+# 
+# Executable:   /data/leuven/359/vsc35916/miniconda3/envs/pipemd_test2/bin.AVX2_256/gmx
+# Data prefix:  /data/leuven/359/vsc35916/miniconda3/envs/pipemd_test2
+# Working dir:  /lustre1/project/stg_00187/users/Irati/thesis_main
+# Command line:
+#   gmx cluster -f data/8rm6/WT/rep1/gromacs/md_post.xtc -s data/8rm6/WT/rep1/gromacs/md.tpr -method gromos -cutoff 0.1 -o data/8rm6/WT/rep1/analysis/clustering/gromos_clusters.xpm -g data/8rm6/WT/rep1/analysis/clustering/gromos_clusters.log -clndx data/8rm6/WT/rep1/analysis/clustering/gromos_clusters.ndx -dist data/8rm6/WT/rep1/analysis/clustering/gromos_clusters_rmsd_dist.xvg -clid data/8rm6/WT/rep1/analysis/clustering/gromos_clust_ids.xvg -sz data/8rm6/WT/rep1/analysis/clustering/gromos_clust_size.xvg -quiet
+# gmx cluster is part of G R O M A C S:
+#
+# Good ROcking Metal Altar for Chronical Sinners
+#
+@    title "RMS Distribution"
+@    xaxis  label "RMS (nm)"
+@    yaxis  label "counts"
+@TYPE xy
+         0           0
+0.00492669           0
+0.00985338           0
+ 0.0147801           0
+ 0.0197068           0
+ 0.0246334           0
+ 0.0295601           0
+ 0.0344868           0
+ 0.0394135           0
+ 0.0443402           0
+ 0.0492669           9
+ 0.0541936         117
+ 0.0591203         479
+  0.064047        1384
+ 0.0689737        2904
+ 0.0739003        5353
+  0.078827        8751
+ 0.0837537       12345
+ 0.0886804       16784
+ 0.0936071       22097
+ 0.0985338       27589
+   0.10346       33886
+  0.108387       40202
+  0.113314       46537
+  0.118241       53450
+  0.123167       61441
+  0.128094       69669
+  0.133021       75857
+  0.137947       79981
+  0.142874       82586
+  0.147801       82206
+  0.152727       80303
+  0.157654       77419
+  0.162581       74589
+  0.167507       70347
+  0.172434       66953
+  0.177361       62770
+  0.182288       58958
+  0.187214       55621
+  0.192141       51943
+  0.197068       48857
+  0.201994       45621
+  0.206921       42403
+  0.211848       40585
+  0.216774       37960
+  0.221701       34868
+  0.226628       33612
+  0.231554       31216
+  0.236481       28855
+  0.241408       27127
+  0.246334       25376
+  0.251261       23778
+  0.256188       22300
+  0.261115       20663
+  0.266041       19342
+  0.270968       17931
+  0.275895       16932
+  0.280821       15480
+  0.285748       14678
+  0.290675       13592
+  0.295601       12613
+  0.300528       11788
+  0.305455       10568
+  0.310381        9767
+  0.315308        8964
+  0.320235        8099
+  0.325161        7527
+  0.330088        6512
+  0.335015        5979
+  0.339942        5381
+  0.344868        4658
+  0.349795        4019
+  0.354722        3599
+  0.359648        3087
+  0.364575        2719
+  0.369502        2246
+  0.374428        1959
+  0.379355        1620
+  0.384282        1305
+  0.389208        1050
+  0.394135         892
+  0.399062         712
+  0.403989         574
+  0.408915         447
+  0.413842         344
+  0.418769         229
+  0.423695         181
+  0.428622         133
+  0.433549         100
+  0.438475          77
+  0.443402          52
+  0.448329          37
+  0.453255          19
+  0.458182          12
+  0.463109           8
+  0.468035           9
+  0.472962           2
+  0.477889           4
+  0.482816           1
+  0.487742           0
+  0.492669           1

@@ -1,0 +1,20 @@
+Covariance analysis log, written Wed Apr 29 18:31:34 2026
+
+Program: covar
+Working directory: /lustre1/project/stg_00187/users/Irati/thesis_main
+
+Read 2001 frames from data/8rm6/WT/rep1/gromacs/md_post.xtc (time 0 to 200000 ps)
+Read reference structure for fit from data/8rm6/WT/rep1/gromacs/md.tpr
+
+Analysis group is 'C-alpha' (142 atoms)
+Fit group is 'C-alpha' (142 atoms)
+Analysis is non-mass weighted
+Fit is non-mass weighted
+Diagonalized the 426x426 covariance matrix
+Trace of the covariance matrix before diagonalizing: 2.57407
+Trace of the covariance matrix after diagonalizing: 2.57407
+
+Wrote 426 eigenvalues to data/8rm6/WT/rep1/analysis/pca/eigenval.xvg
+Wrote reference structure to data/8rm6/WT/rep1/analysis/pca/eigenvec.trr
+Wrote average structure to data/8rm6/WT/rep1/analysis/pca/average.pdb and data/8rm6/WT/rep1/analysis/pca/eigenvec.trr
+Wrote eigenvectors 1 to 426 to data/8rm6/WT/rep1/analysis/pca/eigenvec.trr

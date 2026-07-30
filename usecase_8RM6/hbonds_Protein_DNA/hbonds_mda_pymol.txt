@@ -1,0 +1,5 @@
+color grey80, all
+select bonding_residues, resi 5 and chain C or resi 6 and chain C or resi 6 and chain C or resi 15 and chain D or resi 15 and chain D or resi 5 and chain D or resi 6 and chain D or resi 6 and chain D or resi 7 and chain D or resi 13 and chain C or resi 15 and chain C or resi 13 and chain D or resi 570 and chain A or resi 571 and chain A or resi 580 and chain A or resi 584 and chain A or resi 585 and chain A or resi 608 and chain A or resi 615 and chain A or resi 570 and chain B or resi 571 and chain B or resi 580 and chain B or resi 584 and chain B or resi 585 and chain B or resi 608 and chain B or resi 609 and chain B or resi 615 and chain B
+show sticks, bonding_residues
+color green, bonding_residues
+util.cnc("bonding_residues",_self=cmd)

@@ -1,0 +1,27 @@
+# This file was created Wed Apr 29 18:31:41 2026
+# Created by:
+#               :-) GROMACS - gmx analyze, 2024.3-conda_forge (-:
+# 
+# Executable:   /data/leuven/359/vsc35916/miniconda3/envs/pipemd_test2/bin.AVX2_256/gmx
+# Data prefix:  /data/leuven/359/vsc35916/miniconda3/envs/pipemd_test2
+# Working dir:  /lustre1/project/stg_00187/users/Irati/thesis_main
+# Command line:
+#   gmx analyze -f data/8rm6/WT/rep1/analysis/pca/proj_10.xvg -n 10 -cc data/8rm6/WT/rep1/analysis/pca/pc_cosine_corr.xvg -quiet
+# gmx analyze is part of G R O M A C S:
+#
+# Guyana Rwanda Oman Macau Angola Cameroon Senegal
+#
+@    title "Cosine content"
+@    xaxis  label "set / half periods"
+@    yaxis  label "cosine content"
+@TYPE xy
+ 1 0.716515
+ 2 0.779478
+ 3 0.325425
+ 4 0.0162113
+ 5 0.00780225
+ 6 0.0156693
+ 7 0.0216914
+ 8 0.0777789
+ 9 0.0541909
+ 10 0.0203297
