@@ -679,7 +679,7 @@ time | sele1_index | sele2_index | sele1_resnm | sele1_resid | sele1_atom | sele
 
 ```waterbridges_per_frame.png```
 
-<img src="usecase_8RM6/water_bridges_Protein_DNA/water_bridges_per_frame.png" alt="Water bridge count between protein and DNA" width="600">
+<img src="usecase_8RM6/water_bridges_Protein_DNA/water_bridges_per_frame.png" alt="Water bridge count between protein and DNA" width="700">
 
 Time evolution of water-mediated interactions between protein and DNA, showing fluctuations in the solvent contribution to the stability of the complex.
 
@@ -723,7 +723,7 @@ Columns and example values:
 
 ```contacts_timeseries.png```
 
-<img src="usecase_8RM6/contacts_Protein_DNA/contacts_timeseries.png" alt="Native contacts across time" width="600">
+<img src="usecase_8RM6/contacts_Protein_DNA/contacts_timeseries.png" alt="Native contacts across time" width="700">
 
 Fraction of contacts between protein and DNA within a radius of 5 Å  that are also present in the reference structure, across simulation time. This metric provides insight into stability and conformational changes.
 
@@ -821,7 +821,7 @@ Frame # | Residue | Internal | van der Waals | Electrostatic | Polar Solvation |
 
 ```gbsa_full_totalenergy.png```
 
-<img src="usecase_8RM6/gbsa_Protein_DNA/gbsa_full_totalenergy.png" alt="GBSA Total Energy Breakdow" width="500">
+<img src="usecase_8RM6/gbsa_Protein_DNA/gbsa_full_totalenergy.png" alt="GBSA Total Energy Breakdow" width="600">
 
 Decomposition of protein–DNA binding free energy into energetic components. Contributions include bonded terms (BOND, ANGLE, DIHED), nonbonded interactions (VDWAALS: van der Waals; EEL: electrostatic; 1–4 VDW/EEL: intramolecular short-range interactions), and solvation terms (EGB: generalized Born energy; ESURF: solvent accessible surface area). Aggregate terms GGAS (gas-phase energy), GSOLV (solvation energy), and TOTAL summarize the overall binding energetics.
 
