@@ -107,26 +107,28 @@ if "hbonds" in rule_groups or rule_groups == [""]:
     if "Protein" in [GROUP1, GROUP2]:
         all_input["hbonds_prot_chains"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_protein_perchain.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
         out_hbonds_plots["hbonds_prot_chains"] = report(f"{PATH_HBONDS}/hbonds_{{method}}_protein_perchain.png", category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} Protein hydrogen bonds"})
-        all_input["hbonds_prot_chains_merged"] = expand(f"{PATH_HBONDS}/hbonds_merged_protein_perchain.png", struct=structures, mut=mutations, rep=reps, zip=True)
-        out_hbonds_plots_merged["hbonds_prot_chains"] = report(f"{PATH_HBONDS}/hbonds_merged_protein_perchain.png", category="Hbonds",  labels={"sample": "{mut} {rep} Protein hydrogen bonds"})
+        all_input["hbonds_prot_chains_merged"] = expand(f"{PATH_HBONDS}/hbondsmerged_protein_perchain.png", struct=structures, mut=mutations, rep=reps, zip=True)
+        out_hbonds_plots_merged["hbonds_prot_chains"] = report(f"{PATH_HBONDS}/hbondsmerged_protein_perchain.png", category="Hbonds",  labels={"sample": "{mut} {rep} Protein hydrogen bonds"})
     if "DNA" in [GROUP1, GROUP2]:
         all_input["hbonds_dna_chains"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_dna_perchain.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
         out_hbonds_plots["hbonds_dna_chains"] = report(f"{PATH_HBONDS}/hbonds_{{method}}_dna_perchain.png", category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} DNA hydrogen bonds"})
-        all_input["hbonds_dna_chains_merged"] = expand(f"{PATH_HBONDS}/hbonds_merged_dna_perchain.png", struct=structures, mut=mutations, rep=reps, zip=True)
-        out_hbonds_plots_merged["hbonds_dna_chains"] = report(f"{PATH_HBONDS}/hbonds_merged_dna_perchain.png", category="Hbonds",  labels={"sample": "{mut} {rep} DNA hydrogen bonds"})
+        all_input["hbonds_dna_chains_merged"] = expand(f"{PATH_HBONDS}/hbondsmerged_dna_perchain.png", struct=structures, mut=mutations, rep=reps, zip=True)
+        out_hbonds_plots_merged["hbonds_dna_chains"] = report(f"{PATH_HBONDS}/hbondsmerged_dna_perchain.png", category="Hbonds",  labels={"sample": "{mut} {rep} DNA hydrogen bonds"})
         all_input["hbonds_heatmap_base"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_heatmap_base.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
         out_hbonds_plots["hbonds_heatmap_base"] = report(f"{PATH_HBONDS}/hbonds_{{method}}_heatmap_base.png", category="Hbonds", subcategory="{method}", labels={"sample": "{mut} {rep} Hydrogen bonds with DNA bases"})
-        all_input["hbonds_heatmap_base_merged"] = expand(f"{PATH_HBONDS}/hbonds_merged_heatmap_base.png", struct=structures, mut=mutations, rep=reps, zip=True)
-        out_hbonds_plots_merged["hbonds_heatmap_base"] = report(f"{PATH_HBONDS}/hbonds_merged_heatmap_base.png", category="Hbonds",  labels={"sample": "{mut} {rep} Hydrogen bonds with DNA bases"})
+        all_input["hbonds_heatmap_base_merged"] = expand(f"{PATH_HBONDS}/hbondsmerged_heatmap_base.png", struct=structures, mut=mutations, rep=reps, zip=True)
+        out_hbonds_plots_merged["hbonds_heatmap_base"] = report(f"{PATH_HBONDS}/hbondsmerged_heatmap_base.png", category="Hbonds",  labels={"sample": "{mut} {rep} Hydrogen bonds with DNA bases"})
+        all_input["hbonds_nucplot"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_nucplot.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
+        all_input["hbonds_nucplot_merged"] = expand(f"{PATH_HBONDS}/hbondsmerged_nucplot.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["hbonds_perframe"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_perframe.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
     all_input["hbonds_ext"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_ext.csv", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
     all_input["hbonds_per_group"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_per_group.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
     all_input["hbonds_heatmap"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_heatmap.png", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
     all_input["hbonds_pymol"] = expand(f"{PATH_HBONDS}/hbonds_{{method}}_pymol.txt", struct=structures, mut=mutations, rep=reps, method=METHODS_HBONDS, zip=True)
-    all_input["hbonds_pymol_merged"] = expand(f"{PATH_HBONDS}/hbonds_merged_pymol.txt", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["hbonds_merged"] = expand(f"{PATH_HBONDS}/hbonds_merged_ext.csv", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["hbonds_merged_per_group"] = expand(f"{PATH_HBONDS}/hbonds_merged_per_group.png", struct=structures, mut=mutations, rep=reps, zip=True)
-    all_input["hbonds_merged_heatmap"] = expand(f"{PATH_HBONDS}/hbonds_merged_heatmap.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["hbonds_pymol_merged"] = expand(f"{PATH_HBONDS}/hbondsmerged_pymol.txt", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["hbonds_merged"] = expand(f"{PATH_HBONDS}/hbondsmerged_ext.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["hbonds_merged_per_group"] = expand(f"{PATH_HBONDS}/hbondsmerged_per_group.png", struct=structures, mut=mutations, rep=reps, zip=True)
+    all_input["hbonds_merged_heatmap"] = expand(f"{PATH_HBONDS}/hbondsmerged_heatmap.png", struct=structures, mut=mutations, rep=reps, zip=True)
 if "wb" in rule_groups or rule_groups == [""]:
     all_input["water_bridges"] = expand(f"{PATH_WB}/waterbridges.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["water_bridges_ext"] = expand(f"{PATH_WB}/waterbridges_ext.csv", struct=structures, mut=mutations, rep=reps, zip=True)
@@ -410,7 +412,7 @@ rule hbonds_merge:
     input: 
         hbonds_ext = expand(f"{PATH_HBONDS}/hbonds_{{method}}_ext.csv", method=METHODS_HBONDS, struct=structures, mut=mutations, rep=reps, zip=True)
     output: 
-        hbonds_merged_ext = f"{PATH_HBONDS}/hbonds_merged_ext.csv"
+        hbonds_merged_ext = f"{PATH_HBONDS}/hbondsmerged_ext.csv"
     run:
         from scripts_analysis.hbonds_merge import main
         main(
@@ -452,12 +454,12 @@ rule hbonds_plots_merged:
     params:
         outdir = lambda wc: f"{PATH_ANALYSIS_WC(wc)}/hbonds_{GROUP1}_{GROUP2}"
     input: 
-        hbonds_merged = f"{PATH_HBONDS}/hbonds_merged_ext.csv",
+        hbonds_merged = f"{PATH_HBONDS}/hbondsmerged_ext.csv",
         hbonds_parsed = f"{PATH_HBONDS}/hbonds_gmx_parsed.csv", # to get the number of frames
     output: 
-        hbonds_per_group = report(f"{PATH_HBONDS}/hbonds_merged_per_group.png", 
+        hbonds_per_group = report(f"{PATH_HBONDS}/hbondsmerged_per_group.png", 
             category="Hbonds",  labels={"sample": "{mut} {rep} Hbonds per interaction group."}),
-        hbonds_heatmap = report(f"{PATH_HBONDS}/hbonds_merged_heatmap.png", 
+        hbonds_heatmap = report(f"{PATH_HBONDS}/hbondsmerged_heatmap.png", 
             category="Hbonds",  labels={"sample": "{mut} {rep} Hbond heatmap"}),
         **out_hbonds_plots_merged
     run:
@@ -473,6 +475,52 @@ rule hbonds_plots_merged:
             outfiles=dict(output)
         )
 
+
+
+# Protein-DNA binding schematic showing the dsDNA and binding protein residues colored by chain
+rule hbonds_nucplot:
+    params:
+        min_occupancy = 5.0,
+    input:
+        hbonds_ext = f"{PATH_HBONDS}/hbonds_{{method}}_ext.csv",
+        pdb = f"{PATH_GMX}/md_sys.pdb",
+    output:
+        hbonds_nucplot = report(f"{PATH_HBONDS}/hbonds_{{method}}_nucplot.png",
+            category="Hbonds", subcategory="{method}",
+            labels={"sample": "{mut} {rep} Protein-DNA H-bonds, full duplex NUCPLOT schematic"}),
+    run:
+        from scripts_analysis.nucplot import main
+        main(
+            logfile=LOGFILE,
+            hbonds_ext=input.hbonds_ext,
+            pdb=input.pdb,
+            min_occupancy=params.min_occupancy,
+            outfile=output.hbonds_nucplot,
+        )
+
+
+
+rule hbonds_nucplot_merged:
+    params:
+        min_occupancy = 5.0,
+    input:
+        hbonds_merged = f"{PATH_HBONDS}/hbondsmerged_ext.csv",
+        pdb = f"{PATH_GMX}/md_sys.pdb",
+    output:
+        hbonds_nucplot = report(f"{PATH_HBONDS}/hbondsmerged_nucplot.png",
+            category="Hbonds",
+            labels={"sample": "{mut} {rep} Protein-DNA H-bonds, full duplex NUCPLOT schematic"}),
+    run:
+        from scripts_analysis.nucplot import main
+        main(
+            logfile=LOGFILE,
+            hbonds_ext=input.hbonds_merged,
+            pdb=input.pdb,
+            min_occupancy=params.min_occupancy,
+            outfile=output.hbonds_nucplot,
+        )
+
+        
 
 # Generate PyMOL commands to highlight residues predicted to participate in hydrogen bonds        
 rule hbonds_pymol:
@@ -491,9 +539,9 @@ rule hbonds_pymol:
 
 rule hbonds_pymol_merged:
     input: 
-        hbonds_ext = f"{PATH_HBONDS}/hbonds_merged_ext.csv",
+        hbonds_ext = f"{PATH_HBONDS}/hbondsmerged_ext.csv",
     output: 
-        hbonds_pymol = f"{PATH_HBONDS}/hbonds_merged_pymol_.txt",
+        hbonds_pymol = f"{PATH_HBONDS}/hbondsmerged_pymol.txt",
     run:
         from scripts_analysis.hbonds_pymol import main
         main(
