@@ -40,7 +40,7 @@ Clone this repository to use it.
 ## Dependencies
 
 IMDIA requires the following packages:
-- Ambertools 
+- Ambertools
 - Biopython 
 - Dask
 - GROMACS
@@ -625,7 +625,7 @@ Hydrogen bonds between protein and DNA, combining GROMACS and MDAnalysis results
 
 ```hbondsmerged_protein_perchain.png```
 
-![Heatmap of hydrogen bonds between Protein and DNA](usecase_8RM6/hbonds_Protein_DNA/hbondsmerged_per_group.png)
+![Heatmap of hydrogen bonds between Protein and DNA](usecase_8RM6/hbonds_Protein_DNA/hbondsmerged_protein_perchain.png)
 
 Hydrogen bonds between protein and DNA, combining GROMACS and MDAnalysis results, per protein chain and residue. Each point represents a donor-acceptor pair, colored by chain and marker style indicating donor (filled) or acceptor (open) roles. Shaded regions correspond to protein domains as indicated in the input parameters.
 
@@ -641,10 +641,14 @@ Hydrogen bonds between protein and DNA, combining GROMACS and MDAnalysis results
 
 Hydrogen-bond schematic between protein and DNA, combining GROMACS and MDAnalysis results, mapped onto the full DNA duplex. Nucleotides pairs are shown as an antiparallel ladder; highlighted bases indicate residues involved in at least one protein contact above the occupancy threshold. Lines connect protein residues to the exact base or backbone atom they hydrogen-bond to, colored by protein chain. Line style distinguishes base (solid) from backbone (dashed) bonds. Line width scales with occupancy.
 
+The code to generate this plot has been adapted from NUCPLOT (https://github.com/RomanLas/NUCPLOT).
+
 
 ```hbondsmerged_pymol.txt```
 
-Dynamically generated PyMOL commands that highlight the pairs of donors and acceptors predicted to form hydrogen bonds in more than 10% of the analyzed frames. Use it in PyMOL's command line to obtain this visualization and explore it interactively.
+Dynamically generated PyMOL commands that highlight the pairs of donors and acceptors predicted to form hydrogen bonds in more than 10% of the analyzed frames. Use it in PyMOL's command line to obtain this visualization similar to the one below, and explore it interactively.
+
+![PyMOL Hydrogen bond residue highlighting](img/DNA_bonds_Pymol_8rm6.png)
 
 
 ### Water bridge analysis
