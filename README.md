@@ -98,7 +98,7 @@ From this initial directory system, the scripts generate the necessary directori
 │   │   │   │   │   ├── pca/
 │   │   │   │   │   ├── clustering/
 │   │   │   │   │   ├── hbonds_{group1}_{group2}/
-│   │   │   │   │   └── water_bridges_{group1}_{group2}/
+│   │   │   │   │   └── waterbridges_{group1}_{group2}/
 │   │   │   │   │   ├── contacts_{group1}_{group2}/
 │   │   │   │   │   └── gbsa_{group1}_{group2}/
 │   │   │   │   └── gromacs
@@ -684,7 +684,7 @@ time | sele1_index | sele2_index | sele1_resnm | sele1_resid | sele1_atom | sele
 Time evolution of water-mediated interactions between protein and DNA, showing fluctuations in the solvent contribution to the stability of the complex.
 
 
-```water_bridges_per_chain.png```
+```waterbridges_per_chain.png```
 
 <img src="usecase_8RM6/water_bridges_Protein_DNA/water_bridges_per_chain.png" alt="Water bridge count per chain" width="500">
 
