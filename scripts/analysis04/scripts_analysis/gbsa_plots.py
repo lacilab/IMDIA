@@ -131,6 +131,8 @@ def main(logfile: str, energy_total: Path, energy_decomp: Path, offsets: dict, o
     df_decomp["resid_adj"] = (df_decomp['resid'].astype(int) + df_decomp['chain'].map(
         lambda chain: offsets.get(chain, {}).get('offset', 0)
     ).astype(int)) # Adjust resid by chain offset and convert back to string
+    # Adjust chain id, new->old
+    df_decomp["chain"] = df_decomp["chain"].map(lambda x: offsets[x]['id_old'])
 
     # Get stats by residue for total energy
     # Group by residue identifiers

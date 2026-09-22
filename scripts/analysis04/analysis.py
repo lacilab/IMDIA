@@ -31,17 +31,23 @@ def main(logfile: Path, datadir: Path, configfile: Path, pdbpath: Path, cores: i
     # Extract chain ids from the PDB file
     uppercase_alphabet = list(string.ascii_uppercase)
     u = mda.Universe(pdbpath)
-    chains = {"chains": {}}
+    chains = {}  # old_id -> {"id_new": ..., "offset": ...}
     i = 0
+
     for atom in u.atoms:
-        if atom.segid: 
-            if atom.segid not in chains["chains"].keys():
-                chains["chains"][atom.segid] = {"new_id": uppercase_alphabet[i], "offset": int(atom.resid) - 1}
-                logger.debug(f"Found chain ID: '{atom.segid}' with starting residue number {atom.resid}. Assigned chain ID '{uppercase_alphabet[i]}' in the offset dictionary.")
+        if atom.segid:
+            offset = int(atom.resid) - 1
+            if atom.segid not in chains:
+                new_id = uppercase_alphabet[i]
+                chains[atom.segid] = {"id_new": new_id, "offset": offset}
                 i += 1
-            elif atom.resid - 1 < chains["chains"][atom.segid]['offset']:
-                chains["chains"][atom.segid]['offset'] = int(atom.resid) - 1
-                logger.debug(f"Updated chain {atom.segid} (new ID {chains['chains'][atom.segid]['new_id']}) with new starting residue number {atom.resid}")
+                logger.debug(f"Found chain ID: '{atom.segid}' with starting residue number {atom.resid}. Assigned chain ID '{new_id}'.")
+            elif offset < chains[atom.segid]['offset']:
+                chains[atom.segid]['offset'] = offset
+                logger.debug(f"Updated chain {atom.segid} (new ID {chains[atom.segid]['id_new']}) with new offset {offset}")
+
+    # Final output keyed by new (alphabetical) ID
+    chains_newid = {v["id_new"]: {"id_old": k, "offset": v["offset"]} for k, v in chains.items()}
 
     params_copy = shutil.copyfile(configfile, pdbpath.parent / "params_copy.yaml")
 
@@ -58,7 +64,7 @@ def main(logfile: Path, datadir: Path, configfile: Path, pdbpath: Path, cores: i
 
         # Move to end and append new content
         f.write("\n\n")
-        yaml.safe_dump(chains, f)
+        yaml.safe_dump({"chains": chains_newid}, f)
     
     if rules is not None:
         logger.debug(f"Executing specific rules: {rules}")
