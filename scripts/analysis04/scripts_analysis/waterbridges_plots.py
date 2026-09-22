@@ -6,7 +6,7 @@ import MDAnalysis as mda
 from matplotlib import pyplot as plt
 from scripts.utils.helpers import setup_logger
 
-def main(logfile, wb_csv, wb_ext_csv, outfiles, group1, group2, chains):
+def main(logfile, wb_csv, wb_ext_csv, outfiles, group1, group2):
     """
     Plot water-bridge analysis results between groups.
 
@@ -17,7 +17,6 @@ def main(logfile, wb_csv, wb_ext_csv, outfiles, group1, group2, chains):
         outfiles     : Dictionary of the files to be generated, assigned to labels/keys.
         group1       : First atom group for hydrogen bond analysis.
         group2       : Second atom group for hydrogen bond analysis.
-        chains       : Dictionary of original ID chains and corresponding updated IDs, and offsets.
     """
 
     logger = setup_logger("analysis", logfile)

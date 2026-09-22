@@ -400,10 +400,9 @@ rule hbonds_extend:
             hbonds_parsed=input.hbonds_parsed,
             hbonds_ext=output.hbonds_ext,
             hbonds_perframe=output.hbonds_perframe,
-            offsets=OFFSETS,
             domains=DOMAINS,
             chaingroups=CHAINGROUPS, 
-            chains=OFFSETS,
+            offsets=OFFSETS,
         )
 
 
@@ -705,8 +704,7 @@ rule waterbridges_plots:
             wb_ext_csv=input.wb_ext,
             outfiles=dict(output),
             group1=GROUP1,
-            group2=GROUP2,
-            chains=OFFSETS
+            group2=GROUP2
         )
 
 
@@ -876,7 +874,7 @@ rule gbsa:
     input: 
         tpr = f"{PATH_GMX}/md.tpr",
         xtc = f"{PATH_GMX}/md_post.xtc",
-        top = f"{PATH_MUT}/gromacs_common/topol.top",
+        top = f"{PATH_MUT}{offsets.get(chain, {}).get('id_old', chain)}",
         index = f"{PATH_GMX}/interaction_{GROUP1}_{GROUP2}.ndx",
         groups = f"{PATH_GMX}/interaction_groups_{GROUP1}_{GROUP2}.json"
     output: 

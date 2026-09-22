@@ -222,7 +222,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
     for chain in prot_segids:
         df_chain = pd.DataFrame({
             'Residue': rmsf_all[chain]['resids'] + offsets[chain]['offset'],   
-            'Chain': chain,  
+            'Chain': offsets[chain]['id_old'],  
             f'RMSF': rmsf_all[chain]['rmsf']
         })
         rmsf_prot = pd.concat([rmsf_prot, df_chain], axis=1)
@@ -231,7 +231,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
 
     # Plot all protein chain RMSF together
     for chain in prot_segids:
-        plt.plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f'Chain {chain}')
+        plt.plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f"Chain {offsets[chain]['id_old']}")
     plt.xlabel('Residue number (adjusted)')
     plt.ylabel('RMSF (Å)')
     plt.title('RMSF of Protein Chains')
@@ -242,7 +242,9 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
 
     # Plot each chaingroup
     # One plot row per chaingroup, one plot per chain not in a chaingroup
-    chains_with_groups = set(chain for group in chaingroups.values() for chain in group)
+    #chains_with_groups = set(chain for group in chaingroups.values() for chain in group)
+    old_to_new = {v['id_old']: k for k, v in offsets.items()}
+    chains_with_groups = set(old_to_new[chain] for group in chaingroups.values() for chain in group if chain in old_to_new)
     chains_without_groups = [chain for chain in all_segids if chain not in chains_with_groups]
     num_groups = len(chaingroups) + len(chains_without_groups)
     logger.debug(f"Number of chaingroups: {len(chaingroups)}, Chains without groups: {len(chains_without_groups)}, Total subplots: {num_groups}")
@@ -255,7 +257,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
             chain_list = chaingroups[group]
             for j, chain in enumerate(chain_list):
                 if chain in rmsf_all:
-                    axes[i].plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f'Chain {chain}')
+                    axes[i].plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f"Chain {offsets.get(chain, {}).get('id_old', chain)}")
                 else:
                     logger.warning(f"Chain {chain} not found in rmsf_all.")
                 # Color by protein domains
@@ -272,10 +274,10 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
             axes[i].set_title(f'RMSF of chain group {group}')
         for i, chain in enumerate(chains_without_groups):
             j = len(chaingroups) + i
-            axes[j].plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f'Chain {chain}')
+            axes[j].plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f"Chain {offsets.get(chain, {}).get('id_old', chain)}")
             axes[j].set_xlabel('Residue number (adjusted)')
             axes[j].set_ylabel('RMSF (Å)')
-            axes[j].set_title(f'RMSF of Chain {chain}')
+            axes[j].set_title(f"RMSF of Chain {offsets.get(chain, {}).get('id_old', chain)}")
             axes[j].legend()
         plt.tight_layout()
         plt.savefig(outfiles['rmsf_chaingroups'])
@@ -304,7 +306,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
         for chain in dna_rmsf.keys():  
             df_chain = pd.DataFrame({
                 'Residue': dna_rmsf[chain]['resids'] + offsets[chain]['offset'],   
-                'Chain': chain,  
+                'Chain': {offsets.get(chain, {}).get('id_old', chain)},  
                 f'RMSF': dna_rmsf[chain]['rmsf']
             })
             rmsf_dna = pd.concat([rmsf_dna, df_chain], axis=1)
@@ -313,7 +315,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
 
         # Plot
         for chain in dna_rmsf.keys():
-            plt.plot(dna_rmsf[chain]['resids'] + offsets[chain]['offset'], dna_rmsf[chain]['rmsf'], label=f'DNA Chain {chain}')
+            plt.plot(dna_rmsf[chain]['resids'] + offsets[chain]['offset'], dna_rmsf[chain]['rmsf'], label=f"DNA Chain {offsets.get(chain, {}).get('id_old', chain)}")
         plt.xlabel('Residue number')
         plt.ylabel('RMSF (Å)')
         plt.title('RMSF of DNA Chains')
