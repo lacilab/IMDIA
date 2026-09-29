@@ -307,10 +307,10 @@ def group_index_interactions(gmxdir: str = None, logfile: str = None, logname: s
     for i, group in enumerate([group1, group2]):
             if re.match(r"^[A-Za-z]$", group):
                 # Map old chain IDs to new ones
-                if group in chains.keys():
-                    chain_id = chains[group]['new_id']
-                ndx_names.append(f"Chain_{chain_id}")
-                target_chains.append(chain_id)
+                new_id = next((k for k, v in chains.items() if v['id_old'] == group), None)
+                if new_id:
+                    ndx_names.append(f"Chain_{new_id}")
+                    target_chains.append(new_id)
             elif group == "DNA" and dna:
                 ndx_names.append("DNA")
             elif group == "Protein":

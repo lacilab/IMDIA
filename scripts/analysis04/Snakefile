@@ -377,7 +377,8 @@ rule hbonds_mda:
             group2=GROUP2,
             start=START,
             stop=STOP,
-            dna=DNA
+            dna=DNA,
+            offsets=OFFSETS
         )
 
 
@@ -874,7 +875,7 @@ rule gbsa:
     input: 
         tpr = f"{PATH_GMX}/md.tpr",
         xtc = f"{PATH_GMX}/md_post.xtc",
-        top = f"{PATH_MUT}{offsets.get(chain, {}).get('id_old', chain)}",
+        top = f"{PATH_MUT}/gromacs_common/topol.top",
         index = f"{PATH_GMX}/interaction_{GROUP1}_{GROUP2}.ndx",
         groups = f"{PATH_GMX}/interaction_groups_{GROUP1}_{GROUP2}.json"
     output: 
