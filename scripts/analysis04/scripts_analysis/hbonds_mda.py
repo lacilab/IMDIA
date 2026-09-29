@@ -23,7 +23,7 @@ def main(logfile: str = None, universe: str = None,
          outdir : str = None, hbonds_mda_parsed : str = None,
          cores : int = 1,
          start: int = 0, stop: int = None,
-         group1: str = None, group2: str = None, dna : bool = False):
+         group1: str = None, group2: str = None, dna : bool = False, offsets : dict = None):
 
     """
     Predict hydrogen bonds between two groups using MDAnalysis.
@@ -45,6 +45,7 @@ def main(logfile: str = None, universe: str = None,
         group2            : Second atom group for hydrogen bond analysis.
 
         dna               : True if DNA is present in the system.
+        offsets           : Dictionary specifying residue numbering offsets per chain.
     """
 
     ##### Initialize logger
@@ -72,8 +73,9 @@ def main(logfile: str = None, universe: str = None,
     selections = []
     for group in [group1, group2]:
         if re.match(r"^[A-Za-z]$", group):
-            logger.debug(f"MDA - hbond analysis - Group {group} identified as chain.")
-            selections.append(u.select_atoms(f"segid {group}"))
+            new_id = next((k for k, v in offsets.items() if v['id_old'] == group), 'UNK')
+            logger.debug(f"MDA - hbond analysis - Group {group} identified as chain, with new id {new_id}.")
+            selections.append(u.select_atoms(f"segid {new_id}"))
         elif group == "DNA" and dna:
             logger.debug(f"MDA - hbond analysis - Group {group} identified as DNA.")
             selections.append(u.select_atoms("nucleic")) 
@@ -98,7 +100,7 @@ def main(logfile: str = None, universe: str = None,
         logger.debug(f"MDA - hbond analysis - Running parallel Dask with {cores} cores")
         hbonds_array = an_perblock(logger, tprfile, xtcfile, cores, hbond_factory, start, stop, sele_index, dha_angle, da_angle)
     else:
-        logger.debug(f"MDA - hbond analysis - Running single-core analysis")
+        logger.debug(f"MDA - hbond analysis - Running single-core analysis.")
         hbonds = HBA(
             universe=u_tpr,
             between=[sele_index],

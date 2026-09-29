@@ -42,7 +42,7 @@ def get_atom_info(structure_file, atom_ids, offsets):
                 'res_name': a.resnames[0],
                 'res_num': a.resids[0],
                 'atom_name': a.names[0],
-                'chain': offsets[chain]['id_old']
+                'chain': offsets[a.chainIDs[0]]['id_old']
             }
     return atom_info
 
