@@ -28,5 +28,5 @@ def main(pipe: Pipeline):
 
     prep.main(logfile=LOGFILE, datadir=pipe.paths.mutdir, filename=pipe.paths.pdbfile,
         dna=pipe.system.dna, phos=pipe.system.phos, 
-        range_a=pipe.system.range_a, range_b=pipe.system.range_b, ffs=pipe.system.ffs)
+        range_a=pipe.system.range_a, range_b=pipe.system.range_b, ffs=pipe.system.ffs, protonation=getattr(pipe.system, "protonation", None))
     

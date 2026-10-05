@@ -20,6 +20,7 @@ class SystemConfig:
     range_a: list[int]
     range_b: list[int]
     ffs: list[str]
+    protonation: dict | None = None
 
 @dataclass
 class RunConfig:
@@ -104,7 +105,8 @@ class Pipeline:
             phos=params.get("phos", False),
             range_a=params.get("range_a", [0, -1]),
             range_b=params.get("range_b", [0, -1]),
-            ffs=params.get("ffs", None)
+            ffs=params.get("ffs", None),
+            protonation=params.get("protonation", None),
         )
 
         run = RunConfig(

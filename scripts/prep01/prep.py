@@ -14,12 +14,13 @@ from scripts.prep01 import prep_03_extractitp as extractitp
 from scripts.prep01 import prep_04_removeamberions as removeamberions
 from scripts.prep01 import prep_05_restraindnahbonds as restraindnahbonds
 from scripts.prep01 import prep_06_addgmxions as addgmxions
+from scripts.prep01.prep_00_protonation import guard_preparation_cache
 
 
 def main(logfile: Path, datadir: Path, filename: str,
     dna : bool = False, phos : bool = False,
     range_a : str = None, range_b : str = None,
-    ffs : str = None):
+    ffs: str = None, protonation: dict = None):
     """
     Prepare a PDB structure for MD simulations.
 
@@ -39,6 +40,7 @@ def main(logfile: Path, datadir: Path, filename: str,
         range_a  : Range of residues for DNA A (0-indexed) (default: [0, -1], full length)
         range_b  : Range of residues for DNA B (0-indexed) (default: [0, -1], full length)
         ffs      : List of force fields to use in LEaP (default: protein.ff19SB, water.opc)
+        protonation : Protonation configuration (default: None)
     """
 
     ##### INITIALIZE LOG
@@ -59,6 +61,9 @@ def main(logfile: Path, datadir: Path, filename: str,
     if not path_pdb.is_file():
         logger.error(f"Input PDB file '{str(path_pdb)}' not found.")
         sys.exit(1)
+
+    protonation = guard_preparation_cache(
+        datadir, path_pdb, protonation, dna, phos, ffs)
 
     ##### CHECK KEY SOFTWARE DEPENDENCIES ######
     # Check GROMACS is ready and print version
@@ -124,7 +129,7 @@ def main(logfile: Path, datadir: Path, filename: str,
 
     ### 1. AmberTools preparation
 
-    amber.main(logfile=logfile, pdbpath=path_noconect, dna=dna, phos=phos, ffs=ffs)
+    amber.main(logfile=logfile, pdbpath=path_noconect, dna=dna, phos=phos, ffs=ffs, protonation=protonation)
 
     logger.debug(f"The current directory is {os.getcwd()}")
 

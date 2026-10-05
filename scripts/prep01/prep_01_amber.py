@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import re
 import subprocess
 import time
 import sys
@@ -9,7 +10,7 @@ from pathlib import Path
 from venv import logger
 import MDAnalysis as mda
 from scripts.utils.helpers import setup_logger
-
+from scripts.prep01.prep_00_protonation import assign_protonation
 
 def remove_hydrogens(filename: str, logger_name: str, logfile: Path):
 	""" Remove hydrogens from the structure and prepare it with pdb4amber. """
@@ -41,16 +42,26 @@ def add_hydrogens(file: str, logger_name: str, logfile: Path, ffs: list[str] = [
 	tleap_input = f"""
 		{ffs_import}
 		complex = loadPdb {file}
+		check complex
+    	charge complex
 		savePdb complex {outfile}
 		quit
 	"""
 	logger.debug(f"Running tleap with input:\n{tleap_input}") 
 	process = subprocess.run(['tleap', '-f', '-'], input=tleap_input, text=True, capture_output=True)
 	
-	if process.returncode != 0:
-		logger.error(f"tleap error:\n {process.stderr}")
-	else:
-		logger.debug(f"tleap output:\n {process.stdout}")
+	if process.returncode != 0 or re.search(
+		r"Errors\s*=\s*[1-9]", process.stdout
+	):
+		logger.error(
+			f"tleap failed:\n{process.stdout}\n{process.stderr}"
+		)
+		raise RuntimeError("tleap hydrogen addition failed")
+
+	logger.debug(f"tleap output:\n{process.stdout}")
+
+	if not Path(outfile).is_file():
+		raise RuntimeError(f"tleap did not create {outfile}")
 
 	return outfile
 
@@ -156,7 +167,7 @@ def solvate_gen_parm(complex_file: Path, logger_name: str, logfile: Path, chains
 ########## MAIN ##########
 
 def main(logfile: Path = None, pdbpath: Path = None,
-	dna : bool = False, phos : bool = False, ffs: list = None):
+	dna : bool = False, phos : bool = False, ffs: list = None, protonation: dict = None):
 
 	"""
     Prepare system using AmberTools. Add solvent and ions, generate prmtop
@@ -170,6 +181,7 @@ def main(logfile: Path = None, pdbpath: Path = None,
         ffs         : List of force fields to use from the list
                         available in LEaP. Avoid using clashing force fields.
                         Default: protein.ff19SB, water.opc
+        protonation : Protonation configuration (default: None)
     """
 
 	start_time = time.time()
@@ -227,21 +239,40 @@ def main(logfile: Path = None, pdbpath: Path = None,
 		logger.debug(f"No custom force fields provided. Using default: {ff_default}")
 		ffs = ff_default
 
-	# Prepare the complex (make sure the hydrogens naming matches amber)
+	# Remove hydrogens and prepare the PDB.
 	noH_complex = remove_hydrogens(pdbfile, logger_name, logfile)
-	logger.debug(f"Hydrogens removed from {pdbpath}, saved as {noH_complex}")
-	protonated_complex = add_hydrogens(noH_complex, logger_name, logfile, ffs)
 
-	# Extract chain ids from the PDB file
-	u = mda.Universe(pdbfile)
+	if noH_complex is None:
+		raise RuntimeError("pdb4amber preparation failed")
+
+	logger.debug(
+		f"Hydrogens removed from {pdbpath}, saved as {noH_complex}"
+	)
+
+	# Assign residue protonation states at the requested pH.
+	assigned_complex = assign_protonation(
+		pdbfile=noH_complex,
+		original_pdb=pdbfile,
+		config=protonation,
+		logger=logger,
+	)
+
+	# Add hydrogens using the assigned residue states.
+	protonated_complex = add_hydrogens(
+		assigned_complex, logger_name, logfile, ffs
+	)
+
+	# Extract chain IDs from the assigned structure.
+	u = mda.Universe(assigned_complex)
 	chains = []
 	for atom in u.atoms:
 		if atom.segid and atom.segid not in chains:
 			chains.append(atom.segid)
+
 	logger.debug(f"Extracted chain IDs: {chains}")
 
 	# Generate the receptor & ligand (also match the hydrogens to amber specifics)
-	chain_files = gen_chains(noH_complex, logger_name, logfile, chains, ffs)
+	chain_files = gen_chains(assigned_complex, logger_name, logfile, chains, ffs)
 	solvate_gen_parm(protonated_complex, logger_name, logfile,chain_files, ffs)
 
 	protonated_complex.replace('.pdb', '_solvated.prmtop')
