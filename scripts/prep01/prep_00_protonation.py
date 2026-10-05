@@ -1,4 +1,4 @@
-"""Conservative fixed-protonation preparation; not constant-pH MD.
+"""Assign fixed protonation states before LEaP adds hydrogens
 """
 import csv
 import hashlib
@@ -8,6 +8,10 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+ATOM_RECORDS = ('ATOM  ', 'HETATM')
+STALE_REFERENCES = ('SSBOND', 'CONECT', 'ANISOU', 'LINK')
+HISTIDINE_HYDROGENS = {'HID': {'HD1'}, 'HIE': {'HE2'}}
 
 CANONICAL = {
     'ASH': 'ASP', 'GLH': 'GLU', 'HID': 'HIS', 'HIE': 'HIS',
@@ -44,29 +48,35 @@ def normalize_config(config):
                 overrides=overrides)
 
 
-def guard_preparation_cache(datadir, input_pdb, config, dna, phos, ffs):
-    """Refuse stale/legacy checkpoints; use a fresh run directory to rebuild."""
-    config = normalize_config(config)
-    datadir, input_pdb = Path(datadir), Path(input_pdb)
-    manifest = datadir / 'protonation_preparation.json'
-    payload = dict(input_sha256=hashlib.sha256(input_pdb.read_bytes()).hexdigest(),
-                   protonation=config, dna=dna, phos=phos, ffs=ffs,
-                   implementation=1)
-    # Existing legacy workflows may continue unchanged when feature is disabled.
-    if config['method'] == 'none' and not manifest.exists():
-        return config
-    if manifest.exists():
-        if json.loads(manifest.read_text()) != payload:
-            raise RuntimeError('Preparation settings/input changed. Use a fresh '
-                               'run directory containing the input PDB; old '
-                               'AMBER/GROMACS checkpoints must not be reused.')
-    else:
-        existing = [datadir / 'amber', datadir / 'gromacs_common']
-        if any(p.exists() and any(p.iterdir()) for p in existing):
-            raise RuntimeError('Existing preparation has no pH manifest. Use a '
-                               'fresh run directory for pH-aware preparation.')
-        manifest.write_text(json.dumps(payload, indent=2) + '\n')
-    return config
+def residue_key(line):
+    return (line[21].strip(), int(line[22:26]), line[26].strip())
+
+
+def is_hydrogen(line):
+    name = line[12:16].strip()
+    element = line[76:78].strip() or name.lstrip('0123456789')[:1]
+    return element in ('H', 'D')
+
+
+def predictor_input(lines, indices, states):
+    """Renumber only predictor input; retain components and TER boundaries."""
+    output = []
+    for line in lines:
+        if line.startswith(STALE_REFERENCES):
+            continue
+        if line.startswith(ATOM_RECORDS):
+            key = residue_key(line)
+            line = (line[:17] + f'{states[key]:>3}' + line[20:22]
+                    + f'{indices[key]:4d} ' + line[27:])
+        output.append(line)
+    return ''.join(output)
+
+
+def run_predictor(command, work, logpath, failure_message):
+    result = subprocess.run(command, cwd=work, capture_output=True, text=True)
+    logpath.write_text(result.stdout + result.stderr)
+    if result.returncode:
+        raise RuntimeError(f'{failure_message}; inspect {logpath}')
 
 
 def residues(lines):
@@ -74,8 +84,8 @@ def residues(lines):
     for line in lines:
         if line.startswith('MODEL'):
             raise ValueError('Select a single PDB model before preparation')
-        if line.startswith(('ATOM  ', 'HETATM')):
-            key = (line[21].strip(), int(line[22:26]), line[26].strip())
+        if line.startswith(ATOM_RECORDS):
+            key = residue_key(line)
             name = line[17:20].strip()
             if key in result and result[key] != name:
                 raise ValueError(f'Ambiguous residue identifier: {key}')
@@ -105,16 +115,134 @@ def parse_pkas(text):
     return result
 
 
-def assign_protonation(pdbfile, original_pdb, config, logger):
-    config = normalize_config(config)
-    if config['method'] == 'none':
-        return str(pdbfile)
-    path = Path(pdbfile).resolve()
-    lines = path.read_text().splitlines(keepends=True)
-    prepared = residues(lines)
-    original = residues(Path(original_pdb).read_text().splitlines(keepends=True))
-    # pdb4amber can renumber residues. Map by residue order, with a strict
-    # identity check; refuse removals/reordering instead of guessing.
+PROTEIN_NAMES = {
+    'ALA', 'ARG', 'ASN', 'ASP', 'CYS', 'GLN', 'GLU', 'GLY', 'HIS',
+    'ILE', 'LEU', 'LYS', 'MET', 'PHE', 'PRO', 'SER', 'THR', 'TRP',
+    'TYR', 'VAL',
+}
+
+
+def pdb2pqr_histidines(lines, prepared, indices, decisions, targets, path, config, logger):
+    """Choose HID/HIE and validate the optimized protein coordinates."""
+    unsupported = {name for name in prepared.values()
+                   if CANONICAL.get(name, name) not in PROTEIN_NAMES
+                   and name not in ('HOH', 'WAT')}
+    if unsupported:
+        raise ValueError('Automatic histidine assignment currently supports only '
+                         'standard proteins and water. Unsupported components: '
+                         + ', '.join(sorted(unsupported))
+                         + '. Supply explicit histidine overrides or use a '
+                         'validated preparation adapter retaining their context.')
+    original_atoms = {}
+    for line in lines:
+        if line.startswith(ATOM_RECORDS):
+            key = residue_key(line)
+            if line[16].strip():
+                raise ValueError('Resolve alternate conformations before automatic assignment')
+            name = line[12:16].strip()
+            if is_hydrogen(line):
+                raise ValueError('Automatic stage expects a hydrogen-free input PDB')
+            if CANONICAL.get(prepared[key], prepared[key]) in PROTEIN_NAMES:
+                atom_key = (key, name)
+                if atom_key in original_atoms:
+                    raise ValueError(f'Duplicate input atom: {atom_key}')
+                original_atoms[atom_key] = line
+    # Only histidines without overrides are free to change tautomer.
+    prediction_states = {}
+    for key, name in prepared.items():
+        state = 'HIS' if key in targets else decisions.get(key, name)
+        prediction_states[key] = 'HOH' if state == 'WAT' else state
+    # Run PDB2PQR in the pipeline's Python environment.
+    with tempfile.TemporaryDirectory(prefix='pdb2pqr_', dir=path.parent) as work:
+        work = Path(work)
+        (work / 'input.pdb').write_text(predictor_input(lines, indices, prediction_states))
+        command = [sys.executable, '-c', 'from pdb2pqr.main import main; main()',
+                   '--ff=AMBER', '--ffout=AMBER', '--keep-chain', '--nodebump',
+                   '--titration-state-method=propka', '--with-ph', str(config['ph']),
+                   '--pdb-output=optimized.pdb', 'input.pdb', 'optimized.pqr']
+        run_predictor(command, work, path.with_suffix('.pdb2pqr.log'),
+                      'Automatic histidine assignment failed')
+        output = work / 'optimized.pdb'
+        if not output.is_file():
+            raise RuntimeError('PDB2PQR did not write optimized.pdb')
+        output_text = output.read_text()
+        path.with_suffix('.pdb2pqr.pdb').write_text(output_text)
+    by_index = {number: key for key, number in indices.items()}
+    output_states, output_hydrogens, coords = {}, {}, {}
+    for line in output_text.splitlines():
+        if not line.startswith(ATOM_RECORDS):
+            continue
+        number = int(line[22:26])
+        if number not in by_index:
+            raise ValueError(f'Unexpected PDB2PQR residue number: {number}')
+        key = by_index[number]
+        if line[21].strip() != key[0]:
+            raise ValueError(f'PDB2PQR changed chain identity at {key}')
+        if CANONICAL.get(prepared[key], prepared[key]) not in PROTEIN_NAMES:
+            continue  # Original waters remain unchanged in the final PDB.
+        state = line[17:20].strip()
+        if CANONICAL.get(state, state) != CANONICAL.get(prepared[key], prepared[key]):
+            raise ValueError(f'PDB2PQR changed residue identity at {key}')
+        if key in output_states and output_states[key] != state:
+            raise ValueError(f'Ambiguous PDB2PQR state at {key}')
+        output_states[key] = state
+        name = line[12:16].strip()
+        if is_hydrogen(line):
+            output_hydrogens.setdefault(key, set()).add(name)
+            continue
+        atom_key = (key, name)
+        if atom_key in coords:
+            raise ValueError(f'Duplicate PDB2PQR atom: {atom_key}')
+        xyz = [float(line[i:i+8]) for i in (30, 38, 46)]
+        if not all(math.isfinite(x) for x in xyz):
+            raise ValueError(f'Invalid PDB2PQR coordinates: {atom_key}')
+        coords[atom_key] = line[30:54]
+    if coords.keys() != original_atoms.keys():
+        raise ValueError('PDB2PQR added/removed or renamed protein heavy atoms. '
+                         'Automatic coordinate transfer requires explicit atom mapping.')
+    for key, state in decisions.items():
+        if key not in targets and key in output_states and output_states[key] != state:
+            raise ValueError(f'PDB2PQR changed requested state at {key}: '
+                             f'{state} -> {output_states[key]}; assignment needs review')
+    assignments = {}
+    for key in targets:
+        state = output_states.get(key)
+        if state not in HISTIDINE_HYDROGENS:
+            raise ValueError(f'PDB2PQR did not return neutral HID/HIE for {key}: {state}')
+        ring_h = output_hydrogens.get(key, set()) & {'HD1', 'HE2'}
+        if ring_h != HISTIDINE_HYDROGENS[state]:
+            raise ValueError(f'PDB2PQR state/hydrogens disagree at {key}')
+        assignments[key] = state
+        logger.info(f'Automatic histidine {key}: {state} (PDB2PQR optimization)')
+    changed = sum(original_atoms[k][30:54] != value for k, value in coords.items())
+    logger.info(f'Transferring optimized protein heavy-atom coordinates; '
+                f'{changed} atom records differ. Original waters/components are retained.')
+    return assignments, coords
+
+
+def run_propka(lines, prepared, indices, path, logger):
+    """Run PROPKA and save its log and predictions beside the input PDB."""
+    predictor = predictor_input(lines, indices,
+                                {key: CANONICAL.get(name, name) for key, name in prepared.items()})
+    with tempfile.TemporaryDirectory(prefix='propka_', dir=path.parent) as tmp:
+        tmp = Path(tmp)
+        (tmp / 'predictor.pdb').write_text(predictor)
+        run_predictor([sys.executable, '-m', 'propka', 'predictor.pdb',
+                       '--display-coupled-residues'], tmp,
+                      path.with_suffix('.propka.log'), 'PROPKA failed')
+        pka_files = sorted(tmp.glob('*.pka'))
+        if len(pka_files) != 1:
+            raise RuntimeError(f'Expected one PROPKA .pka file, found {len(pka_files)}')
+        pka_path = pka_files[0]
+        logger.debug(f'Reading PROPKA output: {pka_path.name}')
+        text = pka_path.read_text()
+        path.with_suffix('.pka').write_text(text)
+        return parse_pkas(text)
+
+
+def prepare_overrides(original, prepared, override_items):
+    """Map original residue IDs and validate the requested AMBER states."""
+    # pdb4amber may renumber residues; overrides use the original IDs.
     if len(prepared) != len(original):
         raise ValueError('pdb4amber changed residue count; explicit mapping needed')
     mapping = {}
@@ -123,7 +251,7 @@ def assign_protonation(pdbfile, original_pdb, config, logger):
             raise ValueError('pdb4amber changed residue order/identity; mapping needed')
         mapping[old_key] = key
     overrides = {}
-    for item in config['overrides']:
+    for item in override_items:
         old_key = (str(item.get('chain', '')).strip(), int(item['residue']),
                    str(item.get('insertion_code', '')).strip())
         if old_key not in mapping:
@@ -141,45 +269,28 @@ def assign_protonation(pdbfile, original_pdb, config, logger):
         if prepared[key] == 'CYX':
             raise ValueError('Do not titrate disulfide CYX residues')
         overrides[key] = state
-    # Renumber ONLY the temporary predictor input to eliminate insertion-code
-    # collisions. Keep every component and TER record in the assembled complex.
+    return mapping, overrides
+
+
+def assign_protonation(pdbfile, original_pdb, config, logger):
+    """Apply overrides, predict remaining states, and write the PDB and report."""
+    config = normalize_config(config)
+    if config['method'] == 'none':
+        return str(pdbfile)
+    path = Path(pdbfile).resolve()
+    lines = path.read_text().splitlines(keepends=True)
+    prepared = residues(lines)
+    original = residues(Path(original_pdb).read_text().splitlines(keepends=True))
+    mapping, overrides = prepare_overrides(original, prepared, config['overrides'])
+
+    # Unique predictor IDs avoid chain and insertion-code collisions.
     indices = {key: i for i, key in enumerate(prepared, 1)}
     if len(indices) > 9999:
         raise ValueError('Predictor PDB exceeds 9999 residues; mmCIF support needed')
-    predictor = []
-    for line in lines:
-        if line.startswith(('ATOM  ', 'HETATM')):
-            key = (line[21].strip(), int(line[22:26]), line[26].strip())
-            name = CANONICAL.get(prepared[key], prepared[key])
-            line = line[:17] + f'{name:>3}' + line[20:22] + f'{indices[key]:4d} ' + line[27:]
-        # Original serial/residue references do not apply to predictor input.
-        if not line.startswith(('SSBOND', 'CONECT', 'ANISOU', 'LINK')):
-            predictor.append(line)
-    with tempfile.TemporaryDirectory(prefix='propka_', dir=path.parent) as tmp:
-        tmp = Path(tmp)
-        (tmp / 'predictor.pdb').write_text(''.join(predictor))
-        result = subprocess.run([sys.executable, '-m', 'propka', 'predictor.pdb',
-                                 '--display-coupled-residues'], cwd=tmp,
-                                text=True, capture_output=True)
-        path.with_suffix('.propka.log').write_text(result.stdout + result.stderr)
-        if result.returncode:
-            raise RuntimeError('PROPKA failed; inspect the .propka.log file')
-        pka_files = sorted(tmp.glob('*.pka'))
+    pkas = run_propka(lines, prepared, indices, path, logger)
 
-        if len(pka_files) != 1:
-            generated = ', '.join(p.name for p in tmp.iterdir())
-            raise RuntimeError(
-                f'Expected one PROPKA .pka file, found {len(pka_files)}. '
-                f'Files generated: {generated}. '
-                'Inspect the .propka.log file.'
-            )
-
-        pka_path = pka_files[0]
-        logger.debug(f'Reading PROPKA output: {pka_path.name}')
-        text = pka_path.read_text()
-        path.with_suffix('.pka').write_text(text)
-        pkas = parse_pkas(text)
     decisions, rows, errors = {}, [], []
+    targets, coords = set(), {}
     old_keys = {v: k for k, v in mapping.items()}
     for key, name in prepared.items():
         base = CANONICAL.get(name, name)
@@ -196,23 +307,34 @@ def assign_protonation(pdbfile, original_pdb, config, logger):
             protonated = config['ph'] < pka
             state = STATES[base][0 if protonated else 1]
             if base == 'HIS' and not protonated:
-                if name in ('HID', 'HIE'):
-                    state, reason = name, 'preserved input neutral tautomer'
-                else:
-                    errors.append(f'{old_keys[key]}: choose HID or HIE in overrides')
+                # Reassess neutral HIS unless YAML explicitly fixes its state.
+                targets.add(key)
+                reason = 'pending PDB2PQR optimization'
             elif state is None:
                 errors.append(f'{old_keys[key]}: unsupported deprotonated {base}')
         review = pka is not None and abs(config['ph'] - pka) <= config['review_pka_window']
         if review:
             logger.warning(f'Review {old_keys[key]}: pKa={pka:.2f}, pH={config["ph"]}')
         decisions[key] = state or name
-        rows.append([*old_keys[key], *key, name, pka, state, reason, review])
+        rows.append([*old_keys[key], *key, name, pka, state, reason, review, config['ph']])
+    if targets and not errors:
+        try:
+            automatic, coords = pdb2pqr_histidines(
+                lines, prepared, indices, decisions, targets, path, config, logger)
+            decisions.update(automatic)
+            for row in rows:
+                key = tuple(row[3:6])
+                if key in automatic:
+                    row[8] = automatic[key]
+                    row[9] = 'PDB2PQR hydrogen-bond optimization'
+        except (ValueError, RuntimeError, OSError) as exc:
+            errors.append(str(exc))
     report = path.with_suffix('.protonation.csv')
     with report.open('w', newline='') as handle:
         writer = csv.writer(handle)
         writer.writerow(['original_chain', 'original_residue', 'original_icode',
                          'prepared_chain', 'prepared_residue', 'prepared_icode',
-                         'input_state', 'pka', 'assigned_state', 'reason', 'near_pka'])
+                         'input_state', 'pka', 'assigned_state', 'reason', 'near_pka', 'target_ph'])
         writer.writerows(rows)
     logger.warning('Review PROPKA coupled-group output; assignments assume independent sites. '
                    'Termini, DNA, phosphoresidues, ligands and metals retain input/default chemistry.')
@@ -222,10 +344,13 @@ def assign_protonation(pdbfile, original_pdb, config, logger):
     path.with_suffix('.unassigned.pdb').write_text(''.join(lines))
     output = []
     for line in lines:
-        if line.startswith(('ATOM  ', 'HETATM')):
-            key = (line[21].strip(), int(line[22:26]), line[26].strip())
+        if line.startswith(ATOM_RECORDS):
+            key = residue_key(line)
             if key in decisions:
                 line = line[:17] + f'{decisions[key]:>3}' + line[20:]
+            atom_key = (key, line[12:16].strip())
+            if atom_key in coords:
+                line = line[:30] + coords[atom_key] + line[54:]
         output.append(line)
     path.write_text(''.join(output))
     logger.info(f'Assigned protein side-chain states at pH {config["ph"]}; report: {report}')

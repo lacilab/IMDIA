@@ -1,14 +1,24 @@
 ### Path to the PDB file for the structure to analyze
-pdbpath: '../data/1BF5/WT/1BF5_WT.pdb'
+pdbpath: 'usecase_1UBQ_pH/1UBQ.pdb'
 
 ### Does the structure contain DNA?
-dna: True
+dna: false
 
 ### Does the structure contain phosphorylated amino acids?
-phos: True
+phos: false
+
+## Define pH for protonation
+protonation:
+  method: propka
+  ph: 7.4
+  review_pka_window: 1.0
+  overrides:
+    - chain: A
+      residue: 68
+      state: HIE
 
 ### Replicates to analyze
-repn: [1, 2]
+repn: [1]
 
 ### Custom AMBER force fields to use (if any)
 # ffs: [water.opc, protein.ff19SB, GLYCAM_06j-1]
@@ -44,15 +54,15 @@ snakecores: 12
 methods_hbonds: [mda, gmx]
 
 ### Structure(s) to analyze
-structure: [1BF5]
+structure: [1UBQ]
 
 ### Mutation(s) to analyze
-muts: [WT, E411A]
+muts: [WT]
 
 ### Interaction groups for interaction analysis
 # These can be chain IDs (e.g., "A", "B", "C") or predefined groups (e.g., "Protein", "DNA")
-group1: Protein
-group2: DNA
+group1: A
+group2: B
 
 ### Frames for interaction analysis. If not specified, all frames will be analyzed.
 start_frame: 1000

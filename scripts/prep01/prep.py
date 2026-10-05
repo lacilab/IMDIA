@@ -14,8 +14,7 @@ from scripts.prep01 import prep_03_extractitp as extractitp
 from scripts.prep01 import prep_04_removeamberions as removeamberions
 from scripts.prep01 import prep_05_restraindnahbonds as restraindnahbonds
 from scripts.prep01 import prep_06_addgmxions as addgmxions
-from scripts.prep01.prep_00_protonation import guard_preparation_cache
-
+from scripts.prep01.prep_00_protonation import normalize_config
 
 def main(logfile: Path, datadir: Path, filename: str,
     dna : bool = False, phos : bool = False,
@@ -62,8 +61,7 @@ def main(logfile: Path, datadir: Path, filename: str,
         logger.error(f"Input PDB file '{str(path_pdb)}' not found.")
         sys.exit(1)
 
-    protonation = guard_preparation_cache(
-        datadir, path_pdb, protonation, dna, phos, ffs)
+    protonation = normalize_config(protonation)
 
     ##### CHECK KEY SOFTWARE DEPENDENCIES ######
     # Check GROMACS is ready and print version
