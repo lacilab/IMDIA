@@ -271,6 +271,38 @@ def prepare_overrides(original, prepared, override_items):
         overrides[key] = state
     return mapping, overrides
 
+def terminal_residues(lines):
+    """Find protein endpoints using chain IDs; a terminal GLU would be GLH already and further protonation would make it -2 OXT, not supported yet"""
+    terminals = set()
+    segment = []
+
+    for line in lines:
+        if line.startswith('TER'):
+            if segment:
+                terminals.update((segment[0], segment[-1]))
+                segment = []
+            continue
+
+        if not line.startswith(('ATOM  ', 'HETATM')):
+            continue
+
+        name = line[17:20].strip()
+        if CANONICAL.get(name, name) not in PROTEIN_NAMES:
+            continue
+
+        key = residue_key(line)
+
+        if segment and key[0] != segment[-1][0]:
+            terminals.update((segment[0], segment[-1]))
+            segment = []
+
+        if not segment or key != segment[-1]:
+            segment.append(key)
+
+    if segment:
+        terminals.update((segment[0], segment[-1]))
+
+    return terminals
 
 def assign_protonation(pdbfile, original_pdb, config, logger):
     """Apply overrides, predict remaining states, and write the PDB and report."""
@@ -317,6 +349,15 @@ def assign_protonation(pdbfile, original_pdb, config, logger):
             logger.warning(f'Review {old_keys[key]}: pKa={pka:.2f}, pH={config["ph"]}')
         decisions[key] = state or name
         rows.append([*old_keys[key], *key, name, pka, state, reason, review, config['ph']])
+    for key in sorted(terminal_residues(lines)):
+        state = decisions.get(key, prepared[key])
+
+        if state in {'ASH', 'GLH', 'LYN', 'CYM'}:
+            errors.append(
+                f'{old_keys[key]}: terminal {state} is not validated '
+                'in this pipeline. Supply an explicit supported-state '
+                'override after reviewing terminal chemistry.'
+            )
     if targets and not errors:
         try:
             automatic, coords = pdb2pqr_histidines(

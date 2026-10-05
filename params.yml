@@ -1,5 +1,5 @@
 ### Path to the PDB file for the structure to analyze
-pdbpath: 'usecase_1UBQ_pH/1UBQ.pdb'
+pdbpath: 'usecase_1PGB_pH/1PGB.pdb'
 
 ### Does the structure contain DNA?
 dna: false
@@ -7,15 +7,15 @@ dna: false
 ### Does the structure contain phosphorylated amino acids?
 phos: false
 
-## Define pH for protonation
+## Define pH for protonation; include in overrides already protonated terminal residues.
 protonation:
   method: propka
-  ph: 7.4
+  ph: 3.0
   review_pka_window: 1.0
-  overrides:
+  overrides: 
     - chain: A
-      residue: 68
-      state: HIE
+      residue: 56
+      state: GLU
 
 ### Replicates to analyze
 repn: [1]
@@ -54,7 +54,7 @@ snakecores: 12
 methods_hbonds: [mda, gmx]
 
 ### Structure(s) to analyze
-structure: [1UBQ]
+structure: [1PGB]
 
 ### Mutation(s) to analyze
 muts: [WT]

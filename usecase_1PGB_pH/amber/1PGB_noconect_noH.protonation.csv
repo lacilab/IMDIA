@@ -1,0 +1,20 @@
+original_chain,original_residue,original_icode,prepared_chain,prepared_residue,prepared_icode,input_state,pka,assigned_state,reason,near_pka,target_ph
+A,3,,A,3,,TYR,10.72,TYR,PROPKA,False,3.0
+A,4,,A,4,,LYS,11.08,LYS,PROPKA,False,3.0
+A,10,,A,10,,LYS,10.66,LYS,PROPKA,False,3.0
+A,13,,A,13,,LYS,10.32,LYS,PROPKA,False,3.0
+A,15,,A,15,,GLU,3.6,GLH,PROPKA,True,3.0
+A,19,,A,19,,GLU,4.34,GLH,PROPKA,False,3.0
+A,22,,A,22,,ASP,2.69,ASP,PROPKA,True,3.0
+A,27,,A,27,,GLU,3.55,GLH,PROPKA,True,3.0
+A,28,,A,28,,LYS,10.42,LYS,PROPKA,False,3.0
+A,31,,A,31,,LYS,11.38,LYS,PROPKA,False,3.0
+A,33,,A,33,,TYR,10.23,TYR,PROPKA,False,3.0
+A,36,,A,36,,ASP,4.05,ASH,PROPKA,False,3.0
+A,40,,A,40,,ASP,4.1,ASH,PROPKA,False,3.0
+A,42,,A,42,,GLU,4.72,GLH,PROPKA,False,3.0
+A,45,,A,45,,TYR,12.28,TYR,PROPKA,False,3.0
+A,46,,A,46,,ASP,3.4,ASH,PROPKA,True,3.0
+A,47,,A,47,,ASP,2.89,ASP,PROPKA,True,3.0
+A,50,,A,50,,LYS,10.83,LYS,PROPKA,False,3.0
+A,56,,A,56,,GLU,3.13,GLU,manual override,True,3.0

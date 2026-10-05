@@ -1,0 +1,28 @@
+;
+;   File usecase_1PGB_pH/gromacs_common/topol.top  was generated
+;   By user: vsc34467 (2534467)
+;   On host:tier2-p-login-1 
+;   At date:Mon. October  1 13:52:24 2026 
+;
+;   This is a standalone topology file
+;
+;   Created by:
+;   ParmEd:       main.py, VERSION4.3.0 
+;   Executable:   main.py
+;   Library dir:  /vsc-hard-mounts/leuven-data/344/vsc34467/miniconda3/envs/pipemd_test2/share/gromacs/top
+;   Command line:
+;     /lustre1/project/stg_00187/users/Cecilia/PipeMD/develop/thesis_main/scripts/main.py --params params.yml --prep
+;
+
+#include "toppar/forcefield.itp"
+#include "toppar/molecule_1.itp"
+#include "toppar/molecule_2.itp"
+#include "toppar/molecule_3.itp"
+#include "toppar/molecule_4.itp"
+[ system ]
+Generic title
+
+[ molecules ]
+; Compound       #mols
+system1              1
+Water               4023
