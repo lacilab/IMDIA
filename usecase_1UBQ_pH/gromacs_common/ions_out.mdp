@@ -1,8 +1,8 @@
 ;
-;	File 'usecase_1AKI_pH/gromacs_common/ions_out.mdp' was generated
+;	File 'usecase_1UBQ_pH/gromacs_common/ions_out.mdp' was generated
 ;	By user: vsc34467 (2534467)
 ;	On host: tier2-p-login-1
-;	At date: Mon Oct  5 13:18:49 2026
+;	At date: Wed Oct  7 09:12:30 2026
 ;
 ;	Created by:
 ;	               :-) GROMACS - gmx grompp, 2024.3-conda_forge (-:
@@ -11,7 +11,7 @@
 ;	Data prefix:  /data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2
 ;	Working dir:  /lustre1/project/stg_00187/users/Cecilia/PipeMD/develop/thesis_main
 ;	Command line:
-;	  gmx grompp -f usecase_1AKI_pH/gromacs_common/ions.mdp -c usecase_1AKI_pH/gromacs_common/updated_gromacs.gro -p usecase_1AKI_pH/gromacs_common/topol.top -o usecase_1AKI_pH/gromacs_common/ions.tpr -po usecase_1AKI_pH/gromacs_common/ions_out.mdp -quiet -maxwarn 1
+;	  gmx grompp -f usecase_1UBQ_pH/gromacs_common/ions.mdp -c usecase_1UBQ_pH/gromacs_common/updated_gromacs.gro -p usecase_1UBQ_pH/gromacs_common/topol.top -o usecase_1UBQ_pH/gromacs_common/ions.tpr -po usecase_1UBQ_pH/gromacs_common/ions_out.mdp -quiet -maxwarn 1
 
 ; VARIOUS PREPROCESSING OPTIONS
 ; Preprocessor information: use cpp syntax.
@@ -175,7 +175,7 @@ annealing-temp           =
 ; GENERATE VELOCITIES FOR STARTUP RUN
 gen-vel                  = no
 gen-temp                 = 300
-gen-seed                 = -307038725
+gen-seed                 = -4785291
 
 ; OPTIONS FOR BONDS    
 constraints              = none

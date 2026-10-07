@@ -1,8 +1,8 @@
 ;
-;   File usecase_1AKI_pH/gromacs_common/topol.top  was generated
+;   File usecase_1UBQ_pH/gromacs_common/topol.top  was generated
 ;   By user: vsc34467 (2534467)
 ;   On host:tier2-p-login-1 
-;   At date:Mon. October  1 13:18:47 2026 
+;   At date:Wed. October  3 09:12:28 2026 
 ;
 ;   This is a standalone topology file
 ;
@@ -25,6 +25,6 @@ Generic title
 [ molecules ]
 ; Compound       #mols
 system1              1
-WAT       4922
+WAT       4904
 Na              17
-Cl              17
+Cl              28

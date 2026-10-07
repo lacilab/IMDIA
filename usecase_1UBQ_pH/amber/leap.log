@@ -1,4 +1,4 @@
-log started: Mon Oct  5 13:18:23 2026
+log started: Wed Oct  7 09:12:03 2026
 
 Log file: ./leap.log
 >> #
@@ -220,8 +220,8 @@ Loading: NVAL
 >> HIS = HIE
 >> CHIS = CHIE
 > 
-> 		complex = loadPdb /lustre1/project/stg_00187/users/Cecilia/PipeMD/develop/thesis_main/usecase_1AKI_pH/amber/1UBQ_noconect_noH.pdb
-Loading PDB file: /lustre1/project/stg_00187/users/Cecilia/PipeMD/develop/thesis_main/usecase_1AKI_pH/amber/1UBQ_noconect_noH.pdb
+> 		complex = loadPdb /lustre1/project/stg_00187/users/Cecilia/PipeMD/develop/thesis_main/usecase_1UBQ_pH/amber/1UBQ_noconect_noH.pdb
+Loading PDB file: /lustre1/project/stg_00187/users/Cecilia/PipeMD/develop/thesis_main/usecase_1UBQ_pH/amber/1UBQ_noconect_noH.pdb
 Matching PDB residue names to LEaP variables.
 Mapped residue MET, term: Terminal/beginning, seq. number: 0 to: NMET.
 Mapped residue GLY, term: Terminal/last, seq. number: 75 to: CGLY.
@@ -283,10 +283,13 @@ Starting new chain with OPC
 Starting new chain with OPC
 Starting new chain with OPC
   total atoms in file: 660
-  Leap added 803 missing atoms according to residue templates:
-       803 H / lone pairs
+  Leap added 814 missing atoms according to residue templates:
+       814 H / lone pairs
 > 		check complex
 Checking 'complex'....
+
+/data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Warning!
+The unperturbed charge of the unit (11.000000) is not zero.
 
 /data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Warning!
 Close contact of 1.031 angstroms between nonbonded atoms HA2 and H1
@@ -295,6 +298,10 @@ Close contact of 1.031 angstroms between nonbonded atoms HA2 and H1
 /data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Warning!
 Close contact of 1.341 angstroms between nonbonded atoms HG1 and H1
 -------  .R<THR 12>.A<HG1 12> and .R<WAT 91>.A<H1 2>
+
+/data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Warning!
+Close contact of 1.207 angstroms between nonbonded atoms HZ3 and HD2
+-------  .R<LYS 27>.A<HZ3 20> and .R<ASH 52>.A<HD2 11>
 
 /data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Warning!
 Close contact of 1.430 angstroms between nonbonded atoms HE and HE22
@@ -310,7 +317,7 @@ Close contact of 1.458 angstroms between nonbonded atoms H and H2
 
 /data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Warning!
 Close contact of 1.372 angstroms between nonbonded atoms H and HH
--------  .R<GLU 51>.A<H 2> and .R<TYR 59>.A<HH 15>
+-------  .R<GLH 51>.A<H 2> and .R<TYR 59>.A<HH 15>
 
 /data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Warning!
 Close contact of 1.477 angstroms between nonbonded atoms H and H2
@@ -342,13 +349,13 @@ Close contact of 1.316 angstroms between nonbonded atoms O and H1
 Checking parameters for unit 'complex'.
 Checking for bond parameters.
 Checking for angle parameters.
-check:  Warnings: 188
+check:  Warnings: 190
 Unit is OK.
 >     	charge complex
-Total unperturbed charge:   0.000000
-Total perturbed charge:     0.000000
-> 		savePdb complex /lustre1/project/stg_00187/users/Cecilia/PipeMD/develop/thesis_main/usecase_1AKI_pH/amber/1UBQ_noconect_protonated.pdb
-Writing pdb file: /lustre1/project/stg_00187/users/Cecilia/PipeMD/develop/thesis_main/usecase_1AKI_pH/amber/1UBQ_noconect_protonated.pdb
+Total unperturbed charge:  11.000000
+Total perturbed charge:    11.000000
+> 		savePdb complex /lustre1/project/stg_00187/users/Cecilia/PipeMD/develop/thesis_main/usecase_1UBQ_pH/amber/1UBQ_noconect_protonated.pdb
+Writing pdb file: /lustre1/project/stg_00187/users/Cecilia/PipeMD/develop/thesis_main/usecase_1UBQ_pH/amber/1UBQ_noconect_protonated.pdb
 
 /data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Warning!
  Converting N-terminal residue name to PDB format: NMET -> MET
@@ -358,8 +365,8 @@ Writing pdb file: /lustre1/project/stg_00187/users/Cecilia/PipeMD/develop/thesis
 > 		quit
 	Quit
 
-Exiting LEaP: Errors = 0; Warnings = 15; Notes = 0.
-log started: Mon Oct  5 13:18:23 2026
+Exiting LEaP: Errors = 0; Warnings = 17; Notes = 0.
+log started: Wed Oct  7 09:12:03 2026
 
 Log file: ./leap.log
 >> #
@@ -644,10 +651,13 @@ Starting new chain with OPC
 Starting new chain with OPC
 Starting new chain with OPC
   total atoms in file: 660
-  Leap added 803 missing atoms according to residue templates:
-       803 H / lone pairs
+  Leap added 814 missing atoms according to residue templates:
+       814 H / lone pairs
 > 		check complex
 Checking 'complex'....
+
+/data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Warning!
+The unperturbed charge of the unit (11.000000) is not zero.
 
 /data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Warning!
 Close contact of 1.031 angstroms between nonbonded atoms HA2 and H1
@@ -656,6 +666,10 @@ Close contact of 1.031 angstroms between nonbonded atoms HA2 and H1
 /data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Warning!
 Close contact of 1.341 angstroms between nonbonded atoms HG1 and H1
 -------  .R<THR 12>.A<HG1 12> and .R<WAT 91>.A<H1 2>
+
+/data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Warning!
+Close contact of 1.207 angstroms between nonbonded atoms HZ3 and HD2
+-------  .R<LYS 27>.A<HZ3 20> and .R<ASH 52>.A<HD2 11>
 
 /data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Warning!
 Close contact of 1.430 angstroms between nonbonded atoms HE and HE22
@@ -671,7 +685,7 @@ Close contact of 1.458 angstroms between nonbonded atoms H and H2
 
 /data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Warning!
 Close contact of 1.372 angstroms between nonbonded atoms H and HH
--------  .R<GLU 51>.A<H 2> and .R<TYR 59>.A<HH 15>
+-------  .R<GLH 51>.A<H 2> and .R<TYR 59>.A<HH 15>
 
 /data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Warning!
 Close contact of 1.477 angstroms between nonbonded atoms H and H2
@@ -703,11 +717,11 @@ Close contact of 1.316 angstroms between nonbonded atoms O and H1
 Checking parameters for unit 'complex'.
 Checking for bond parameters.
 Checking for angle parameters.
-check:  Warnings: 188
+check:  Warnings: 190
 Unit is OK.
 >     	charge complex
-Total unperturbed charge:   0.000000
-Total perturbed charge:     0.000000
+Total unperturbed charge:  11.000000
+Total perturbed charge:    11.000000
 > 		savePdb complex 1UBQ_noconect_noH_A_protonated.pdb
 Writing pdb file: 1UBQ_noconect_noH_A_protonated.pdb
 
@@ -719,8 +733,8 @@ Writing pdb file: 1UBQ_noconect_noH_A_protonated.pdb
 > 		quit
 	Quit
 
-Exiting LEaP: Errors = 0; Warnings = 15; Notes = 0.
-log started: Mon Oct  5 13:18:23 2026
+Exiting LEaP: Errors = 0; Warnings = 17; Notes = 0.
+log started: Wed Oct  7 09:12:03 2026
 
 Log file: ./leap.log
 >> #
@@ -948,24 +962,27 @@ Reading force field modification type file (frcmod)
 Reading title:
 Li/Merz ion parameters of atomic ions for the OPC water model (12-6-4 set)
 > 
-> 	complex = loadPdb /lustre1/project/stg_00187/users/Cecilia/PipeMD/develop/thesis_main/usecase_1AKI_pH/amber/1UBQ_noconect_protonated.pdb
-Loading PDB file: /lustre1/project/stg_00187/users/Cecilia/PipeMD/develop/thesis_main/usecase_1AKI_pH/amber/1UBQ_noconect_protonated.pdb
+> 	complex = loadPdb /lustre1/project/stg_00187/users/Cecilia/PipeMD/develop/thesis_main/usecase_1UBQ_pH/amber/1UBQ_noconect_protonated.pdb
+Loading PDB file: /lustre1/project/stg_00187/users/Cecilia/PipeMD/develop/thesis_main/usecase_1UBQ_pH/amber/1UBQ_noconect_protonated.pdb
 Matching PDB residue names to LEaP variables.
 Mapped residue MET, term: Terminal/beginning, seq. number: 0 to: NMET.
 Mapped residue GLY, term: Terminal/last, seq. number: 75 to: CGLY.
-  total atoms in file: 1463
+  total atoms in file: 1474
 > 	1UBQ_noconect_noH_A_protonated = loadPdb 1UBQ_noconect_noH_A_protonated.pdb
 Loading PDB file: ./1UBQ_noconect_noH_A_protonated.pdb
 Matching PDB residue names to LEaP variables.
 Mapped residue MET, term: Terminal/beginning, seq. number: 0 to: NMET.
 Mapped residue GLY, term: Terminal/last, seq. number: 75 to: CGLY.
-  total atoms in file: 1463
+  total atoms in file: 1474
 > 
 > set default PBRadii mbondi2
 Using H(N)-modified Bondi radii
 > 
 > saveAmberParm complex 1UBQ_noconect_protonated.prmtop 1UBQ_noconect_protonated.inpcrd
 Checking Unit.
+
+/data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Warning!
+The unperturbed charge of the unit (11.000000) is not zero.
 
 /data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Note.
 Ignoring the warnings from Unit Checking.
@@ -976,7 +993,7 @@ Building bond parameters.
 Building angle parameters.
 Building proper torsion parameters.
 Building improper torsion parameters.
- total 216 improper torsions applied
+ total 217 improper torsions applied
 Building H-Bond parameters.
 Incorporating Non-Bonded adjustments.
 Not Marking per-residue atom chain types.
@@ -994,6 +1011,9 @@ Marking per-residue atom chain types.
 > saveAmberParm 1UBQ_noconect_noH_A_protonated 1UBQ_noconect_noH_A_protonated.prmtop 1UBQ_noconect_noH_A_protonated.inpcrd
 Checking Unit.
 
+/data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Warning!
+The unperturbed charge of the unit (11.000000) is not zero.
+
 /data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Note.
 Ignoring the warnings from Unit Checking.
 
@@ -1003,7 +1023,7 @@ Building bond parameters.
 Building angle parameters.
 Building proper torsion parameters.
 Building improper torsion parameters.
- total 216 improper torsions applied
+ total 217 improper torsions applied
 Building H-Bond parameters.
 Incorporating Non-Bonded adjustments.
 Not Marking per-residue atom chain types.
@@ -1078,10 +1098,10 @@ Marking per-residue atom chain types.
  (using default radius 1.500000 for EPW)
  (using default radius 1.500000 for EPW)
  (using default radius 1.500000 for EPW)
-Scaling up box by a factor of 1.218743 to meet diagonal cut criterion
-  Solute vdw bounding box:              30.510 46.550 33.894
-  Total bounding box for atom centers:  70.925 70.925 70.925
-      (box expansion for 'iso' is  57.3%)
+Scaling up box by a factor of 1.217078 to meet diagonal cut criterion
+  Solute vdw bounding box:              30.485 46.548 34.007
+  Total bounding box for atom centers:  70.889 70.889 70.889
+      (box expansion for 'iso' is  57.1%)
   Solvent unit box:                     18.865 18.478 19.006
 The number of boxes:  x= 4  y= 4  z= 4
  (using default radius 1.500000 for EPW)
@@ -6033,34 +6053,30 @@ The number of boxes:  x= 4  y= 4  z= 4
  (using default radius 1.500000 for EPW)
  (using default radius 1.500000 for EPW)
  (using default radius 1.500000 for EPW)
- (using default radius 1.500000 for EPW)
- (using default radius 1.500000 for EPW)
- (using default radius 1.500000 for EPW)
- (using default radius 1.500000 for EPW)
- (using default radius 1.500000 for EPW)
- (using default radius 1.500000 for EPW)
- (using default radius 1.500000 for EPW)
-  Volume: 186038.016 A^3 (oct)
-  Total mass 97852.218 amu,  Density 0.873 g/cc
-  Added 4898 residues.
+  Volume: 185765.948 A^3 (oct)
+  Total mass 97737.194 amu,  Density 0.874 g/cc
+  Added 4891 residues.
 > 	addIons2 complex Na+ 1  Cl- 1
 Adding 2 counter ions to "complex" using 1A grid
-Total solute charge:   0.00  Max atom radius:   1.98
+Total solute charge:  11.00  Max atom radius:   1.98
 Grid extends from solute vdw + 1.45  to  7.43
 Box:
-   enclosing:  -37.84 -42.46 -44.10   38.42 42.98 44.16
-   sized:			      90.16 85.54 83.90
+   enclosing:  -37.76 -42.46 -44.10   38.42 42.98 44.16
+   sized:			      90.24 85.54 83.90
    edge:        128.00
 Resolution:      1.00 Angstrom.
 Tree depth: 7
-Volume =  4.92% of box, grid points 103150
+Volume =  4.91% of box, grid points 103028
 Calculating grid charges
-Placed Na+ in complex at (5.16, -10.46, 5.90).
-Placed Cl- in complex at (3.16, -32.46, 13.90).
+Placed Na+ in complex at (-13.76, 28.54, 24.90).
+Placed Cl- in complex at (32.24, -5.46, -2.10).
 
 Done adding ions.
 > 	saveAmberParm complex 1UBQ_noconect_protonated_solvated.prmtop 1UBQ_noconect_protonated_solvated.inpcrd
 Checking Unit.
+
+/data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Warning!
+The unperturbed charge of the unit (11.000000) is not zero.
 
 /data/leuven/344/vsc34467/miniconda3/envs/pipemd_test2/bin/teLeap: Note.
 Ignoring the warnings from Unit Checking.
@@ -6071,7 +6087,7 @@ Building bond parameters.
 Building angle parameters.
 Building proper torsion parameters.
 Building improper torsion parameters.
- total 216 improper torsions applied
+ total 217 improper torsions applied
 Building H-Bond parameters.
 Incorporating Non-Bonded adjustments.
 Not Marking per-residue atom chain types.
@@ -6099,4 +6115,4 @@ Writing pdb file: 1UBQ_noconect_protonated_solvated.pdb
 > 	quit
 	Quit
 
-Exiting LEaP: Errors = 0; Warnings = 2; Notes = 3.
+Exiting LEaP: Errors = 0; Warnings = 5; Notes = 3.
