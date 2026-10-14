@@ -7,7 +7,7 @@ import numpy as np
 from scripts.utils.helpers import setup_logger
 
 
-def get_original_chain_id(universe, atom_number):
+def get_chain_id(universe, atom_number):
     return universe.atoms[atom_number - 1].chainID
 
 
