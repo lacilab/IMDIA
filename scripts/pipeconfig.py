@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from datetime import datetime
 from pathlib import Path
 import sys
 import yaml
@@ -11,15 +12,16 @@ class Paths:
     pdbfile: str
     gmxdir: Path
     paramspath: Path
+    postpdb: Path | None    # post-simulation PDB used by the analysis stage (None without replicates)
 
 @dataclass
 class SystemConfig:
     repn: list[int]
-    dna: bool
-    phos: bool
-    range_a: list[int]
-    range_b: list[int]
+    dna: bool | None    # None = detect from the structure
+    phos: bool | None   # None = detect from the structure
     ffs: list[str]
+    rna: bool | None = None  # None = detect from the structure
+    protein: bool | None = None  # None = detect from the structure
 
 @dataclass
 class RunConfig:
@@ -45,6 +47,11 @@ class Pipeline:
         self.paramsfile = Path(paramsfile)
         self.pdbpath, self.system, self.run = self._get_params()
         self.paths = self._derive_paths()
+        # Pipeline-level log file for messages produced while setting up the run.
+        self.logger = self._pipeline_logger()
+        # Composition detected from the input structure; fills dna/rna/phos left on auto.
+        self.composition = self._composition()
+        self._resolve_flags()
 
     def _derive_paths(self) -> 'Paths':
         pdbpath = Path(self.pdbpath)
@@ -55,11 +62,15 @@ class Pipeline:
         self._validate_dir(mutdir, "Mutation")
         datadir = Path(mutdir.parent.parent)
         self._validate_dir(datadir, "Data")
-        gmxdir = mutdir / "gromacs_common" # Don't validate, will be created during prep step
+        gmxdir = mutdir / "gromacs_common" # Don't validate here, will be created during prep step
+        # Post-simulation PDB of the first replicate (None without replicates).
+        # Don't validate here, will be created during md step
+        reps = self.system.repn
+        postpdb = mutdir / f"rep{reps[0]}" / "gromacs" / "md_prot.pdb" if reps else None
         pdbfile = pdbpath.name 
         self._validate_file(mutdir / pdbfile, "In the mutation directory, PDB")
         return Paths(mutdir=mutdir, datadir=datadir, pdbfile=pdbfile,
-                     gmxdir=gmxdir, paramspath=paramspath)
+                     gmxdir=gmxdir, paramspath=paramspath, postpdb=postpdb)
     
     def _validate_file(self, file, role) -> None:
         if not file.is_file():
@@ -100,10 +111,10 @@ class Pipeline:
 
         system = SystemConfig(
             repn=params.get("repn", []),
-            dna=params.get("dna", False),
-            phos=params.get("phos", False),
-            range_a=params.get("range_a", [0, -1]),
-            range_b=params.get("range_b", [0, -1]),
+            dna=self._flag(params, "dna"),
+            phos=self._flag(params, "phos"),
+            rna=self._flag(params, "rna"),
+            protein=self._flag(params, "protein"),
             ffs=params.get("ffs", None)
         )
 
@@ -125,6 +136,85 @@ class Pipeline:
 
         return pdbpath, system, run
 
+    @staticmethod
+    def _flag(params: dict, key: str) -> bool | None:
+        """Read an optional true/false/auto key; None (auto) when missing or 'auto'."""
+        value = params.get(key)
+        if value is None or (isinstance(value, str) and value.lower() == "auto"):
+            return None
+        if isinstance(value, bool):
+            return value
+        print(f"ERROR: '{key}' in the parameter file must be true, false or auto (got {value!r}).")
+        sys.exit(1)
+
+    def _pipeline_logger(self):
+        """Logger writing to mutdir/logs/pipeline_<timestamp>.log."""
+        from scripts.utils.helpers import setup_logger
+
+        logdir = self.paths.mutdir / "logs"
+        logdir.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        return setup_logger("pipeline", logdir / f"pipeline_{timestamp}.log")
+
+    def _composition(self):
+        """Detect the composition of the input PDB and keep a JSON record in mutdir.
+
+        If a record from an earlier run exists, differences are reported as a warning
+        (the input changed between runs). The record is then replaced by the new one.
+        """
+        from scripts.utils import composition as comp_mod
+
+        record = self.paths.mutdir / comp_mod.RECORD_NAME
+        comp = comp_mod.detect(self.paths.mutdir / self.paths.pdbfile)
+
+        # Compare with the record of a previous run, if any.
+        if record.is_file():
+            try:
+                previous = comp_mod.load(record)
+                changes = comp_mod.differences(previous, comp)
+            except Exception as err:
+                previous = None
+                changes = [f"previous record could not be read ({err})"]
+            if changes:
+                self.logger.warning(f"Composition differs from the previous record {record}:\n"
+                                    + "\n".join(f"  - {change}" for change in changes))
+            # A chain mapping stays valid only while the input file is unchanged.
+            if previous is not None and previous.chain_mapping:
+                if previous.source_sha256 == comp.source_sha256:
+                    comp = replace(comp, chain_mapping=previous.chain_mapping)
+                else:
+                    self.logger.warning("The chain mapping in the previous record refers to "
+                                        "a different input file and was removed; it is "
+                                        "recreated by the analysis stage.")
+
+        comp_mod.save(comp, record)
+        self.logger.info(f"Detected composition: {comp.summary()} (record: {record})")
+        return comp
+
+    def _resolve_flags(self) -> None:
+        """Set protein/dna/rna/phos from detection unless the parameter file sets them explicitly."""
+        detected = {"protein": self.composition.has_protein,
+                    "dna": self.composition.has_dna,
+                    "rna": self.composition.has_rna,
+                    "phos": self.composition.has_phospho}
+        for key, found in detected.items():
+            given = getattr(self.system, key)
+            if given is None:
+                # Not set by the user: use the detected value.
+                setattr(self.system, key, found)
+                self.logger.info(f"{key}: {found} (detected)")
+            elif given != found:
+                # Explicit value that disagrees with the structure: keep it, but warn.
+                self.logger.warning(
+                    f"{key} is set to {given} in {self.paramsfile.name}, but the structure "
+                    f"analysis found {found}. Using {given}. This is likely to cause errors "
+                    "during the simulation if the forcefields required for the detected "
+                    "molecule types are not included.")
+            else:
+                # Explicit value that agrees with the structure: confirmation only.
+                self.logger.debug(f"{key}: {given} (set in {self.paramsfile.name}, "
+                                  "matches detection)")
+
     def setup(self) -> None:
         # Create log directory if it doesn't exist
         # logdir = self.paths.mutdir / "logs"
@@ -145,6 +235,12 @@ class Pipeline:
         post_wrap.main(self)
 
     def analysis(self) -> None:
+        # The analysis stage needs the post-simulation PDB.
+        if self.paths.postpdb is None:
+            print("ERROR: no replicates in 'repn' in the parameter file; the post-simulation "
+                  "PDB (rep<n>/gromacs/md_prot.pdb) is needed for analysis.")
+            sys.exit(1)
+        self._validate_file(self.paths.postpdb, "Post-simulation PDB")
         import scripts.analysis04.analysis_wrap as analysis_wrap
         analysis_wrap.main(self)
         

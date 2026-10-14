@@ -1,316 +1,460 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""Add distance restraints on Watson-Crick H-bonds of DNA/RNA base pairs.
+
+Base pairs are detected from the coordinates (``.gro``) rather than assumed from the
+sequences, so overhangs, hairpins, RNA and duplexes split over any number of
+molecules are handled without manual residue ranges:
+
+1. ``[ molecules ]`` + the included ``.itp`` files give every molecule instance and its
+   global atom range (GROMACS numbers atoms in ``[ molecules ]`` order).
+2. The ``.gro`` is checked atom by atom against the topology up to the last
+   nucleic-acid molecule (the solvent/ion tail may differ, e.g. a pre-genion ``.gro``).
+3. The nucleotides of those molecules are grouped into strands (runs joined by O3'-P
+   links); amino acids, ligands and isolated nucleotides are left out. Residue names
+   are translated to PDB names, and ``scripts.utils.nucleic`` finds the pairs
+   (observed by geometry + inferred along duplex registers). A system without any
+   Watson-Crick pair (e.g. a single strand) needs no restraints and is not an error.
+4. Restraints between atoms of different molecules go to
+   ``[ intermolecular_interactions ]`` in ``topol`` (global numbering); restraints within
+   one molecule (hairpins, merged strands) go to that molecule's ``.itp`` (local
+   numbering, applied to every copy of the molecule).
+"""
 
 import argparse
-import os
+import io
+import itertools
 import sys
-import glob
 import time
-from scripts.utils.helpers import setup_logger
+import warnings
 from pathlib import Path
 
-def main(logfile: Path, gmxdir: Path, topol: Path = Path("./topol.top"), range_a: list = [0, -1], range_b: list = [0, -1],
-         type: int = 1, type2: int = 2, low: float = 0.0, up1: float = 0.3, up2: float = 0.4, fac: float = 1.0):
+import numpy as np
+import pandas as pd
+import biotite.structure as struc
+import biotite.structure.io.gro as gro_io
+
+from scripts.utils.helpers import setup_logger
+from scripts.utils.nucleic import classify_structure, nucleic_chain_ids, find_wc_pairs, pairs_diagram
+from scripts.utils.nucleic.infer import LINK_MAX
+from scripts.utils.naming import SUGAR_ATOMS, pdb_residue_name
+
+# H-bonded atoms per Watson-Crick pair, as (purine atom, pyrimidine atom).
+# A pairs with T or (RNA) U; both pyrimidines use O4 and N3.
+RESTRAINT_ATOMS = {"A": [("N6", "O4"), ("N1", "N3")],
+                   "G": [("N2", "O2"), ("N1", "N3"), ("O6", "N4")]}
+CHECKPOINT = "check_05_restraindnahbonds_*.done"
+# Shortest run of linked nucleotides treated as a strand that can pair.
+MIN_STRAND_LENGTH = 2
+# Columns of the restraint review table (restraints_hbonds.csv).
+RESTRAINT_COLUMNS = ["label", "pair", "evidence", "chain1", "res_id1", "res_name1", "chain2",
+                     "res_id2", "res_name2", "atom_pur", "atom_pyr", "global_ai", "global_aj",
+                     "section"]
+
+
+def main(logfile: Path, gmxdir: Path, topol: Path = Path("./topol.top"), gro: Path = None,
+         type: int = 1, type2: int = 2, low: float = 0.0, up1: float = 0.3, up2: float = 0.4,
+         fac: float = 1.0):
     """
-    Calculate distance restraints for DNA H-bonds and append them to a topology file.
+    Detect Watson-Crick base pairs (DNA and RNA) and add H-bond distance restraints.
 
     Arguments:
         logfile : Path to the log file.
-        gmxdir  : Directory containing GROMACS files
-        topol   : Topology file to append restraints to (default: ./topol.top)
-        range_a : Range of residues for DNA A (0-indexed) (default: [0, -1], full length)
-        range_b : Range of residues for DNA B (0-indexed) (default: [0, -1], full length)
+        gmxdir  : Directory containing GROMACS files (with toppar/).
+        topol   : Topology file to append restraints to (default: ./topol.top).
+        gro     : Coordinates in topology atom order (default: the single *.gro in gmxdir).
         type    : Restraint type (default: 1)
         type2   : Secondary restraint type (default: 2)
-        low     : Lower bound distance (Å) (default: 0.0)
-        up1     : Upper bound distance 1 (Å) (default: 0.3)
-        up2     : Upper bound distance 2 (Å) (default: 0.4)
+        low     : Lower bound distance (nm) (default: 0.0)
+        up1     : Upper bound distance 1 (nm) (default: 0.3)
+        up2     : Upper bound distance 2 (nm) (default: 0.4)
         fac     : Force constant scaling factor (default: 1.0)
     """
-
-    ##### Initialize logger
     logger = setup_logger("prep", logfile)
+    gmxdir, topol = Path(gmxdir), Path(topol)
     toppar = gmxdir / "toppar"
 
     ##### CHECK INPUT #####
     if not gmxdir.is_dir():
-        logger.error(f"Directory {str(gmxdir)} not found")
+        logger.error(f"Directory {gmxdir} not found")
         sys.exit(1)
     if not toppar.is_dir():
-        logger.error(f"Topology directory {str(toppar)} not found")
+        logger.error(f"Topology directory {toppar} not found")
         sys.exit(1)
     if not topol.is_file():
-        logger.error(f"Topology file {str(topol)} not found.")
+        logger.error(f"Topology file {topol} not found.")
         sys.exit(1)
-
-    # Check if checkpoint file from previous run exists
-    checkpoint_files = list(gmxdir.glob(f"check_05_restraindnahbonds_*.done"))
-    if len(checkpoint_files) > 0:
-        logger.warning("Checkpoint file found.")
-        # Check if topol file contains distance_restraints section
-        with open(topol, 'r') as f:
-            if "[ distance_restraints ]" in f.read():
-                logger.info(f"[ distance_restraints ] section found in {str(topol)}.")
-                logger.warning("Skipping DNA H-bond restraints addition.")
-                return
-            else:
-                logger.warning(f"Checkpoint file found but [ distance_restraints ] section not found in {str(topol)}. The previous run might have been incomplete. Proceeding with DNA H-bond restraints addition.")
-
-    # Find DNA itp files
-    dna_resnames = {"DC", "DA", "DG", "DT"}
-    dna_files = []
-    # Find DNA itp files
-    for file in toppar.glob("*.itp"):
-        has_dna = False
-        with open(file) as f:
-            for line in f:
-                line = line.strip()
-                # match comment lines that define residues
-                # example line:
-                # ; residue    2 DG rtp DG q -1.0
-                if line.startswith(";") and "residue" in line:
-                    cols = line.split()
-                    if len(cols) >= 3:
-                        resname = cols[3]
-                        if resname in dna_resnames:
-                            has_dna = True
-                            dna_files.append(Path(file))
-                            logger.debug(f"Found DNA residue {resname} in {file}.")
-                            break
-    if len(dna_files) != 2:
-        logger.error(f"--dna flag provided but found {len(dna_files)} files containing DNA residues. Expected 2 files.")
-        sys.exit(1)
-    else:
-        dna_a, dna_b = dna_files
-        logger.info("The complex includes DNA. Adding DNA H-bond restraints.")
-    
-    if not dna_a.is_file():
-        logger.error(f"DNA chain A topology file {str(dna_a)} not found.")
-        sys.exit(1)
-    if not dna_b.is_file():
-        logger.error(f"DNA chain B topology file {str(dna_b)} not found.")
-        sys.exit(1)
-
-    # distance bounds order
     if low > up1 or up1 > up2:
         logger.error("Invalid distance bounds: ensure that low <= up1 <= up2.")
         sys.exit(1)
-
-    # fac should be positive
     if fac <= 0:
         logger.error("Force constant scaling factor (fac) should be positive.")
         sys.exit(1)
-
-    if range_a is None:
-        range_a = [0, -1]
-    if range_b is None:
-        range_b = [0, -1]
-
-    ##### CHECK DNA SEQUENCES #####
-    # Extract lines between [atoms] and [bonds]
-    seqs = {}
-    dna_files = {'a': dna_a, 'b': dna_b}
-    dna_dicts = {'a': [], 'b': []}
-    for key, dna_file in dna_files.items():
-        with open(dna_file) as f:
-            dna_atoms_lines = []
-            resnr = []
-            inside = False
-            for line in f:
-                if "[ atoms ]" in line:
-                    inside = True
-                    continue
-                if "[ bonds ]" in line:
-                    inside = False
-                if inside and not line.lstrip().startswith(";"):
-                    dna_atoms_lines.append(line)
-            seq = []
-            for line in dna_atoms_lines:
-                cols = line.split()
-                if len(cols) < 5:
-                    continue
-                # Extract sequence
-                if cols[2] not in resnr:
-                    resnr.append(cols[2])
-                    seq.append(cols[3][1]) # substr($4,2,1) → second character of parts[3]
-                # Save columns resnr, residue, atom to dict
-                select_cols = cols[2:6] 
-                dna_dicts[key].append(select_cols)
-        seqs[key] = seq
-
-    for key, value in seqs.items():
-        logger.debug(f"Sequence for DNA {key.upper()}: {''.join(seqs[key])}")
-
-    # Apply residue range filters if provided
-    ranges  = [range_a, range_b]
-    for i, r in enumerate(ranges):
-        if int(r[0]) != 0 or int(r[1]) != -1:
-            key = 'a' if i == 0 else 'b'
-            logger.debug(f"Applying residue range filter for DNA {key.upper()}: {r}")
-            seqs[key] = seqs[key][int(r[0]) : int(r[1]) if int(r[1]) != -1 else None]
-            logger.debug(f"Filtered sequence for DNA {key.upper()}: {''.join(seqs[key])}")
-
-    # Check equal lengths (in the selected ranges)
-    len_a = len(seqs['a'])
-    len_b = len(seqs['b'])
-    if len_a == len_b:
-        logger.info(f"DNA sequences have the same length {len_a}.")
-    else:
-        logger.error(f"DNA sequences have different lengths: {len_a} and {len_b}.")
+    if gro is None:
+        candidates = sorted(gmxdir.glob("*.gro"))
+        if len(candidates) != 1:
+            logger.error(f"Expected exactly one .gro in {gmxdir} (found {len(candidates)}); "
+                         "pass gro explicitly.")
+            sys.exit(1)
+        gro = candidates[0]
+    gro = Path(gro)
+    if not gro.is_file():
+        logger.error(f"Coordinate file {gro} not found.")
         sys.exit(1)
 
-    # Check valid DNA sequences
-    nts = {'A', 'T', 'C', 'G'}
-    for key, seq in seqs.items():
-        for nt in seq:
-            if nt not in nts:
-                logger.error(f"Invalid nucleotide '{nt}' found in DNA {key.upper()} sequence. Only A, C, G, T are allowed.")
-                sys.exit(1)
-    logger.info("Both DNA sequences are valid.")
+    ##### READ TOPOLOGY #####
+    includes, molecules = _read_topol(topol, logger)
+    itp_paths = [_resolve_include(inc, topol, toppar) for inc in includes]
+    moltypes = {}
+    for path in itp_paths:
+        if path is None:
+            continue
+        for name, atoms in _read_moleculetypes(path).items():
+            moltypes[name] = {"itp": path, "atoms": atoms}
 
-    # Check complementary seqs
-    complement = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C'}
-    for i in range(len_a):
-        if seqs['a'][i] != complement[seqs['b'][len_b - i - 1]]:
-            logger.error(f"Nucleotides at position {i+1} are not complementary: {seqs['a'][i]}-{seqs['b'][len_b - i - 1]}.")
+    # Checkpoint: restraints may already be in topol or in any molecule itp.
+    if list(gmxdir.glob(CHECKPOINT)):
+        logger.warning("Checkpoint file found.")
+        written = [p for p in [topol] + [m["itp"] for m in moltypes.values()]
+                   if "[ distance_restraints ]" in p.read_text()]
+        if written:
+            logger.info(f"[ distance_restraints ] found in: {', '.join(str(p) for p in written)}.")
+            logger.warning("Skipping H-bond restraints addition.")
+            return
+        logger.warning("Checkpoint file found but no [ distance_restraints ] section; the previous "
+                       "run might have been incomplete. Proceeding.")
+
+    # Global atom ranges per molecule instance, in [ molecules ] order.
+    instances, start = [], 0
+    for name, count in molecules:
+        if name not in moltypes:
+            logger.error(f"Molecule {name} from [ molecules ] not defined in any included itp.")
             sys.exit(1)
-    logger.info("DNA sequences are complementary.")
+        natoms = len(moltypes[name]["atoms"])
+        is_nucleic = _is_nucleic(moltypes[name]["atoms"])
+        for copy in range(count):
+            instances.append({"moltype": name, "copy": copy, "start": start, "natoms": natoms,
+                              "nucleic": is_nucleic})
+            start += natoms
+    nucleic = [m for m in instances if m["nucleic"]]
+    if not nucleic:
+        logger.error("No nucleic-acid molecules found in the topology.")
+        sys.exit(1)
+    logger.info("Nucleic-acid molecules: " + ", ".join(
+        f"{m['moltype']}#{m['copy'] + 1} (atoms {m['start'] + 1}-{m['start'] + m['natoms']})"
+        for m in nucleic))
 
-    ##### CALCULATE DISTANCE RESTRAINTS #####
-    logger.debug(f"""Calculating distance restraints for h-bonds in {dna_a} and {dna_b}.\n
-        Restrains will be writen to {topol}.
-        Parameters: 
-        type    index    type'    low    up1    up2    fac
-        {type}	i	 {type2}	  {low}	 {up1}	{up2}   {fac}""")
-    
-    with open(topol, 'a') as f:
-        text = """
-[ intermolecular_interactions ]
-[ distance_restraints ]
-; ai    aj    type    index    type'    low    up1    up2    fac\n"""
-        f.write(text)
+    ##### READ AND CHECK COORDINATES #####
+    # Only atoms up to the end of the last nucleic-acid molecule are needed.
+    n_check = nucleic[-1]["start"] + nucleic[-1]["natoms"]
+    atoms, gro_total = _read_gro_prefix(gro, n_check)
+    if gro_total < n_check:
+        logger.error(f"{gro} has {gro_total} atoms; the topology needs at least "
+                     f"{n_check} to cover the nucleic acids.")
+        sys.exit(1)
+    # Expected names only for the molecules up to the last nucleic acid (not the solvent).
+    topo_names = [(a["residue"], a["atom"]) for m in instances if m["start"] < n_check
+                  for a in moltypes[m["moltype"]]["atoms"]]
+    for k, (res, atom) in enumerate(topo_names):
+        if (atoms.res_name[k], atoms.atom_name[k]) != (res[:5], atom[:5]):
+            logger.error(f"Atom {k + 1}: {gro.name} has {atoms.res_name[k]} {atoms.atom_name[k]}, "
+                         f"topology has {res} {atom}. Coordinates and topology do not match.")
+            sys.exit(1)
+    # The total atom count comes from the .gro header, so the solvent itself is never read.
+    total = start
+    if gro_total != total:
+        logger.warning(f"{gro.name} has {gro_total} atoms, the topology {total}. Atoms "
+                       f"1-{n_check} (all molecules up to the last nucleic acid) match exactly, so "
+                       "the restraints are unaffected; the difference is in the solvent/ion tail.")
 
-    # Mapping local ids to global ids
-    with open(topol) as f:
-        itps = []
-        molmap = {}
-        in_molecules = False
-        for line in f:
-            # Get list of itps included in topol (except forcefield)
-            if line.strip().startswith("#include") and "forcefield" not in line:
-                filename = line.split("/")[-1].strip().strip('"') 
-                itps.append(filename)
-            # Get number of copies per moleculetype
-            if line.strip().startswith('[ molecules ]'):
-                in_molecules = True
+    ##### NUCLEIC-ACID STRANDS #####
+    # Keep only nucleotides, grouped into strands with one chain label each.
+    try:
+        sub, global_index, strand_info, ignored = _nucleic_strands(atoms, nucleic)
+    except RuntimeError as err:
+        logger.error(str(err))
+        sys.exit(1)
+    if ignored:
+        logger.info("Ignored single nucleotides (not part of a strand): " + ", ".join(ignored))
+    if sub is None:
+        logger.error("No nucleic-acid strands (at least two linked nucleotides) found.")
+        sys.exit(1)
+    for chain, (mol, n_res) in strand_info.items():
+        logger.debug(f"Strand {chain}: {mol['moltype']}#{mol['copy'] + 1}, {n_res} nucleotides")
+
+    ##### FIND BASE PAIRS #####
+    chains_df, summary = classify_structure(sub)
+    nuc_chains = nucleic_chain_ids(chains_df)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        pairs, candidates, info = find_wc_pairs(sub, nuc_chains)
+    # Per-strand notes (e.g. unpaired strands) go to INFO, likely problems to WARNING.
+    for note in info["notes"]:
+        logger.debug(note)
+    for w in info["warnings"]:
+        logger.warning(w)
+    logger.debug(f"Nucleic acids: {summary}; branch {info['method']} (hydrogens: {info['hydrogens']}); "
+                f"{len(pairs)} Watson-Crick pairs ({info['n_observed']} observed, "
+                f"{info['n_inferred']} inferred).")
+    if not len(pairs):
+        logger.info("No Watson-Crick base pairs found (e.g. single-stranded nucleic acid): "
+                    "no restraints needed.")
+
+    ##### RESTRAINT LINES #####
+    atom_index = {(sub.chain_id[k], int(sub.res_id[k]), sub.atom_name[k]): global_index[k]
+                  for k in range(sub.array_length())}
+    inter, intra = [], {}     # intra: moltype -> lines
+    rows = []
+    for label, p in enumerate(pairs.itertuples(), start=1):
+        # Describes each base of the pair as (strand label, residue number, base letter), e.g. ("A", 1155, "G")
+        side1 = (p.chain1, int(p.res_id1), p.base1)
+        side2 = (p.chain2, int(p.res_id2), p.base2)
+        # The purine is the one with a defined restraint atom; the pyrimidine is the other.
+        # Ordering matters because the atom table is written as (purine atom, pyrimidine atom)
+        pur, pyr = (side1, side2) if p.base1 in RESTRAINT_ATOMS else (side2, side1)
+        # Check which molecule copy each strand came from
+        mol1, mol2 = strand_info[p.chain1][0], strand_info[p.chain2][0]
+        # Loop over the H-bond atom pairs for that purine
+        for pur_atom, pyr_atom in RESTRAINT_ATOMS[pur[2]]:
+            # Convert each atom, identified by (strand, residue, atom name), into its global atom index
+            ai = atom_index.get((pur[0], pur[1], pur_atom))
+            aj = atom_index.get((pyr[0], pyr[1], pyr_atom))
+            if ai is None or aj is None:
+                logger.warning(f"Missing atom for pair {p.chain1}{p.res_id1}-{p.chain2}{p.res_id2} "
+                             f"({pur_atom}/{pyr_atom}).")
                 continue
-            # End of [ molecules ] section
-            if line.strip().startswith("[ intermolecular_interactions ]"):
-                in_molecules = False
-                continue
-            if in_molecules:
-                if not line or len(line) == 0 or line.startswith(';'):
-                    continue
-                # First data line, i.e. "system1          2"
-                cols = line.split()
-                if len(cols) == 2:
-                    molmap[cols[0]] = int(cols[1])
-                elif len(cols) > 0:
-                    logger.warning(f"[ molecules ] line {line} in {topol} could not be split in columns. Skipping count of this compound.")
-
-
-    global_id = 0
-    global_a = 0
-    global_b = 0
-    logger.debug(f"Found .itp files included in {topol} (excluding forcefield.itp):")
-
-
-    for itp in itps:
-        logger.debug(itp)
-        if dna_a.name == itp:
-            logger.debug(f"Match: {itp}")
-            global_a = global_id
-        elif dna_b.name == itp:
-            logger.debug(f"Match: {itp}")
-            global_b = global_id
-        in_atoms = False
-        in_moleculetype = False
-        itp_name = None
-        with open(f"{gmxdir}/toppar/{itp}") as f:
-            last_value = None
-            for line_raw in f:
-                line = line_raw.strip()
-                # ---- [ moleculetype ] handling ----
-                if line.startswith('[') and 'moleculetype' in line:
-                    in_moleculetype = True
-                    continue
-                if in_moleculetype and itp_name is None:
-                    if not line or line.startswith(';'):
-                        continue
-                    # First data line, i.e. "system1          3"
-                    cols = line.split()
-                    if cols:
-                        itp_name = cols[0]
-                    in_moleculetype = False
-                # Find [ atoms ] section
-                if "[ atoms ]" in line:
-                    in_atoms = True
-                    continue
-                if "[ bonds ]" in line:
-                    in_atoms = False
-                if not in_atoms:
-                    continue
-                cols = line.split()
-                if cols and cols[0].isnumeric():
-                        last_value = cols[0]
-            logger.debug(f"File {itp} corresponds to compound {itp_name}, containing {last_value} atoms.")
-            if itp_name and itp_name in molmap.keys():
-                natoms = int(last_value) * molmap[itp_name]
-                logger.debug(f"Found {molmap[itp_name]} ocurrences of compound {itp_name} in the system.")
+            # If the two strands are from the same molecule, use local numbering in its itp; otherwise, use global numbering in topol.
+            if mol1 is mol2:     
+                off = mol1["start"]
+                intra.setdefault(mol1["moltype"], []).append(
+                    _restraint_line(ai - off + 1, aj - off + 1, type, label, type2, low, up1, up2, fac))
             else:
-                natoms = int(last_value)
-                logger.debug(f"Number of ocurrences of compound {itp_name} in the system could not be determined. Using default 1.")
-        # after reading whole itp file:
-        if natoms is not None:
-            global_id += natoms
-            
+                inter.append(_restraint_line(ai + 1, aj + 1, type, label, type2, low, up1, up2, fac))
+            rows.append({"label": label, "pair": p.pair, "evidence": p.evidence,
+                         "chain1": p.chain1, "res_id1": p.res_id1, "res_name1": p.res_name1,
+                         "chain2": p.chain2, "res_id2": p.res_id2, "res_name2": p.res_name2,
+                         "atom_pur": pur_atom, "atom_pyr": pyr_atom,
+                         "global_ai": ai + 1, "global_aj": aj + 1,
+                         "section": "intramolecular" if mol1 is mol2 else "intermolecular"})
 
-    logger.debug(f"Number of atoms in the complex before DNA A: {global_a}")
-    logger.debug(f"Number of atoms in the complex before DNA B: {global_b}")
+    ##### WRITE (only after everything above succeeded) #####
+    header = "; ai    aj    type    index    type'    low    up1    up2    fac\n"
+    if inter:
+        with open(topol, "a") as f:
+            f.write("\n[ intermolecular_interactions ]\n[ distance_restraints ]\n" + header)
+            f.writelines(inter)
+        logger.info(f"{len(inter)} intermolecular H-bond restraints added to {topol}.")
+    for name, lines in intra.items():
+        itp = moltypes[name]["itp"]
+        count = dict(molecules)[name]
+        if count > 1:
+            logger.warning(f"{name} appears {count} times; its intramolecular restraints apply to every copy.")
+        with open(itp, "a") as f:
+            f.write("\n[ distance_restraints ]\n" + header)
+            f.writelines(lines)
+        logger.info(f"{len(lines)} intramolecular H-bond restraints added to {itp} ({name}).")
 
-    # Map atom pairs by name
-    pairs = {'A': {'atoms_a':['N6', 'N1'], 'atoms_b': ['O4', 'N3'], 'comp': 'DT'},
-             'T': {'atoms_a':["O4", "N3"], 'atoms_b':["N6", "N1"], 'comp': 'DA'},
-             'C': {'atoms_a':["O2", "N3", "N4"], 'atoms_b':["N2", "N1", "O6"], 'comp': 'DG'},
-             'G': {'atoms_a':["N2", "N1", "O6"], 'atoms_b':["O2", "N3", "N4"], 'comp': 'DC'}}
-    for i, nt in enumerate(seqs['a']):
-        nt_pairs = pairs[nt]
-        atoms_a = nt_pairs['atoms_a']
-        atoms_b = nt_pairs['atoms_b']
-        comp = nt_pairs['comp']
-        with open(topol, "a") as out:
-            for idx, atom in enumerate(atoms_a):
-                i_val = i + 1 + int(range_a[0])
-                comp_i = len_a - i + int(range_b[0])
+    # Review files: pair diagram and restraint table.
+    pd.DataFrame(rows, columns=RESTRAINT_COLUMNS).to_csv(gmxdir / "restraints_hbonds.csv",
+                                                          index=False)
+    legend = "\n".join(f"- strand {c}: {m['moltype']} copy {m['copy'] + 1}, {n} nucleotides"
+                       for c, (m, n) in strand_info.items())
+    (gmxdir / "restraints_basepairs.md").write_text(
+        pairs_diagram(sub, nuc_chains, pairs, info, title=gro.stem)
+        + "\n## Strands\n\n" + legend + "\n", encoding="utf-8")
+    logger.info(f"Review files written: {gmxdir / 'restraints_basepairs.md'}, "
+                f"{gmxdir / 'restraints_hbonds.csv'}")
 
-                for row in dna_dicts['a']:
-                    if row[0] == str(i_val) and f"D{nt}" in row[1] and row[2] == atoms_a[idx]:
-                        atom_a = int(row[3])
-                        break
-                for row in dna_dicts['b']:
-                    if row[0] == str(comp_i) and comp in row[1] and row[2] == atoms_b[idx]:
-                        atom_b = int(row[3])
-                        break
-                # Add atom pair to distance restrains table
-                out.write(
-                    f"{atom_a + global_a}    {atom_b + global_b}    {type}    {i + 1}    {type2}    {low}    {up1}    {up2}    {fac}\n")
+    checkpoint = gmxdir / f"check_05_restraindnahbonds_{int(time.time())}.done"
+    checkpoint.write_text(f"H-bond restraint step finished: {len(rows)} restraint(s) for "
+                          f"{len(pairs)} Watson-Crick pair(s).\n")
 
-    logger.info(f"Distance restraints for DNA H-bonds added to {topol}.")
-    # Create checkpoint file
-    checkpoint_filename = gmxdir / f"check_05_restraindnahbonds_{int(time.time())}.done"
-    with open(checkpoint_filename, 'w') as f:
-        f.write("Distance restraints for DNA H-bonds added successfully.\n")
+
+def _read_gro_prefix(gro, n_atoms):
+    """First ``n_atoms`` atoms of a .gro file, and the total atom count from its header.
+
+    Only the title, the atom-count line and the first ``n_atoms`` atom lines are read;
+    the rest of the file (typically solvent and ions) is skipped.
+
+    Returns
+    -------
+    atoms : AtomArray
+        The first ``min(n_atoms, total)`` atoms.
+    total : int
+        Number of atoms stated on line 2 of the file.
+    """
+    with open(gro) as f:
+        title = f.readline()
+        total = int(f.readline().split()[0])
+        # One atom per line, in file order: stop after the atoms that are needed.
+        lines = list(itertools.islice(f, min(n_atoms, total)))
+    # Rebuild a small, valid .gro (the box line is a placeholder; it is not used here).
+    text = title + f"{len(lines)}\n" + "".join(lines) + "   0.00000   0.00000   0.00000\n"
+    atoms = gro_io.GROFile.read(io.StringIO(text)).get_structure(model=1)
+    return atoms, total
+
+
+def _restraint_line(ai, aj, type, label, type2, low, up1, up2, fac):
+    return f"{ai}    {aj}    {type}    {label}    {type2}    {low}    {up1}    {up2}    {fac}\n"
+
+
+def _read_topol(topol, logger):
+    """Included files (in order) and the [ molecules ] list of (name, count)."""
+    includes, molecules, section = [], [], None
+    for raw in open(topol):
+        line = raw.split(";")[0].strip()
+        if not line:
+            continue
+        if line.startswith("#include"):
+            includes.append(line.split(None, 1)[1].strip().strip('"'))
+        elif line.startswith("["):
+            section = line.strip("[] ").lower()
+        elif section == "molecules":
+            cols = line.split()
+            if len(cols) == 2 and cols[1].isdigit():
+                molecules.append((cols[0], int(cols[1])))
+            else:
+                logger.warning(f"[ molecules ] line '{line}' in {topol} not understood; skipped.")
+    return includes, molecules
+
+
+def _resolve_include(include, topol, toppar):
+    """Path of an included itp (relative to topol, else in toppar); None if not found."""
+    for path in (topol.parent / include, toppar / Path(include).name):
+        if path.is_file():
+            return path
+    return None
+
+
+def _read_moleculetypes(path):
+    """{moleculetype name: [atom dicts]} for every moleculetype defined in an itp."""
+    out, name, section, expect_name = {}, None, None, False
+    for raw in open(path):
+        line = raw.split(";")[0].strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("["):
+            section = line.strip("[] ").lower()
+            expect_name = section == "moleculetype"
+            continue
+        if expect_name:
+            name = line.split()[0]
+            out[name] = []
+            expect_name = False
+        elif section == "atoms" and name is not None:
+            cols = line.split()
+            out[name].append({"nr": int(cols[0]), "resnr": int(cols[2]),
+                              "residue": cols[3], "atom": cols[4]})
+    return out
+
+
+def _is_nucleic(atom_list):
+    """True if any residue of the moleculetype has a nucleotide sugar."""
+    by_res = {}
+    for a in atom_list:
+        by_res.setdefault(a["resnr"], set()).add(a["atom"])
+    return any(SUGAR_ATOMS <= names for names in by_res.values())
+
+
+def _nucleic_strands(atoms, nucleic, min_length=MIN_STRAND_LENGTH):
+    """Nucleotide strands of the nucleic-acid molecules, one chain label per strand.
+
+    Only nucleotides are kept (sugar atoms and a recognisable base); amino acids, ligands
+    and other residues inside these molecules are left out. A strand is a run of
+    nucleotides joined by O3'-P links; strands shorter than ``min_length`` (isolated
+    nucleotides such as nucleotide cofactors) are left out as well.
+
+    Returns
+    -------
+    sub : AtomArray
+        The kept nucleotides, with PDB residue names and one chain label per strand.
+    global_index : ndarray
+        Global (0-based) atom index of each atom of ``sub``.
+    strand_info : dict
+        ``{chain: (molecule instance, number of nucleotides)}``.
+    ignored : list of str
+        Nucleotides left out because their strand is too short.
+    """
+    pieces, index, strand_info, ignored = [], [], {}, []
+    labels = _chain_ids()
+    for mol in nucleic:
+        part = atoms[mol["start"]:mol["start"] + mol["natoms"]].copy()
+        part.ins_code[:] = ""
+        starts = struc.get_residue_starts(part, add_exclusive_stop=True)
+
+        # Group consecutive linked nucleotides into strands; any other residue ends a strand.
+        strands, current, prev = [], [], None
+        for a, b in zip(starts[:-1], starts[1:]):
+            res = part[a:b]
+            if not _is_nucleotide(res):
+                if current:
+                    strands.append(current)
+                current, prev = [], None
+                continue
+            if prev is not None and not _linked(prev, res):
+                strands.append(current)
+                current = []
+            current.append((a, b))
+            prev = res
+        if current:
+            strands.append(current)
+
+        for strand in strands:
+            # Too short to be part of a duplex: record it and skip it.
+            if len(strand) < min_length:
+                ignored += [f"{part.res_name[a]}{part.res_id[a]} ({mol['moltype']}#{mol['copy'] + 1})"
+                            for a, _ in strand]
+                continue
+            chain = next(labels, None)
+            if chain is None:
+                raise RuntimeError("More nucleic-acid strands than available chain labels.")
+
+            # Copy the strand's atoms, label them and translate residue names to PDB names.
+            sel = np.concatenate([np.arange(a, b) for a, b in strand])
+            piece = part[sel]
+            piece.chain_id[:] = chain
+            res_starts = struc.get_residue_starts(piece, add_exclusive_stop=True)
+            for a, b in zip(res_starts[:-1], res_starts[1:]):
+                piece.res_name[a:b] = pdb_residue_name(piece[a:b])
+            pieces.append(piece)
+            index.append(mol["start"] + sel)
+            strand_info[chain] = (mol, len(strand))
+
+    if not pieces:
+        return None, np.array([], dtype=int), strand_info, ignored
+    sub = struc.concatenate(pieces) if len(pieces) > 1 else pieces[0]
+    return sub, np.concatenate(index), strand_info, ignored
+
+
+def _is_nucleotide(res):
+    """True if the residue has nucleotide sugar atoms and a base biotite can identify."""
+    return SUGAR_ATOMS <= set(res.atom_name) and struc.map_nucleotide(res)[0] is not None
+
+
+def _linked(res_a, res_b):
+    """True if res_a's O3' is covalently linked to res_b's P (distance <= LINK_MAX)."""
+    o3, p = res_a.coord[res_a.atom_name == "O3'"], res_b.coord[res_b.atom_name == "P"]
+    return len(o3) > 0 and len(p) > 0 and np.linalg.norm(o3[0] - p[0]) <= LINK_MAX
+
+
+def _chain_ids():
+    alphabet = [chr(c) for c in range(ord("A"), ord("Z") + 1)]
+    # One-, two- and three-letter labels, in that order.
+    for length in (1, 2, 3):
+        for letters in itertools.product(alphabet, repeat=length):
+            yield "".join(letters)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--logfile", type=Path, required=True)
+    parser.add_argument("--gmxdir", type=Path, required=True)
+    parser.add_argument("--topol", type=Path, default=Path("./topol.top"))
+    parser.add_argument("--gro", type=Path, default=None)
+    parser.add_argument("--type", type=int, default=1)
+    parser.add_argument("--type2", type=int, default=2)
+    parser.add_argument("--low", type=float, default=0.0)
+    parser.add_argument("--up1", type=float, default=0.3)
+    parser.add_argument("--up2", type=float, default=0.4)
+    parser.add_argument("--fac", type=float, default=1.0)
+    main(**vars(parser.parse_args()))

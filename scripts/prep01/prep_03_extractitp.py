@@ -12,7 +12,7 @@ from scripts.utils.helpers import setup_logger
 from pathlib import Path
 
 
-def main(logfile: Path, top: Path, dna: bool = False):
+def main(logfile: Path, top: Path):
 
     """
     Generate separate .itp files from a GROMACS topology file.
@@ -20,12 +20,10 @@ def main(logfile: Path, top: Path, dna: bool = False):
     Arguments:
         logfile     : Path to the log file.
         top         : Path to the GROMACS topology file
-        dna         : True if the system contains DNA.
     """
 
     gmxdir = top.parent
     path_toppar = gmxdir / "toppar"
-    expected_itps = 8 if dna else 6
 
     ##### Initialize logger
     logger = setup_logger("prep", logfile)
@@ -34,11 +32,6 @@ def main(logfile: Path, top: Path, dna: bool = False):
     checkpoint_files = list(path_toppar.glob(f"check_03_extractitp_*.done"))
     if len(checkpoint_files) > 0:
         logger.warning(f"Checkpoint file(s) found: {', '.join([str(f) for f in checkpoint_files])}")
-        itps = list(path_toppar.glob(f"*.itp"))
-        if len(itps) != expected_itps:
-            logger.warning(f"Expected {expected_itps} .itp files, but found {len(itps)}.")
-        else:
-            logger.info(f"The number of .itp files found matches the expected count of ({expected_itps}).")
         logger.warning("Skipping .itp extraction.")
         return
 

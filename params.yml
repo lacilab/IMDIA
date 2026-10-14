@@ -11,11 +11,7 @@ phos: True
 repn: [1, 2]
 
 ### Custom AMBER force fields to use (if any)
-# ffs: [water.opc, protein.ff19SB, GLYCAM_06j-1]
-
-### DNA strand ranges per chain (if DNA is present)
-# range_a: [2,-1]
-# range_b: [2,-1]
+# ffs: [water.opc, protein.ff19SB]
 
 ### Custom MD simulation parameters
 # em: 'myscripts/em.mdp'
@@ -23,8 +19,8 @@ repn: [1, 2]
 # npt: 'myscripts/npt.mdp'
 # md: 'myscripts/md.mdp'
 
-# Duration of the MD production simulation in ps (overwrites md.mdp)
-# 1 ns = 1000 ps
+### Duration of the MD production simulation in ps (overwrites md.mdp)
+### 1 ns = 1000 ps
 # md_time: 100000
 
 ### MD computational resource use 

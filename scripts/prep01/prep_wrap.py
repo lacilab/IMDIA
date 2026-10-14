@@ -17,6 +17,7 @@ def main(pipe: Pipeline):
         3.Extract .itp files from .top topology file.
         4.Remove ions added with Amber.
         5.Add ions with GROMACS to neutralize the system and reach target concentration.
+        6.Add distance restraints on Watson-Crick H-bonds of DNA and/or RNA base pairs.
     """
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -27,6 +28,6 @@ def main(pipe: Pipeline):
     logger.debug("Running preparation step.")
 
     prep.main(logfile=LOGFILE, datadir=pipe.paths.mutdir, filename=pipe.paths.pdbfile,
-        dna=pipe.system.dna, phos=pipe.system.phos, 
-        range_a=pipe.system.range_a, range_b=pipe.system.range_b, ffs=pipe.system.ffs)
+        dna=pipe.system.dna, phos=pipe.system.phos, rna=pipe.system.rna,
+        ffs=pipe.system.ffs)
     

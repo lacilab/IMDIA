@@ -17,8 +17,7 @@ from scripts.prep01 import prep_06_addgmxions as addgmxions
 
 
 def main(logfile: Path, datadir: Path, filename: str,
-    dna : bool = False, phos : bool = False,
-    range_a : str = None, range_b : str = None,
+    dna : bool = False, phos : bool = False, rna : bool = False,
     ffs : str = None):
     """
     Prepare a PDB structure for MD simulations.
@@ -29,6 +28,8 @@ def main(logfile: Path, datadir: Path, filename: str,
         3.Extract .itp files from .top topology file.
         4.Remove ions added with Amber.
         5.Add ions with GROMACS to neutralize the system and reach target concentration.
+        6.Add distance restraints on Watson-Crick H-bonds of DNA and/or RNA base pairs
+          (pairs detected from the structure).
 
     Arguments:
         logfile  : Path to the log file.
@@ -36,9 +37,11 @@ def main(logfile: Path, datadir: Path, filename: str,
         filename : Name of the PDB file (with or without .pdb)
         dna      : True if the system contains DNA. Adds DNA.bsc1 force field.
         phos     : True if the system contains phosphorylated residues.
-        range_a  : Range of residues for DNA A (0-indexed) (default: [0, -1], full length)
-        range_b  : Range of residues for DNA B (0-indexed) (default: [0, -1], full length)
+        rna      : True if the system contains RNA.
         ffs      : List of force fields to use in LEaP (default: protein.ff19SB, water.opc)
+
+    dna, rna and phos are detected from the structure by the pipeline unless set in
+    params.yml.
     """
 
     ##### INITIALIZE LOG
@@ -63,19 +66,19 @@ def main(logfile: Path, datadir: Path, filename: str,
     ##### CHECK KEY SOFTWARE DEPENDENCIES ######
     # Check GROMACS is ready and print version
     if shutil.which("gmx") is None:
-        logger.error("GROMACS (gmx) not found. Please install GROMACS and ensure it is in your PATH.", file=sys.stderr)
+        logger.error("GROMACS (gmx) not found. Please install GROMACS and ensure it is in your PATH.")
         sys.exit(1)
     subprocess.run(["gmx", "--version"])
 
     # Check ambpdb is ready and print version
     if shutil.which("ambpdb") is None:
-        logger.error("ERROR: ambpdb not found. Please install ambpdb and ensure it is in your PATH.", file=sys.stderr)
+        logger.error("ambpdb not found. Please install ambpdb and ensure it is in your PATH.")
         sys.exit(1)
     subprocess.run(["ambpdb", "--version"])
 
     # Check ParmEd is ready and print version
     if shutil.which("parmed") is None:
-        logger.error("ERROR: ParmEd (parmed) not found. Please install ParmEd and ensure it is in your PATH.", file=sys.stderr)
+        logger.error("ParmEd (parmed) not found. Please install ParmEd and ensure it is in your PATH.")
         sys.exit(1)
     subprocess.run(["parmed", "--version"])
 
@@ -154,7 +157,7 @@ def main(logfile: Path, datadir: Path, filename: str,
         gro=path_gro)
 
     ### 3. Extract .itps from .top file
-    extractitp.main(logfile=logfile, top=path_top, dna=dna)
+    extractitp.main(logfile=logfile, top=path_top)
 
     ### 4. Remove the 2 ions added with AmberTools from .gro files
     removeamberions.main(logfile=logfile, gmxdir=gmxdir)
@@ -162,12 +165,18 @@ def main(logfile: Path, datadir: Path, filename: str,
     ### 5. Add ions with GROMACS (neutralize and reach target concentration)
     addgmxions.main(logfile=logfile, gmxdir=gmxdir)
 
-    ### 6. Add DNA H-bonds restraints if DNA is present
-    if dna:
+    ### 6. Add Watson-Crick H-bond restraints if DNA or RNA is present
+    if dna or rna:
+        # Topology and coordinates after ion addition.
         path_top = gmxdir / "topol.top"
-        restraindnahbonds.main(logfile=logfile, gmxdir=gmxdir, topol=path_top, range_a=range_a, range_b=range_b)
+        path_ions = gmxdir / "ions.gro"
+        if not path_ions.is_file():
+            logger.error(f"{str(path_ions)} not found. It is needed to detect base pairs for the H-bond restraints.")
+            sys.exit(1)
+        # Base pairs are detected from the coordinates; no pairs means no restraints.
+        restraindnahbonds.main(logfile=logfile, gmxdir=gmxdir, topol=path_top, gro=path_ions)
     else:
-        logger.debug("The complex does not include DNA. Skipping DNA H-bond restraints. If this is incorrect, rerun with dna: True in params.yml.")
+        logger.debug("The system contains no DNA or RNA. Skipping H-bond restraints.")
 
     logger.info("Preparation completed successfully.")
 
