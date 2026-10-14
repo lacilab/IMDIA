@@ -306,8 +306,8 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
         for chain in dna_rmsf.keys():  
             df_chain = pd.DataFrame({
                 'Residue': dna_rmsf[chain]['resids'] + offsets[chain]['offset'],   
-                'Chain': {offsets.get(chain, {}).get('id_old', chain)},  
-                f'RMSF': dna_rmsf[chain]['rmsf']
+                'Chain': offsets.get(chain, {}).get('id_old', chain),  
+                'RMSF': dna_rmsf[chain]['rmsf']
             })
             rmsf_dna = pd.concat([rmsf_dna, df_chain], axis=1)
 
