@@ -130,7 +130,9 @@ def _record_params(record: Path, configfile: Path, flags: dict | None, logger) -
     """Copy the parameter file into the composition record as ``params``.
 
     ``flags`` (protein/dna/rna/phos as resolved by the pipeline) replace the values of the
-    parameter file, which may be "auto" or missing. Returns the stored settings.
+    parameter file, which may be "auto" or missing. ``structure`` and ``muts`` default
+    to the folders of the input PDB (data/<structure>/<mut>/), and a single name is
+    turned into a list. Returns the stored settings.
     """
     with open(configfile) as f:
         params = yaml.safe_load(f) or {}
@@ -140,6 +142,18 @@ def _record_params(record: Path, configfile: Path, flags: dict | None, logger) -
             logger.debug(f"{key}: {value} (resolved; {Path(configfile).name} has "
                          f"{params.get(key)!r})")
         params[key] = value
+
+    # The record JSON is in the mutation folder. Its parent is the structure folder.
+    mutdir = Path(record).parent
+    for key, default in (("structure", mutdir.parent.name), ("muts", mutdir.name)):
+        value = params.get(key)
+        # Missing or empty in params file: use the folder name.
+        if not value:
+            params[key] = [default]
+            logger.info(f"{key}: {params[key]} (from the PDB path)")
+        elif isinstance(value, str):
+            # A single name is stored as a one-element list.
+            params[key] = [value]
 
     # Store the settings next to the composition and the chain mapping.
     comp = composition.load(record)

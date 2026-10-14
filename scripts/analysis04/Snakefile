@@ -5,7 +5,8 @@ import os
 # Load configuration file
 # ------------------------
 # The config file is the system record (system_record.json). It holds:
-#   params        : settings from the parameter file (dna/rna/phos as resolved by the pipeline)
+#   params        : settings from the parameter file (protein/dna/rna/phos as resolved by the pipeline;
+#                   structure/muts default to the folders of the input PDB, data/<structure>/<mut>/)
 #   chain_mapping : simulation chains matched to the input structure
 #   chains        : composition of the input structure
 # logfile, datadir and rule_groups are passed on the command line.
