@@ -18,5 +18,5 @@ def main(pipe: Pipeline):
 
     analysis.main(logfile=LOGFILE, datadir=pipe.paths.datadir, configfile=pipe.paths.paramspath, pdbpath=pipe.pdbpath,
                   postpdb=pipe.paths.postpdb, cores=pipe.run.snakecores, rules=pipe.rules, unlock=pipe.unlock,
-                  flags={"dna": pipe.system.dna, "rna": pipe.system.rna, "phos": pipe.system.phos})
+                  flags={"protein": pipe.system.protein, "dna": pipe.system.dna, "rna": pipe.system.rna, "phos": pipe.system.phos})
 
