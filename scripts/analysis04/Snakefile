@@ -26,8 +26,8 @@ DNA            = PARAMS.get("dna", False)
 RNA            = PARAMS.get("rna", False)
 PHOS           = PARAMS.get("phos", False)
 DOMAINS        = PARAMS.get("domains", {})
-GROUP1         = PARAMS.get("group1", None)
-GROUP2         = PARAMS.get("group2", None)
+GROUP1         = PARAMS.get("group1", "Protein" if PROT else None)
+GROUP2         = PARAMS.get("group2", "DNA" if DNA else None)
 CHAINGROUPS    = PARAMS.get("chaingroups", {})
 START          = PARAMS.get("start_frame", 0)
 STOP           = PARAMS.get("stop_frame", None)
@@ -99,6 +99,14 @@ out_hbonds_plots_merged = {}
 
 # Rule groups: qc, hbonds, wb, contacts, pca, clust, gbsa
 # Rule groups for interaction analysis, which requires group1 and group2 defined: hbonds, wb, contacts, gbsa
+
+## Check interaction groups are valid if rule sets to run include interaction analysis
+if len(set(rule_groups).intersection(["hbonds", "wb", "contacts", "gbsa"])) > 0 or rule_groups == [""]:
+    for i, group in enumerate([GROUP1, GROUP2]):
+        if group is None:
+            print(f"group{i} is set as None. Interaction analysis cannot be performed. Two groups (group1, group2) must be defined to perform interaction analysis.")
+
+### Select output based on rule sets to run
 
 if "qc" in rule_groups or rule_groups == [""]:
     if DNA:

@@ -139,8 +139,8 @@ The following parameters are parsed from ```params.yml```:
 | muts           | list | Mutations or variants of the previous structures to analyze. If empty, it's parsed from pdbpath.   | an |  |     [ ]      | [WT, N460H] |
 | start_frame    | int  | First frame to analyze in interaction analysis.                | an |        | 1 | 1000 |
 | stop_frame     | int  | Last frame to analyze in interaction analysis.                 | an |        | None | 2001 |
-| group1         | str  | First group of interest for interaction analysis, which studies the interaction between group1 and group2. These can be chain IDs (e.g., "A", "B", "C") or predefined groups (e.g., "Protein", "DNA")  | an (hbonds, contacts, water bridges) | * | | Protein |
-| group2         | str  | Second group of interest for interaction analysis, which studies the interaction between group1 and group2. These can be chain IDs (e.g., "A", "B", "C") or predefined groups (e.g., "Protein", "DNA") | an (hbonds, contacts, water bridges) | * | | DNA |
+| group1         | str  | First group of interest for interaction analysis, which studies the interaction between group1 and group2. These can be chain IDs (e.g., "A", "B", "C") or predefined groups (e.g., "Protein", "DNA")  | an (hbonds, contacts, water bridges) | * | Protein | A |
+| group2         | str  | Second group of interest for interaction analysis, which studies the interaction between group1 and group2. These can be chain IDs (e.g., "A", "B", "C") or predefined groups (e.g., "Protein", "DNA") | an (hbonds, contacts, water bridges) | * | DNA | B |
 | chaingroups    | dict | Named groups of chain lists. Used to group them together for plotting. | an |  |  | (See below)
 | domains        | dict | Domains or segments of the protein. These are used for annotation and plotting. First level keys are group names, which must match chaingroup keys. Each domain is defined by: start (int), end (int), color (str), labe(str). Domains for the same chaingroup should not overlap, but can be adjacent.| an | | | (See below) |
 
