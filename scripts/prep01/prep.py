@@ -36,8 +36,8 @@ def main(logfile: Path, datadir: Path, filename: str,
         datadir  : Directory containing the input PDB file.
         filename : Name of the PDB file (with or without .pdb)
         dna      : True if the system contains DNA. Adds DNA.bsc1 force field.
-        phos     : True if the system contains phosphorylated residues.
         rna      : True if the system contains RNA.
+        phos     : True if the system contains phosphorylated residues.
         ffs      : List of force fields to use in LEaP (default: protein.ff19SB, water.opc)
 
     dna, rna and phos are detected from the structure by the pipeline unless set in
@@ -127,7 +127,7 @@ def main(logfile: Path, datadir: Path, filename: str,
 
     ### 1. AmberTools preparation
 
-    amber.main(logfile=logfile, pdbpath=path_noconect, dna=dna, phos=phos, ffs=ffs)
+    amber.main(logfile=logfile, pdbpath=path_noconect, dna=dna, rna=rna, phos=phos, ffs=ffs)
 
     logger.debug(f"The current directory is {os.getcwd()}")
 

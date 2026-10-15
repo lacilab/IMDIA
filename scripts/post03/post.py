@@ -6,7 +6,7 @@ import sys
 from scripts.utils.helpers import setup_logger
 from scripts.utils.group_index import group_index
 
-def main(logfile: Path, repdir: Path, dna: bool = False, phos: bool = False):
+def main(logfile: Path, repdir: Path, dna: bool = False, rna: bool = False, phos: bool = False):
     """
     Post-process MD results to make them ready for analysis and visualization.
 
@@ -21,6 +21,7 @@ def main(logfile: Path, repdir: Path, dna: bool = False, phos: bool = False):
        logfile : Path to the log file.
        repdir  : Directory containing the MD results for this replicate.
        dna     : True if the system contains DNA.
+       rna     : True if the system contains RNA.
        phos    : True if the system contains phosphorylated residues.
     """
 
@@ -40,7 +41,7 @@ def main(logfile: Path, repdir: Path, dna: bool = False, phos: bool = False):
         sys.exit(0)
 
     # Get main group name
-    group = group_index(gmxdir=repdir, logfile=logfile, logname='post', structurefile=repdir / "md.gro", dna=dna, phos=phos)
+    group = group_index(gmxdir=repdir, logfile=logfile, logname='post', structurefile=repdir / "md.gro", dna=dna, rna=rna, phos=phos)
 
     ##### POST-PROCESSING STEPS ######
     # Remove PBC artifacts
