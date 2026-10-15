@@ -1,5 +1,7 @@
 import argparse
+import os
 from scripts.pipeconfig import Pipeline
+from scripts.utils.helpers import VERBOSE_ENV
 
 def main():
     parser = argparse.ArgumentParser(description="Pipeline for preparing and running MD simulations.")
@@ -13,7 +15,13 @@ def main():
     parser.add_argument('--analysis', action='store_true', help='Run analysis step.')
     parser.add_argument('--rules', dest='rules', nargs='+', default=None, help='Snakefile rules to be used in analysis step.')
     parser.add_argument('--unlock', dest='unlock', action='store_true', help='Unlock snakemake workflow if it is locked.')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Also print DEBUG messages on the console; the log files always contain them.')
     args = parser.parse_args()
+
+    # Loggers read this when they are first set up, so it is set before the pipeline starts.
+    # Child processes (e.g. Snakemake rules) inherit it.
+    if args.verbose:
+        os.environ[VERBOSE_ENV] = "1"
 
     # Build array of steps to run
     steps_flags = [

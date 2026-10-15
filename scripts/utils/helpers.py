@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import sys
 from pathlib import Path
 
 def gen_flags(args):
@@ -36,7 +37,21 @@ def count_lines(file, *names):
 
 
 
+# Environment variable that makes the console show DEBUG messages too (set by main.py --verbose).
+VERBOSE_ENV = "MDPIPE_VERBOSE"
+
+
+def console_verbose() -> bool:
+    """True if DEBUG messages should also be printed on the console."""
+    return os.environ.get(VERBOSE_ENV) == "1"
+
+
 def setup_logger(name: str, logfile: Path, level=logging.DEBUG):
+    """Logger writing all messages to ``logfile`` and INFO and above to stdout.
+
+    With the environment variable MDPIPE_VERBOSE=1 the console also shows DEBUG messages.
+    The first call for a logger name sets it up; later calls return it unchanged.
+    """
     logger = logging.getLogger(name)
 
     if logger.handlers:
@@ -44,8 +59,11 @@ def setup_logger(name: str, logfile: Path, level=logging.DEBUG):
 
     logger.setLevel(level)
 
+    # The log file receives every message; the console only INFO and above unless verbose.
     fh = logging.FileHandler(str(logfile), mode="a")
-    ch = logging.StreamHandler()
+    fh.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.DEBUG if console_verbose() else logging.INFO)
 
     formatter = logging.Formatter(
         "%(asctime)s - %(levelname)s - %(message)s"

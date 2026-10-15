@@ -16,6 +16,19 @@ from scripts.prep01 import prep_05_restraindnahbonds as restraindnahbonds
 from scripts.prep01 import prep_06_addgmxions as addgmxions
 
 
+def _log_version(logger, tool: str):
+    """Log the version of an external tool: one line at INFO, the full output at DEBUG."""
+    process = subprocess.run([tool, "--version"], capture_output=True, text=True)
+    output = "\n".join(part for part in (process.stdout, process.stderr) if part).strip()
+    lines = [line.strip() for line in output.splitlines() if line.strip()]
+    # The first line where "version" is followed by a number,
+    # so a "gmx --version" command echo is skipped; else, the first line.
+    numbered = re.compile(r"\bversion\b\s*:?\s*v?\d", re.IGNORECASE)
+    summary = next((line for line in lines if numbered.search(line)), lines[0] if lines else "")
+    logger.info(f"{tool}: {summary or 'no version output'}")
+    logger.debug(f"{tool} --version output:\n{output}")
+
+
 def main(logfile: Path, datadir: Path, filename: str,
     dna : bool = False, phos : bool = False, rna : bool = False,
     ffs : str = None):
@@ -36,9 +49,10 @@ def main(logfile: Path, datadir: Path, filename: str,
         datadir  : Directory containing the input PDB file.
         filename : Name of the PDB file (with or without .pdb)
         dna      : True if the system contains DNA. Adds DNA.bsc1 force field.
-        rna      : True if the system contains RNA.
         phos     : True if the system contains phosphorylated residues.
-        ffs      : List of force fields to use in LEaP (default: protein.ff19SB, water.opc)
+        rna      : True if the system contains RNA. Adds RNA.OL3 force field.
+        ffs      : List of force fields to use in LEaP instead of the automatic choice
+                   (water.opc is added if no water model is listed).
 
     dna, rna and phos are detected from the structure by the pipeline unless set in
     params.yml.
@@ -68,19 +82,19 @@ def main(logfile: Path, datadir: Path, filename: str,
     if shutil.which("gmx") is None:
         logger.error("GROMACS (gmx) not found. Please install GROMACS and ensure it is in your PATH.")
         sys.exit(1)
-    subprocess.run(["gmx", "--version"])
+    _log_version(logger, "gmx")
 
     # Check ambpdb is ready and print version
     if shutil.which("ambpdb") is None:
         logger.error("ambpdb not found. Please install ambpdb and ensure it is in your PATH.")
         sys.exit(1)
-    subprocess.run(["ambpdb", "--version"])
+    _log_version(logger, "ambpdb")
 
     # Check ParmEd is ready and print version
     if shutil.which("parmed") is None:
         logger.error("ParmEd (parmed) not found. Please install ParmEd and ensure it is in your PATH.")
         sys.exit(1)
-    subprocess.run(["parmed", "--version"])
+    _log_version(logger, "parmed")
 
     logger.info(f"Preparing {datadir}/{file}.pdb")
 
@@ -127,7 +141,7 @@ def main(logfile: Path, datadir: Path, filename: str,
 
     ### 1. AmberTools preparation
 
-    amber.main(logfile=logfile, pdbpath=path_noconect, dna=dna, rna=rna, phos=phos, ffs=ffs)
+    amber.main(logfile=logfile, pdbpath=path_noconect, dna=dna, phos=phos, ffs=ffs, rna=rna)
 
     logger.debug(f"The current directory is {os.getcwd()}")
 
