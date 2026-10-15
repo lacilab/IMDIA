@@ -96,11 +96,6 @@ def main(logfile: Path, top: Path):
     itps = list(path_toppar.glob(f"*.itp"))
     for itp_file in itps:
         logger.info(f"generated {itp_file}")
-    
-    if len(itps) == expected_itps:
-        logger.info(f"All expected .itp files have been generated successfully.")
-    else:
-        logger.warning(f"Expected {expected_itps} .itp files, but found {len(itps)}.")
         
     # Create checkpoint file
     checkpoint = path_toppar / f"check_03_extractitp_{int(time.time())}.done"
