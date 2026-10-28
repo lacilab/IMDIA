@@ -308,7 +308,7 @@ def main(logfile: Path = None, pdbpath: Path = None,
 		removed = ligands.remove_residues(unfiltered, names, noH_complex)
 		logger.warning(f"VERY IMPORTANT. IMDIA removed these residues from the structure because they do not have a template in the loaded force fields: {', '.join(removed)}. "
 					   f"\nThe structure before removal is {unfiltered}."
-						"\nKeeping this residues with the current settings would have caused the pipeline to fail, so they were removed by default"
+						"\nKeeping this residues with the current settings would have caused the pipeline to fail, so they were removed by default."
 						"\nIf you want to run the simulation with these residues, include a forcefield that supports them in the parameters."
 						"\nAlternatively, you can try preparing the system with a suitable package or web based tool, and using the prepared files to run the MD simulation in IMDIA."
 					   "\nAdd parameters for them if they are needed in the simulation. ")
