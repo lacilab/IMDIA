@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import re
 import subprocess
 import time
 import sys
@@ -9,6 +10,9 @@ from pathlib import Path
 import MDAnalysis as mda
 from scripts.utils.helpers import setup_logger
 from scripts.utils.forcefields import select_forcefields
+
+# Number of tleap error lines repeated at ERROR level when tleap fails.
+TLEAP_MAX_ERRORS = 20
 
 
 def remove_hydrogens(filename: str, logger_name: str, logfile: Path):
@@ -46,15 +50,10 @@ def add_hydrogens(file: str, logger_name: str, logfile: Path, ffs: list[str] = [
 		savePdb complex {outfile}
 		quit
 	"""
-	logger.debug(f"Running tleap with input:\n{tleap_input}") 
-	process = subprocess.run(['tleap', '-f', '-'], input=tleap_input, text=True, capture_output=True)
-	
-	if process.returncode != 0:
-		logger.error(f"There was an error adding hydrogens to {filename} to create {outfile}. Check the logs for the comple tleap error message.")
-		logger.debug(f"tleap error:\n {process.stderr}")
-	else:
+	logger.debug(f"Running tleap with input:\n{tleap_input}")
+	# Errors are logged by _run_tleap; the caller checks that the output file exists.
+	if _run_tleap(tleap_input, logger, f"adding hydrogens to {file}"):
 		logger.debug(f"Hydrogens added with tleap. {outfile} was created.")
-		logger.debug(f"tleap output:\n {process.stdout}")
 
 	return outfile
 
@@ -138,8 +137,24 @@ def solvate_gen_parm(complex_file: Path, logger_name: str, logfile: Path, chains
 	'''
 	logger.debug(f"Running tleap with input:\n{cmd}")
 
-	result = subprocess.run(['tleap', '-f', '-'], capture_output=True, text=True, check=True, input=cmd)
-	lines = result.stdout.splitlines()
+	# True if tleap built and saved the systems without errors.
+	return _run_tleap(cmd, logger, f"solvating {complex_file}")
+
+
+def _run_tleap(cmd: str, logger, step: str) -> bool:
+	"""
+	Run tleap with the given input and log its output.
+
+	The full output is logged at DEBUG (runs of more than 10 identical lines are
+	collapsed). tleap's error lines (starting with Error, ERROR or FATAL) and its
+	"Exiting LEaP: Errors = N" summary are logged at ERROR, the first TLEAP_MAX_ERRORS
+	of them followed by a count of the rest. Returns False if tleap exits with an
+	error code or reports errors, True otherwise.
+	"""
+	process = subprocess.run(['tleap', '-f', '-'], input=cmd, capture_output=True, text=True)
+	lines = (process.stdout + process.stderr).splitlines()
+
+	# Full output at DEBUG, with long runs of identical lines collapsed.
 	filtered = []
 	i = 0
 	while i < len(lines):
@@ -151,9 +166,23 @@ def solvate_gen_parm(complex_file: Path, logger_name: str, logfile: Path, chains
 			filtered.append(f"SUPPRESSED {count} consecutive '{lines[start]}' lines.")
 		else:
 			filtered.extend(lines[start:i])
-	logger.debug('\n'.join(filtered))
-	
+	logger.debug(f"tleap output ({step}):\n" + '\n'.join(filtered))
 
+	# Error count from the summary line, e.g. "Exiting LEaP: Errors = 1; Warnings = 2; Notes = 1."
+	summary = next((line.strip() for line in lines if line.strip().startswith("Exiting LEaP:")), "")
+	match = re.search(r"Errors\s*=\s*(\d+)", summary)
+	n_errors = int(match.group(1)) if match else 0
+	if process.returncode == 0 and n_errors == 0:
+		return True
+
+	# tleap failed: its error lines at ERROR, the first ones and a count of the rest.
+	errors = [line.strip() for line in lines if line.strip().startswith(("Error", "ERROR", "FATAL"))]
+	logger.error(f"tleap failed while {step} (exit code {process.returncode}). {summary}")
+	for line in errors[:TLEAP_MAX_ERRORS]:
+		logger.error(f"tleap: {line}")
+	if len(errors) > TLEAP_MAX_ERRORS:
+		logger.error(f"tleap: ... and {len(errors) - TLEAP_MAX_ERRORS} more error lines (see the DEBUG output or leap.log).")
+	return False
 
 
 
@@ -259,7 +288,9 @@ def main(logfile: Path = None, pdbpath: Path = None,
 	missing_chains = [f for f in chain_files if not Path(f).is_file()]
 	if missing_chains:
 		_stop(logger, cwd, f"tleap did not write the chain files: {', '.join(missing_chains)}")
-	solvate_gen_parm(protonated_complex, logger_name, logfile,chain_files, ffs)
+	# tleap's errors are already logged; the working directory is restored before stopping.
+	if not solvate_gen_parm(protonated_complex, logger_name, logfile, chain_files, ffs):
+		_stop(logger, cwd, f"tleap could not build the solvated system. See the errors above and leap.log in {amberdir}.")
 
 	protonated_complex.replace('.pdb', '_solvated.prmtop')
 	protonated_complex.replace('.pdb', '_solvated.pdb')

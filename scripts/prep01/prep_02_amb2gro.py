@@ -43,36 +43,10 @@ def main(logfile: Path, prmtop: Path, inpcrd: Path, top: Path, gro: Path):
     # If checkpoint files are not found, proceed with the conversion
     amber = pmd.load_file(str(prmtop), str(inpcrd))
 
-    # Cmap correction, including PTR
-    CX_dir = { 'ALA' : 'XC0', 'ARG' : 'XC1', 'ASH' : 'XC2', 'ASN' : 'XC3', 'ASP' : 'XC4', 'CYM' : 'XC5', 'CYS' : 'XC6', 
-            'CYX' : 'XC5', 'GLH' : 'XC7', 'GLN' : 'XC8', 'GLU' : 'XC9', 'GLY' : 'XC10', 'HID' : 'XC5', 'HIE' : 'XC5',
-            'HIP' : 'XC5', 'HYP' : 'XC5', 'ILE' : 'XC11', 'LEU' : 'XC5', 'LYN' : 'XC12', 'LYS' : 'XC12', 'MET' : 'XC5',
-            'PHE' : 'XC5', 'PRO' : 'XC13', 'SER' : 'XC14', 'THR' : 'XC15', 'TRP' : 'XC5', 'TYR' : 'XC5', 'VAL' : 'XC11',
-                'PTR' : 'XC5' } 
+    # One CA atom type per CMAP grid, so GROMACS finds each residue's grid by atom type
+    _retype_cmap_atoms(amber, logger)
 
-    known_types = {}
-    known_types_list = []
-    for cmap in amber.cmaps:  # loop through all cmap terms
-        atom_type = cmap.atom3.atom_type # get atom type
-        new_typename = CX_dir[cmap.atom3.residue.name] # get new CA type name (e.g. XC0)
-        if new_typename in known_types_list: # if new type name in known types, directly assign atom to new type
-            cmap.atom3.atom_type = known_types[cmap.type]
-            cmap.atom3.type = known_types[cmap.type].name
-            continue # skip
-
-        # if new type name is not in known types, create new type
-        new_type = pmd.AtomType(new_typename, atom_type.number, atom_type.mass, atom_type.atomic_number, new_typename, atom_type.charge)
-        new_type.epsilon = atom_type.epsilon # copy over epsilon and rmin
-        new_type.rmin = atom_type.rmin
-        known_types[cmap.type] = new_type
-        known_types_list.append(new_typename)
-
-        # assgin atom to new type
-        cmap.atom3.atom_type = known_types[cmap.type]
-        cmap.atom3.type = known_types[cmap.type].name
-
-
-    # output 
+    # output
     amber.save(str(top), overwrite=True, format='gromacs')
     amber.save(str(gro), overwrite=True, format='gro')
 
@@ -95,6 +69,63 @@ def main(logfile: Path, prmtop: Path, inpcrd: Path, top: Path, gro: Path):
     else:
         logger.error("Amber to GROMACS conversion failed. There are missing files.")
         sys.exit(1)
+
+def _retype_cmap_atoms(amber, logger) -> dict[str, list[str]]:
+    """
+    Give the central (CA) atom of each CMAP term an atom type specific to its CMAP grid.
+
+    GROMACS looks up CMAP grids in [ cmaptypes ] by the five atom types (C N CA C N),
+    while Amber force fields assign grids per residue. Each distinct pair (grid, original
+    CA atom type) gets a copy of the CA atom type named XC0, XC1, ... (in order of first
+    appearance, skipping names already in use), with the same mass, charge and
+    Lennard-Jones parameters. The grid of each term is read from the prmtop.
+
+    Returns {new type name: sorted residue names using it}.
+    """
+    if not amber.cmaps:
+        logger.debug("No CMAP terms in the topology. CA atom types are unchanged.")
+        return {}
+
+    # Atom type names already present, so new names never collide with them.
+    used_names = {atom.type for atom in amber.atoms}
+    new_types = {}      # (grid index, original CA type name) -> new AtomType
+    residues = {}       # new type name -> residue names
+    grids = {}          # new type name -> grid index
+    counter = 0
+
+    for cmap in amber.cmaps:
+        ca = cmap.atom3
+        atom_type = ca.atom_type
+        key = (amber.cmap_types.index(cmap.type), atom_type.name)
+
+        # First term with this grid and CA type: create a copy of the CA type.
+        if key not in new_types:
+            while f"XC{counter}" in used_names:
+                counter += 1
+            name = f"XC{counter}"
+            used_names.add(name)
+            new_type = pmd.AtomType(name, atom_type.number, atom_type.mass,
+                                    atom_type.atomic_number, name, atom_type.charge)
+            # Same Lennard-Jones parameters as the original CA type.
+            new_type.epsilon = atom_type.epsilon
+            new_type.rmin = atom_type.rmin
+            new_types[key] = new_type
+            residues[name] = set()
+            grids[name] = key[0]
+
+        # Assign the CA atom to the type of its grid.
+        new_type = new_types[key]
+        ca.atom_type = new_type
+        ca.type = new_type.name
+        residues[new_type.name].add(ca.residue.name)
+
+    # Report which residues share each new type.
+    summary = {name: sorted(names) for name, names in residues.items()}
+    for name, names in summary.items():
+        logger.debug(f"{len(summary)} CMAP atom types created for {len(amber.cmaps)} CMAP terms.")
+        logger.debug(f"CMAP atom type {name}: {', '.join(names)} (grid {grids[name]})")
+    return summary
+
 
 if __name__ == "__main__":
     main()

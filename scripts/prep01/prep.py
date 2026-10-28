@@ -179,11 +179,12 @@ def main(logfile: Path, datadir: Path, filename: str,
     ### 5. Add ions with GROMACS (neutralize and reach target concentration)
     addgmxions.main(logfile=logfile, gmxdir=gmxdir)
 
+    # Topology and coordinates after ion addition.
+    path_top = gmxdir / "topol.top"
+    path_ions = gmxdir / "ions.gro"
+    
     ### 6. Add Watson-Crick H-bond restraints if DNA or RNA is present
     if dna or rna:
-        # Topology and coordinates after ion addition.
-        path_top = gmxdir / "topol.top"
-        path_ions = gmxdir / "ions.gro"
         if not path_ions.is_file():
             logger.error(f"{str(path_ions)} not found. It is needed to detect base pairs for the H-bond restraints.")
             sys.exit(1)
