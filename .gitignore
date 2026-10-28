@@ -11,6 +11,7 @@ __pycache__/
 scripts/analysis04/.snakemake
 scripts/04_analysis/.snakemake
 scripts/__pycache__
+scripts/notebooks
 scripts/*/__pycache__/
 scripts/analysis04/scripts_analysis/__pycache__/
 
