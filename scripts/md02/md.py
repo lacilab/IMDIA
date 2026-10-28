@@ -48,14 +48,7 @@ def setup(logfile: Path, gmxdir: Path, outdir: Path, repn: int,
     # check if outdir exists, if not create it
     if not outdir.is_dir():
         outdir.mkdir(parents=True, exist_ok=True)
-        logger.info(f"Created output directory: {outdir}")
-
-    # Check for checkpoint files
-    # checkpoint_files = list(outdir.glob(f"check_02_md_*.done"))
-    # if len(checkpoint_files) > 0:
-    #     logger.warning("Checkpoint file found. Skipping MD steps: minimization, NVT, NPT and production MD.")
-    #     logger.debug(f"To rerun these steps, please remove the checkpoint file(s): {outdir}/check_02_md_*.done")
-    #     sys.exit(0)
+        logger.debug(f"Created output directory: {outdir}")
 
 
     ##### RESOURCE SETUP #####
@@ -186,9 +179,9 @@ def minimization(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
         logger.info("EM sanity check completed successfully.")
     else:
         logger.warning(f"EM sanity check failed. Consider tuning the EM parameters in a custom .mdp file.")
-    logger.debug(f"Converged: {em_check['converged']}")
-    logger.debug(f"PotE OK: {em_check['pot_energy_ok']} ({em_check['pot_energy']:.2e})")
-    logger.debug(f"Fmax: {em_check['fmax']:.2e}")
+    logger.info(f"Converged: {em_check['converged']}")
+    logger.info(f"PotE OK: {em_check['pot_energy_ok']} ({em_check['pot_energy']:.2e})")
+    logger.info(f"Fmax: {em_check['fmax']:.2e}")
 
     # Plot EM potential
     if (outdir / "em.edr").is_file() and not (outdir / "em_potential.png").is_file():
@@ -302,7 +295,7 @@ def equilibration(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
         "If this is your target temperature, consider tuning the NVT parameters in a custom .mdp file." \
         "If you are targeting a different temperature, please verify that the observed average temperature is close to your target.")
     else:
-        logger.info(f"Average temperature is within the default range ({range_temp.start}, {range_temp.stop}) (K).")
+        logger.info(f"Average temperature after NVT is within the default range ({range_temp.start}, {range_temp.stop}) (K).")
 
     ### 4. NPT Equilibration
     if check_finished("npt", outdir):
@@ -384,7 +377,7 @@ def equilibration(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
         "If this is your target pressure, consider tuning the NPT parameters in a custom .mdp file. " \
         "If you are targeting a different pressure, please verify that the observed average pressure is close to your target.")
     else:
-        logger.info(f"Average pressure is within the default range ({range_pres.start}, {range_pres.stop}) (bar).")
+        logger.info(f"Average pressure after NPT is within the default range ({range_pres.start}, {range_pres.stop}) (bar).")
 
     # Plot NPT Density
     if not (outdir / "npt_density.xvg").is_file():
@@ -425,7 +418,7 @@ def equilibration(logfile: Path, gmxdir: Path, outdir: Path, flag_nb_gpu: list):
         "This might indicate that the system did not stabilize. "  \
         "Check the density plot and consider tuning the NPT parameters in a custom .mdp file.")
     else:
-        logger.info("Standard deviation of density is within the default range (-5, 5) (kg/m^3).")
+        logger.info("Standard deviation of density after NPT is within the default range (-5, 5) (kg/m^3).")
 
 
 
@@ -488,12 +481,12 @@ def production(logfile: Path, gmxdir: Path, outdir: Path,
     log_subprocess(logger, process)
     # Assign ntmpi and ntomp if not given
     if ntmpi == 0 or ntomp == 0:
-        logger.warning("ntmpi or ntomp is set to 0. Calculating safe defaults based on system size and available resources.")
+        logger.debug("ntmpi or ntomp is set to 0. Calculating safe defaults based on system size and available resources.")
         ntmpi, ntomp = get_scaling(logger, outdir / "md.tpr", 'md')
         logger.debug(f"Calculated scaling for production MD: ntmpi={ntmpi}, ntomp={ntomp}")
     # If there is a checkpoint from a previous run (completed or not), restart from it
     if os.path.isfile(f"{outdir}/md.cpt"):
-        logger.debug(f"Running production MD from checkpoint {outdir}/md.cpt until target duration {md_time} ps.")
+        logger.info(f"Running production MD from checkpoint {outdir}/md.cpt until target duration {md_time} ps.")
         cmd = ["gmx", "mdrun", "-s", outdir / "md_ext.tpr",
                 "-ntmpi", str(ntmpi), 
                 "-ntomp", str(ntomp)] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + [
@@ -508,7 +501,7 @@ def production(logfile: Path, gmxdir: Path, outdir: Path,
         log_subprocess(logger, process)
     # else, start a new simulation
     else:
-        logger.debug("Starting production MD until target duration {md_time} ps.")
+        logger.info(f"Starting production MD until target duration {md_time} ps.")
         cmd = ["gmx", "mdrun", "-s", outdir / "md_ext.tpr", 
                 "-ntmpi", str(ntmpi), "-ntomp", str(ntomp)
             ] + flag_nb_gpu + flag_pme_gpu + flag_gpu_tasks + ["-v", "-deffnm", outdir / "md", "-quiet"]

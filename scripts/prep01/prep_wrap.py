@@ -25,7 +25,7 @@ def main(pipe: Pipeline):
     logdir.mkdir(parents=True, exist_ok=True)
     LOGFILE = logdir / f"step01_prep_{timestamp}.log"
     logger = setup_logger("prep", LOGFILE)
-    logger.debug("Running preparation step.")
+    logger.info("Running preparation step.")
 
     prep.main(logfile=LOGFILE, datadir=pipe.paths.mutdir, filename=pipe.paths.pdbfile,
         dna=pipe.system.dna, phos=pipe.system.phos, rna=pipe.system.rna,

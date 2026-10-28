@@ -76,8 +76,8 @@ class Pipeline:
         if not file.is_file():
             print(f"ERROR: {role} file '{file}' not found.")
             sys.exit(1)
-        else:
-            print(f"{role} file '{file}' found.")
+        #else:
+        #    print(f"{role} file '{file}' found.")
 
     def _to_path(self, value):
         """Convert str/None to Path, or pass through existing Path."""
@@ -91,8 +91,8 @@ class Pipeline:
         if not file.is_dir():
             print(f"ERROR: {role} directory '{file}' not found.")
             sys.exit(1)
-        else:
-            print(f"{role} directory '{file}' found.")
+        #else:
+        #    print(f"{role} directory '{file}' found.")
     
     
     def _get_params(self) -> tuple[str, SystemConfig, RunConfig]:
@@ -202,7 +202,7 @@ class Pipeline:
             if given is None:
                 # Not set by the user: use the detected value.
                 setattr(self.system, key, found)
-                self.logger.info(f"{key}: {found} (detected)")
+                self.logger.debug(f"{key}: {found} (detected)")
             elif given != found:
                 # Explicit value that disagrees with the structure: keep it, but warn.
                 self.logger.warning(

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+from pathlib import Path
 import MDAnalysis as mda
 import warnings
 # suppress some MDAnalysis warnings about PSF files
@@ -31,10 +32,15 @@ def main(logfile: str = None, pdbfile : str = None, xtcfile : str = None, outdir
     with open(universe, 'wb') as f:
         pickle.dump(u, f)
 
-    logger.debug(f'Number of frames in the trajectory: {len(u.trajectory)}')
-    logger.debug(f'Number of residues: {len(u.residues)}')
-    logger.debug(f'Number of atoms: {len(u.atoms)}')
-    logger.debug(f'Segments: {u.segments}')
+    if Path(universe).is_file():
+        logger.info(f"Universe object created and saved to {universe}")
+        logger.debug(f'Number of frames in the trajectory: {len(u.trajectory)}')
+        logger.debug(f'Number of residues: {len(u.residues)}')
+        logger.debug(f'Number of atoms: {len(u.atoms)}')
+        logger.debug(f'Segments: {u.segments}')
+    else:
+        logger.warning(f"Universe object could not be created. This will likely cause downstream analysis to crash.")
+        logger.warning(f"Check log {logfile}")
 
 if __name__ == "__main__":
     main()

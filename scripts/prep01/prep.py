@@ -25,7 +25,7 @@ def _log_version(logger, tool: str):
     # so a "gmx --version" command echo is skipped; else, the first line.
     numbered = re.compile(r"\bversion\b\s*:?\s*v?\d", re.IGNORECASE)
     summary = next((line for line in lines if numbered.search(line)), lines[0] if lines else "")
-    logger.info(f"{tool}: {summary or 'no version output'}")
+    logger.debug(f"{tool}: {summary or 'no version output'}")
     logger.debug(f"{tool} --version output:\n{output}")
 
 
@@ -101,7 +101,7 @@ def main(logfile: Path, datadir: Path, filename: str,
     # Check if datadir/amber already exists.
     path_amber = datadir / "amber"
     if path_amber.is_dir():
-        logger.warning(f"{str(path_amber)} already exists.")
+        logger.debug(f"{str(path_amber)} already exists.")
     else:
         logger.debug(f"{str(datadir)}/amber does not exist. Creating new directory.")
         path_amber.mkdir(exist_ok=True)
@@ -109,13 +109,13 @@ def main(logfile: Path, datadir: Path, filename: str,
     # Remove lines starting with CONECT, which are added by MOE and cause issues in AmberTools 
     path_noconect = Path(f"{datadir}/amber/{file}_noconect.pdb")
     if path_noconect.is_file():
-        logger.warning(f"{str(path_noconect)} already exists. Skipping CONECT removal.")
+        logger.debug(f"{str(path_noconect)} already exists. Skipping CONECT removal.")
     else:
         connect_before = 0
         with open(path_pdb) as f:
             connect_before = sum(1 for line in f if line.startswith("CONECT"))
         if connect_before == 0:
-            logger.info(f"No CONECT lines found in {file}.pdb. No need to remove them.")
+            logger.debug(f"No CONECT lines found in {file}.pdb. No need to remove them.")
             shutil.copy(path_pdb, path_noconect)
             logger.debug(f"Copied {file}.pdb to amber/{file}_noconect.pdb without changes.")
         else:
@@ -131,8 +131,8 @@ def main(logfile: Path, datadir: Path, filename: str,
                 logger.warning(f"{remaining} CONECT lines remain in {file}_noconect.pdb")
 
     if path_amber.is_dir() and path_noconect.is_file():
-        logger.info(f"{str(path_amber)} directory is ready. ")
-        logger.info(f"{file}_noconect.pdb is in {str(path_amber)}/")
+        logger.debug(f"{str(path_amber)} directory is ready. ")
+        logger.debug(f"{file}_noconect.pdb is in {str(path_amber)}/")
     else:
         logger.error(f"{str(path_amber)} directory is missing or incomplete.")
         sys.exit(1)
@@ -148,11 +148,11 @@ def main(logfile: Path, datadir: Path, filename: str,
     # Check that datadir/gromacs_common does not exist. If it exists, show a message and backup the old one (change the name)
     gmxdir = datadir / "gromacs_common"
     if gmxdir.is_dir():
-        logger.warning(f"{str(gmxdir)} already exists.")
+        logger.debug(f"{str(gmxdir)} already exists.")
     else:
         gmxdir.mkdir(exist_ok=True)
         if gmxdir.is_dir():
-            logger.info(f"GROMACS directory created at {str(gmxdir)}.")
+            logger.debug(f"GROMACS directory created at {str(gmxdir)}.")
         else:
             logger.error(f"Failed to create GROMACS directory at {str(gmxdir)}.")
             sys.exit(1)
@@ -192,7 +192,10 @@ def main(logfile: Path, datadir: Path, filename: str,
     else:
         logger.debug("The system contains no DNA or RNA. Skipping H-bond restraints.")
 
-    logger.info("Preparation completed successfully.")
+    if os.path.isfile(path_ions):
+        logger.info("Preparation completed successfully.")
+    else:
+        logger.error("Preparation did not complete successfully. There are missing files. Check the complete log for more details.")
 
 
 if __name__ == "__main__":

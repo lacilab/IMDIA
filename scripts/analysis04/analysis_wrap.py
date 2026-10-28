@@ -14,7 +14,12 @@ def main(pipe: Pipeline):
     logdir.mkdir(parents=True, exist_ok=True)  # Ensure dir exists
     LOGFILE = logdir / f"step04_analysis_{timestamp}.log"
     logger = setup_logger("analysis", LOGFILE)
-    logger.debug(f"Running analysis step with rules: {pipe.rules} and unlock: {pipe.unlock}.")
+    if pipe.unlock:
+        logger.info("Unlocking pipeline. You can now run the analysis again.")
+    elif pipe.rules:
+        logger.info(f"Running analysis rules {pipe.rules}.")
+    else:
+        logger.info(f"No rules were specified. Running the full analysis.")
 
     analysis.main(logfile=LOGFILE, datadir=pipe.paths.datadir, configfile=pipe.paths.paramspath, pdbpath=pipe.pdbpath,
                   postpdb=pipe.paths.postpdb, cores=pipe.run.snakecores, rules=pipe.rules, unlock=pipe.unlock,

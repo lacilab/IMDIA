@@ -61,6 +61,12 @@ def main(logfile: str, universe: str, contacts_csv: Path, offsets: dict, outfile
     # Save extended df to csv
     agg_df.to_csv(outfile, index=False)
 
+    if Path(outfile).is_file():
+        logger.info(f"Pairwise contact analysis results parsed successfully. Output: {outfile}.")
+    else:
+        logger.warning(f"Pairwise contact analysis results were not parsed successfully. Output {outfile} is missing.")
+        logger.warning(f"Check log {logfile}")
+
 
 if __name__ == "__main__":
     main()

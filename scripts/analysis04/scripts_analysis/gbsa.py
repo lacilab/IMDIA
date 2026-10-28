@@ -102,7 +102,7 @@ def main(logfile: str = None, scriptdir: str = None, gmxdir: str = None, outdir:
     # Create output directory if it doesn't exist
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-        logger.info(f"Created output directory: {outdir}")
+        logger.debug(f"Created output directory: {outdir}")
     else:
         logger.warning(f"Directory already exists: {outdir}")
 
@@ -110,7 +110,7 @@ def main(logfile: str = None, scriptdir: str = None, gmxdir: str = None, outdir:
     input_file_src = os.path.join(scriptdir, "mmpbsa.in")
     input_file_dst = os.path.join(outdir, "mmpbsa.in")
     shutil.copy(input_file_src, input_file_dst)
-    logger.info(f"Copied GBSA input file from {input_file_src} to {input_file_dst}")
+    logger.debug(f"Copied GBSA input file from {input_file_src} to {input_file_dst}")
     prep_mmpbsain(logger, input_file_dst, start, stop, dna, phos, ffs)
     logger.debug(f"Prepared GBSA input file: {input_file_dst}")
     logger.debug(f"Computing GBSA with selections: {index_group1} and {index_group2}")
@@ -134,6 +134,24 @@ def main(logfile: str = None, scriptdir: str = None, gmxdir: str = None, outdir:
            ]
     
     subprocess.run(cmd, cwd=outdir, check=True, text=True)
+
+    # Expected output files (minimum, required downstream)
+    filenames = [
+        'FINAL_ENERGY.csv',
+        'FINAL_ENERGY_DECOMP.csv'
+
+    ]
+    outdir = Path(outdir)
+    outfiles = [outdir / n for n in filenames]
+
+    # Check all expected outputs were generated
+    missing = [f.name for f in outfiles if not f.is_file()]
+    if missing:
+        logger.warning("GBSA analysis did not complete successfully. Some expected outputs are missing.")
+        logger.warning(f"Missing {len(missing)} file(s): {', '.join(missing)}")
+        logger.warning(f"Check log {logfile}")
+    else:
+        logger.info(f"GBSA analysis completed successfully. Output files are in {outdir}.")
 
 if __name__ == "__main__":
     main()

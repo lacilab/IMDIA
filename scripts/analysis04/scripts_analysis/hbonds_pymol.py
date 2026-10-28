@@ -3,6 +3,7 @@
 import sys
 import pandas as pd
 import argparse
+from pathlib import Path
 from scripts.utils.helpers import setup_logger
 
 def main(logfile: str = None, hbonds_ext: str = None, hbonds_pymol: str = None):
@@ -60,7 +61,12 @@ def main(logfile: str = None, hbonds_ext: str = None, hbonds_pymol: str = None):
     with open(hbonds_pymol, 'w') as f:
         for cmd in pymol_commands:
             f.write(cmd + '\n')
-    logger.info(f"PyMOL commands saved to: {hbonds_pymol}")
+    
+    if Path(hbonds_pymol).is_file():
+        logger.info(f"PyMOL commands to visualize residues participating in hydrogen bonds saved to: {hbonds_pymol}")
+    else:
+        logger.warning(f"PyMOL commands to to visualize residues participating in hydrogen bonds could not be correctly generated.")
+        logger.warning(f"Check log {logfile}")
 
 
 if __name__ == "__main__":

@@ -19,17 +19,17 @@ def main(pipe: Pipeline):
     LOGFILE = logdir / f"step03_rep{pipe.system.repn[0]}_post_{timestamp}.log"
     logger = setup_logger("post", LOGFILE)
 
-    logger.debug("Running post-processing step.")
+    logger.info("Running post-processing step.")
 
     if pipe.system.repn is None:
-        logger.warning("No replication numbers specified in configuration.")
+        logger.debug("No replication numbers specified in configuration.")
         parent_dir = pipe.paths.gmxdir.parent
         rep_dirs = [
             d for d in os.listdir(parent_dir)
             if os.path.isdir(os.path.join(parent_dir, d)) and re.match(r'rep\d+', d)
         ]
         reps = [int(re.search(r'rep(\d+)', d).group(1)) for d in rep_dirs]
-        logger.debug(f"Found replication numbers: {reps}")
+        logger.debug(f"Default replication numbers: {reps}")
     else:
         logger.debug(f"Replication numbers for post-processing: {pipe.system.repn}")
         reps = pipe.system.repn

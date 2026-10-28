@@ -1,13 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from collections import deque
 from dataclasses import replace
 from pathlib import Path
+import re
 import subprocess
 import sys
 import yaml
 from scripts.utils import composition
 from scripts.utils.helpers import setup_logger
+
+# A line written by a pipeline logger ("<date> <time>,<ms> - LEVEL - message").
+LOG_LINE = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} - "
+                      r"(DEBUG|INFO|WARNING|ERROR|CRITICAL) - ")
+# Number of Snakemake output lines repeated in the error message when it fails.
+TAIL_LINES = 30
 
 def main(logfile: Path, datadir: Path, configfile: Path, pdbpath: Path, postpdb: Path,
          cores: int = None, rules: list[str] = None, unlock: bool = False,
@@ -34,7 +42,7 @@ def main(logfile: Path, datadir: Path, configfile: Path, pdbpath: Path, postpdb:
     logger = setup_logger("analysis", logfile)
     logger.debug(f"Starting analysis with snakemake using config file: {configfile}.")
 
-    ##### Map simulation chain IDs and numbering to the input structure ######
+    ##### Map new chain IDs and numbering to the input structure ######
     # The composition record of the input PDB is kept next to it.
     record = Path(pdbpath).parent / composition.RECORD_NAME
     _record_chain_mapping(record, Path(postpdb), logger)
@@ -73,7 +81,37 @@ def main(logfile: Path, datadir: Path, configfile: Path, pdbpath: Path, postpdb:
             *config_args
         ]
 
-    subprocess.run(cmd, check=True)
+    _run_snakemake(cmd, logger)
+
+
+def _run_snakemake(cmd: list[str], logger):
+    """Run Snakemake and route its output.
+
+    Lines written by the loggers of the rule scripts are printed to the console as they
+    are: those loggers already chose which levels to show and wrote them to their own
+    log files. Every other line (Snakemake's own output) is logged at DEBUG, so it is
+    always in the log file and on the console only in verbose mode. Continuation lines
+    of multi-line log messages and tracebacks count as Snakemake output. If Snakemake
+    fails, its last lines are logged as an error.
+    """
+    # stderr is merged into stdout so the lines keep their order.
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    tail = deque(maxlen=TAIL_LINES)
+    for line in process.stdout:
+        line = line.rstrip("\n")
+        tail.append(line)
+        if LOG_LINE.match(line):
+            # Rule-script log line: shown on the console only.
+            print(line, flush=True)
+        else:
+            logger.debug(f"snakemake: {line}")
+
+    # A non-zero exit code stops the stage, with the last lines as the reason.
+    if process.wait() != 0:
+        logger.error(f"Snakemake failed (exit code {process.returncode}). Last output:\n"
+                     + "\n".join(tail))
+        sys.exit(1)
+    logger.info("Snakemake workflow completed.")
 
 
 def _record_chain_mapping(record: Path, postpdb: Path, logger) -> dict:
@@ -88,7 +126,7 @@ def _record_chain_mapping(record: Path, postpdb: Path, logger) -> dict:
     Returns the "chains" part.
     """
     if not record.is_file():
-        logger.error(f"Composition record {record} not found.")
+        logger.error(f"Composition file {record} not found.")
         sys.exit(1)
     old = composition.load(record)
 
@@ -102,7 +140,7 @@ def _record_chain_mapping(record: Path, postpdb: Path, logger) -> dict:
     # Residues without a chain ID were assigned to chains by the input chain lengths.
     unnamed = [pos for pos, e in chains.items() if e["id_new"] is not None and not e["id_new"].strip()]
     if unnamed:
-        logger.info(f"{postpdb.name}: residues without a chain ID were split by the input "
+        logger.debug(f"{postpdb.name}: residues without a chain ID were split by the input "
                     f"chain lengths (0-based chain positions {', '.join(unnamed)}); select these "
                     "chains by their residue or atom ranges.")
 
@@ -122,7 +160,7 @@ def _record_chain_mapping(record: Path, postpdb: Path, logger) -> dict:
                "all_verified": all(e["verified"] for e in chains.values()),
                "chains": chains}
     composition.save(replace(old, chain_mapping=mapping), record)
-    logger.info(f"Chain mapping written to {record}")
+    logger.debug(f"Chain mapping written to {record}")
     return chains
 
 
@@ -150,7 +188,7 @@ def _record_params(record: Path, configfile: Path, flags: dict | None, logger) -
         # Missing or empty in params file: use the folder name.
         if not value:
             params[key] = [default]
-            logger.info(f"{key}: {params[key]} (from the PDB path)")
+            logger.debug(f"{key}: {params[key]} (from the PDB path)")
         elif isinstance(value, str):
             # A single name is stored as a one-element list.
             params[key] = [value]
@@ -158,7 +196,7 @@ def _record_params(record: Path, configfile: Path, flags: dict | None, logger) -
     # Store the settings next to the composition and the chain mapping.
     comp = composition.load(record)
     composition.save(replace(comp, params=params), record)
-    logger.info(f"Analysis settings from {configfile} written to {record}")
+    logger.debug(f"Analysis settings from {configfile} written to {record}.")
     return params
 
 

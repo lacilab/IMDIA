@@ -23,10 +23,12 @@ def remove_hydrogens(filename: str, logger_name: str, logfile: Path):
 	
 	process = subprocess.run(cmd, shell=True, text=True, capture_output=True)
 	if process.returncode != 0:
-		logger.error(process.stderr)
+		logger.error(f"There was an error removing hydrogens from {filename} to create {outfile}. Check the logs for the comple pdb4amber error message.")
+		logger.debug(f"pdb4amber error message: \n {process.stderr}")
 		return None  
 	else:
-		logger.info(f"Hydrogen processing complete.\n {process.stdout}")
+		logger.debug(f"Hydrogens removed with pdb4amber. {outfile} was created.")
+		logger.debug(f"pdb4amber log: \n {process.stdout}")
 	return outfile
 
 
@@ -48,8 +50,10 @@ def add_hydrogens(file: str, logger_name: str, logfile: Path, ffs: list[str] = [
 	process = subprocess.run(['tleap', '-f', '-'], input=tleap_input, text=True, capture_output=True)
 	
 	if process.returncode != 0:
-		logger.error(f"tleap error:\n {process.stderr}")
+		logger.error(f"There was an error adding hydrogens to {filename} to create {outfile}. Check the logs for the comple tleap error message.")
+		logger.debug(f"tleap error:\n {process.stderr}")
 	else:
+		logger.debug(f"Hydrogens added with tleap. {outfile} was created.")
 		logger.debug(f"tleap output:\n {process.stdout}")
 
 	return outfile
@@ -77,7 +81,7 @@ def gen_chains(complex_file: Path, logger_name: str, logfile: Path, chains: list
 			logger.error(f"Error occurred while generating receptor file:\n {process_chain.stderr}")
 			return None
 		else:
-			logger.info(f"Chain {chain} extraction complete.")
+			logger.debug(f"Chain {chain} extraction complete.")
 
 		# Write receptor data to file
 		with open(chain_file, 'w') as f:
@@ -209,7 +213,7 @@ def main(logfile: Path = None, pdbpath: Path = None,
 
 	checkpoint_files = list(Path.cwd().glob("check_01_amber_*.done"))
 	if len(checkpoint_files) > 0:
-		logger.warning(f"Checkpoint file(s) found: {', '.join(f.name for f in checkpoint_files)}")
+		logger.debug(f"Checkpoint file(s) found: {', '.join(f.name for f in checkpoint_files)}")
 		# Check if expected output files exist
 		missing = [p for p in expected_files if not p.exists()]
 		if not missing:
@@ -219,13 +223,13 @@ def main(logfile: Path = None, pdbpath: Path = None,
 
 	# Check if input file is a PDB file
 	if not pdbpath.suffix.lower() == '.pdb':
-		logger.error("Input file must be a PDB file with .pdb extension.")
+		logger.error(f"Input file must be a PDB file with .pdb extension. Check that {pdbpath} meets this criteria.")
 		sys.exit(1)
 
 	# Force fields for the molecule types present, water model last.
 	logger.debug(f"Molecule types: protein={protein}, phos={phos}, dna={dna}, rna={rna}")
 	if ffs:
-		logger.debug(f"Custom force fields provided: {ffs}")
+		logger.info(f"Custom force fields provided: {ffs}")
 	ffs = select_forcefields(protein=protein, phos=phos, dna=dna, rna=rna, ffs=ffs, logger=logger)
 	logger.info(f"Force fields loaded in LEaP: {ffs}")
 
@@ -233,13 +237,11 @@ def main(logfile: Path = None, pdbpath: Path = None,
 	noH_complex = remove_hydrogens(pdbfile, logger_name, logfile)
 	# pdb4amber failed: its error is already logged, the later steps need its output.
 	if noH_complex is None or not Path(noH_complex).is_file():
-		_stop(logger, cwd, f"pdb4amber could not process {pdbfile}. Check the structure for "
-			"missing residues or atoms (e.g. incomplete nucleotides) before running prep again.")
-	logger.debug(f"Hydrogens removed from {pdbpath}, saved as {noH_complex}")
+		_stop(logger, cwd, f"pdb4amber could not process {pdbfile}. Check the structure for missing residues or atoms before running prep again.")
 	protonated_complex = add_hydrogens(noH_complex, logger_name, logfile, ffs)
 	# tleap can exit normally without writing the PDB, so the output file is checked.
 	if not Path(protonated_complex).is_file():
-		_stop(logger, cwd, f"tleap did not write {protonated_complex}. See the tleap output above.")
+		_stop(logger, cwd, f"tleap did not write {protonated_complex}. Check the log files for the comple tleap output.")
 
 	# Extract chain ids from the PDB file
 	u = mda.Universe(pdbfile)
@@ -272,7 +274,7 @@ def main(logfile: Path = None, pdbpath: Path = None,
 	missing = [p for p in expected_files if not p.exists()]
 	for file in expected_files:
 		if file not in missing:
-			logger.info(f"generated {file}")
+			logger.debug(f"generated {file}")
 		else:
 			logger.error(f"{file} not generated")
 
@@ -280,7 +282,7 @@ def main(logfile: Path = None, pdbpath: Path = None,
 		checkpoint  = Path(f"check_01_amber_{int(time.time())}.done")
 		checkpoint.parent.mkdir(exist_ok=True)
 		with checkpoint.open('w') as f:
-			msg = f"AmberTools preparation completed successfully for structure {structure}.\n"
+			msg = f"AmberTools preparation completed successfully for structure {structure}."
 			f.write(msg)
 			logger.info(msg)
 			os.chdir(cwd)

@@ -2,6 +2,8 @@
 
 import pandas as pd
 from scripts.utils.helpers import setup_logger
+from pathlib import Path
+
 
 def main(logfile: str = None, hbonds_gmx: str = None, hbonds_gmx_parsed: str = None, group1: str = None, group2: str = None):
     """
@@ -63,9 +65,14 @@ def main(logfile: str = None, hbonds_gmx: str = None, hbonds_gmx_parsed: str = N
                 except ValueError:
                     continue  # Skip malformed lines
 
+    # Save and check
     df = pd.DataFrame(hbonds_data)
-    df.to_csv(hbonds_gmx_parsed, index=False)
-    logger.info(f"Parsed hydrogen bonds saved to {hbonds_gmx_parsed}")
+    try:
+        df.to_csv(hbonds_gmx_parsed, index=False)
+        logger.info(f"Parsed GROMACS hydrogen bond results saved to {hbonds_gmx_parsed}")
+    except OSError as err:
+        logger.warning(f"Parsed GROMACS hydrogen bond results were not saved correctly.")
+        logger.warning(f"Check log {logfile}")
 
 if __name__ == "__main__":
     main()

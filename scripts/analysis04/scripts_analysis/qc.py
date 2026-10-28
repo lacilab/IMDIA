@@ -4,6 +4,7 @@ import sys
 import os
 import argparse
 import pickle
+from pathlib import Path
 import pandas as pd
 import numpy as np
 import matplotlib
@@ -328,17 +329,15 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
 
     expected_files = outfiles.values()
 
-    missing = [p for p in expected_files if not os.path.isfile(p)]
-    for file in expected_files:
-        if file not in missing:
-            logger.debug(f"generated {file}")
-        else:
-            logger.warning(f"{file} not generated")
-
-    if not missing:
-        logger.info("QC completed successfully. All expected files were generated.")
+    # Check all expected outputs were generated
+    missing = [Path(f).name for f in outfiles.values() if not Path(f).is_file()]
+    if missing:
+        logger.warning("QC did not complete successfully. Some expected outputs are missing.")
+        logger.warning(f"Missing {len(missing)} file(s): {', '.join(missing)}")
+        logger.warning(f"Check log {logfile}")
     else:
-        logger.warning("QC completed with warnings. Some expected files are missing.")
+        logger.info(f"QC successfully. Output files are in {outdir}.")
+
 
 if __name__ == "__main__":
     main()

@@ -114,7 +114,7 @@ def main(logfile: Path, gmxdir: Path, topol: Path = Path("./topol.top"), gro: Pa
 
     # Checkpoint: restraints may already be in topol or in any molecule itp.
     if list(gmxdir.glob(CHECKPOINT)):
-        logger.warning("Checkpoint file found.")
+        logger.debug("Checkpoint file found.")
         written = [p for p in [topol] + [m["itp"] for m in moltypes.values()]
                    if "[ distance_restraints ]" in p.read_text()]
         if written:
@@ -138,9 +138,9 @@ def main(logfile: Path, gmxdir: Path, topol: Path = Path("./topol.top"), gro: Pa
             start += natoms
     nucleic = [m for m in instances if m["nucleic"]]
     if not nucleic:
-        logger.error("No nucleic-acid molecules found in the topology.")
-        sys.exit(1)
-    logger.info("Nucleic-acid molecules: " + ", ".join(
+        logger.warning("Nucleic-acid molecules are expected but could not be found in the topology. Hydrogen bond restrains could not be added. This may cause errors downstream.")
+        return
+    logger.debug("Nucleic-acid molecules: " + ", ".join(
         f"{m['moltype']}#{m['copy'] + 1} (atoms {m['start'] + 1}-{m['start'] + m['natoms']})"
         for m in nucleic))
 
@@ -163,9 +163,7 @@ def main(logfile: Path, gmxdir: Path, topol: Path = Path("./topol.top"), gro: Pa
     # The total atom count comes from the .gro header, so the solvent itself is never read.
     total = start
     if gro_total != total:
-        logger.warning(f"{gro.name} has {gro_total} atoms, the topology {total}. Atoms "
-                       f"1-{n_check} (all molecules up to the last nucleic acid) match exactly, so "
-                       "the restraints are unaffected; the difference is in the solvent/ion tail.")
+        logger.warning(f"{gro.name} has {gro_total} atoms, the topology {total}.")
 
     ##### NUCLEIC-ACID STRANDS #####
     # Keep only nucleotides, grouped into strands with one chain label each.
@@ -175,10 +173,10 @@ def main(logfile: Path, gmxdir: Path, topol: Path = Path("./topol.top"), gro: Pa
         logger.error(str(err))
         sys.exit(1)
     if ignored:
-        logger.info("Ignored single nucleotides (not part of a strand): " + ", ".join(ignored))
+        logger.debug("Ignored single nucleotides (not part of a strand): " + ", ".join(ignored))
     if sub is None:
-        logger.error("No nucleic-acid strands (at least two linked nucleotides) found.")
-        sys.exit(1)
+        logger.error("No nucleic-acid strands (at least two linked nucleotides) found, but were expected. Hydrogen bond restrains could not be added. This may cause errors downstream.")
+        return
     for chain, (mol, n_res) in strand_info.items():
         logger.debug(f"Strand {chain}: {mol['moltype']}#{mol['copy'] + 1}, {n_res} nucleotides")
 
@@ -197,8 +195,7 @@ def main(logfile: Path, gmxdir: Path, topol: Path = Path("./topol.top"), gro: Pa
                 f"{len(pairs)} Watson-Crick pairs ({info['n_observed']} observed, "
                 f"{info['n_inferred']} inferred).")
     if not len(pairs):
-        logger.info("No Watson-Crick base pairs found (e.g. single-stranded nucleic acid): "
-                    "no restraints needed.")
+        logger.debug("No Watson-Crick base pairs found. No restraints needed.")
 
     ##### RESTRAINT LINES #####
     atom_index = {(sub.chain_id[k], int(sub.res_id[k]), sub.atom_name[k]): global_index[k]
@@ -248,11 +245,11 @@ def main(logfile: Path, gmxdir: Path, topol: Path = Path("./topol.top"), gro: Pa
         itp = moltypes[name]["itp"]
         count = dict(molecules)[name]
         if count > 1:
-            logger.warning(f"{name} appears {count} times; its intramolecular restraints apply to every copy.")
+            logger.debug(f"{name} appears {count} times; its intramolecular restraints apply to every copy.")
         with open(itp, "a") as f:
             f.write("\n[ distance_restraints ]\n" + header)
             f.writelines(lines)
-        logger.info(f"{len(lines)} intramolecular H-bond restraints added to {itp} ({name}).")
+        logger.debug(f"{len(lines)} intramolecular H-bond restraints added to {itp} ({name}).")
 
     # Review files: pair diagram and restraint table.
     pd.DataFrame(rows, columns=RESTRAINT_COLUMNS).to_csv(gmxdir / "restraints_hbonds.csv",
@@ -262,7 +259,7 @@ def main(logfile: Path, gmxdir: Path, topol: Path = Path("./topol.top"), gro: Pa
     (gmxdir / "restraints_basepairs.md").write_text(
         pairs_diagram(sub, nuc_chains, pairs, info, title=gro.stem)
         + "\n## Strands\n\n" + legend + "\n", encoding="utf-8")
-    logger.info(f"Review files written: {gmxdir / 'restraints_basepairs.md'}, "
+    logger.debug(f"Files written: {gmxdir / 'restraints_basepairs.md'}, "
                 f"{gmxdir / 'restraints_hbonds.csv'}")
 
     checkpoint = gmxdir / f"check_05_restraindnahbonds_{int(time.time())}.done"

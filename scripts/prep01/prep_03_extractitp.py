@@ -31,25 +31,30 @@ def main(logfile: Path, top: Path):
     # Check for checkpoint files
     checkpoint_files = list(path_toppar.glob(f"check_03_extractitp_*.done"))
     if len(checkpoint_files) > 0:
-        logger.warning(f"Checkpoint file(s) found: {', '.join([str(f) for f in checkpoint_files])}")
-        logger.warning("Skipping .itp extraction.")
-        return
+        logger.debug(f"Checkpoint file(s) found: {', '.join([str(f) for f in checkpoint_files])}")
+        itps = list(path_toppar.glob(f"*.itp"))
+        if len(itps) > 2:
+            for itp_file in itps:
+                logger.debug(f"Found already existing {itp_file}.")
+            logger.warning(f"Skipping .itp extraction. {len(itps)} itp files found. If this number does not match the number of molecule types + 1, and you encounter issues downstream, try deleting these toppar/itp files and rerunning prep.")
+            return
 
     # Check that gmxdir/toppar does not exist
     if not path_toppar.is_dir():
         path_toppar.mkdir(exist_ok=True)
         if path_toppar.is_dir():
-            logger.info(f"{str(path_toppar)} directory created.")
+            logger.debug(f"{str(path_toppar)} directory created.")
         else:
             logger.error(f"{str(path_toppar)} directory could not be created.")
             sys.exit(1)
     else:
-        logger.warning(f"{str(path_toppar)} already exists")
+        logger.debug(f"{str(path_toppar)} already exists")
 
     # Extract molecule itps
     pattern = re.compile(r"\[\s*moleculetype\s*\]")
     with open(top, "r") as f:
-        n = sum(1 for line in f if pattern.search(line))
+        n = sum(1 for line in f if pattern.search(line))    
+
     logger.debug(f"Found {n} molecule types in {top}.")
     i = 0
     temp_file = top.parent / f"{top.name}.tmp"
@@ -69,7 +74,7 @@ def main(logfile: Path, top: Path):
                 if i != 0: i += 1  # only increment if not the first molecule
                 dict_mols[i] = [line]
                 path_ff = Path("toppar") / f"forcefield.itp"
-                logger.debug("Writing forcefield include.")
+                logger.debug(f"Writing forcefield include statement in {top}.")
                 fout.write(f'#include "{str(path_ff)}"\n')
                 continue  # skip the original line
             if "[ system ]" in line or "#include" in line:
@@ -92,16 +97,20 @@ def main(logfile: Path, top: Path):
 
 
     ##### CHECK OUTPUT FILES #####
-    logger.info(f"The following .itp files have been created in {path_toppar} and included in {top}:")
+    logger.debug(f"The following .itp files have been created in {path_toppar} and included in {top}:")
     itps = list(path_toppar.glob(f"*.itp"))
     for itp_file in itps:
-        logger.info(f"generated {itp_file}")
+        logger.debug(f"generated {itp_file}")
         
     # Create checkpoint file
     checkpoint = path_toppar / f"check_03_extractitp_{int(time.time())}.done"
     checkpoint.parent.mkdir(exist_ok=True, parents=True)
-    with checkpoint.open('w') as f:
-        f.write(".itp extraction completed successfully.\n")
+    if len(itps) == (n + 1):
+        logger.info("The expected number of .itp files was generated.")
+        with checkpoint.open('w') as f:
+            f.write(".itp extraction completed successfully.\n")
+    else:
+        logger.warning(f"{len(itps)} .itp files were generated, but {n + 1} were expected. This might cause downstream errors.")
 
 if __name__ == "__main__":
     main()

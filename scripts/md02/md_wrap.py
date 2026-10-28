@@ -19,7 +19,7 @@ def main(pipe: Pipeline, steps: list):
     logdir.mkdir(parents=True, exist_ok=True)  # Ensure dir exists
     LOGFILE = logdir / f"step02_rep{pipe.system.repn}_md_{timestamp}.log"
     logger = setup_logger("md", LOGFILE)
-    logger.debug(f"Running MD step.")
+    logger.info(f"Running MD step.")
 
     if not pipe.paths.gmxdir.is_dir():
         logger.error(f"GROMACS directory {pipe.paths.gmxdir} does not exist.")
@@ -48,11 +48,11 @@ def main(pipe: Pipeline, steps: list):
 
     for n in reps:
         outdir = parent_dir / f"rep{n}" / "gromacs"
-        logger.debug(f"Starting MD for replicate {n}.")
+        logger.info(f"Starting MD for replicate {n}.")
         if "md" in steps:
-            logger.debug(f"Running full MD for replicate {n}.")
+            logger.info(f"Running full MD for replicate {n}.")
         else:
-            logger.debug(f"Running specified MD steps {steps} for replicate {n}.")
+            logger.info(f"Running specified MD steps {steps} for replicate {n}.")
         flag_nb_gpu, flag_pme_gpu, flag_gpu_tasks = md.setup(logfile=LOGFILE, 
                                                              gmxdir=pipe.paths.gmxdir, outdir=outdir, repn=n,
                                                              ntmpi=pipe.run.ntmpi, ntomp=pipe.run.ntomp, 
@@ -65,9 +65,9 @@ def main(pipe: Pipeline, steps: list):
             group_index(gmxdir=outdir, logfile=LOGFILE, logname='md', structurefile=outdir / "em.gro", dna=pipe.system.dna, rna=pipe.system.rna, phos=pipe.system.phos)
             md.equilibration(logfile=LOGFILE, gmxdir=pipe.paths.gmxdir, outdir=outdir, flag_nb_gpu=flag_nb_gpu)
         if "md_prod" in steps or "md" in steps:
-            print(f"LOGFILE type: {type(LOGFILE)}, value: {LOGFILE}")
-            print(f"gmxdir type: {type(pipe.paths.gmxdir)}, value: {pipe.paths.gmxdir}")
-            print(f"outdir type: {type(outdir)}, value: {outdir}")
-            print(f"md_time type: {type(pipe.run.md_time)}, value: {pipe.run.md_time}")
+            logger.debug(f"LOGFILE type: {type(LOGFILE)}, value: {LOGFILE}")
+            logger.debug(f"gmxdir type: {type(pipe.paths.gmxdir)}, value: {pipe.paths.gmxdir}")
+            logger.debug(f"outdir type: {type(outdir)}, value: {outdir}")
+            logger.debug(f"md_time type: {type(pipe.run.md_time)}, value: {pipe.run.md_time}")
             group_index(gmxdir=outdir, logfile=LOGFILE, logname='md', structurefile=outdir / "em.gro", dna=pipe.system.dna, rna=pipe.system.rna, phos=pipe.system.phos)
             md.production(logfile=LOGFILE, gmxdir=pipe.paths.gmxdir, outdir=outdir, md_time=str(pipe.run.md_time), ntmpi=pipe.run.ntmpi, ntomp=pipe.run.ntomp, flag_nb_gpu=flag_nb_gpu, flag_pme_gpu=flag_pme_gpu, flag_gpu_tasks=flag_gpu_tasks)

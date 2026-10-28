@@ -31,7 +31,7 @@ def main(logfile: Path, gmxdir: Path, ions: Path = Path("scripts/prep01/ions.mdp
     # Check if checkpoint file from previous run exists
     checkpoint_files = list(gmxdir.glob("check_06_addgmxions_*.done"))
     if len(checkpoint_files) > 0:
-        logger.warning("Checkpoint file found.")
+        logger.debug("Checkpoint file found.")
         # check if ions.gro exists
         if os.path.isfile(gmxdir / "ions.gro"):
             logger.info(f"Found updated topology file {str(gmxdir / 'ions.gro')}.")
@@ -49,7 +49,7 @@ def main(logfile: Path, gmxdir: Path, ions: Path = Path("scripts/prep01/ions.mdp
     shutil.copy(ions, gmxdir / "ions.mdp")
     # Check the ions.mdp is in the target folder
     if (gmxdir / "ions.mdp").is_file():
-        logger.info(f"Copied {str(ions)} to {str(gmxdir / 'ions.mdp')}.")
+        logger.debug(f"Copied {str(ions)} to {str(gmxdir / 'ions.mdp')}.")
     else:
         logger.error(f"Failed to copy {str(ions)} to {str(gmxdir / 'ions.mdp')}.")
         sys.exit(1)
@@ -67,9 +67,10 @@ def main(logfile: Path, gmxdir: Path, ions: Path = Path("scripts/prep01/ions.mdp
     process = subprocess.run(cmd, capture_output=True, text=True)
 
     if process.returncode != 0:
-        logger.error(f"gmx grompp error: {process.stderr}")
+        logger.error("Setup to add ions with gmx grompp returned an error. Check the log file for the complete error message.")
+        logger.debug(f"gmx grompp error: {process.stderr}")
     else:
-        logger.info(f"gmx grompp output: {process.stdout}")
+        logger.debug(f"gmx grompp output: {process.stdout}")
 
     # # Change the name of the solvent from WAT to Water in .top so it can be selected as a group.
     replacements = {
@@ -91,7 +92,7 @@ def main(logfile: Path, gmxdir: Path, ions: Path = Path("scripts/prep01/ions.mdp
         num_WAT, num_water = count_lines(file, "WAT", "Water")
         logger.debug(f"After: WAT: {num_WAT}, Water: {num_water}")
         if num_WAT > 0:
-            logger.warning(f"Substitution incomplete in {file}. This could result in clashing nomenclature later.")
+            logger.warning(f"Solvent name substitution incomplete in {file}. This could result in clashing nomenclature later.")
 
     # There will be a warning because the system is not neutralized.
     cmd = ["gmx", "genion", 
@@ -110,9 +111,13 @@ def main(logfile: Path, gmxdir: Path, ions: Path = Path("scripts/prep01/ions.mdp
             capture_output=True,
         )
 
+
+    logger.debug("There will be a warning because the system is not neutralized. This is expected.")
     if process.returncode != 0:
+        logger.error("Adding ions with gmx genion returned an error. Check the log file for the complete error message.")
         logger.error(f"gmx genion error: {process.stderr}")
     else:
+        logger.info("Ions added successfully. ")
         logger.debug(f"gmx genion output: {process.stdout}")
         
     ##### CHECKS #####
@@ -133,12 +138,12 @@ def main(logfile: Path, gmxdir: Path, ions: Path = Path("scripts/prep01/ions.mdp
                 num_Cl = parts[1]
 
         if num_Na and int(num_Na) >= 1:
-            logger.info(f"Ions added successfully. Na: {num_Na}")
+            logger.debug(f"Ions added successfully. Na: {num_Na}")
         else:
             logger.warning(f"The number of Na ions added to the system is smaller or equal to 1. The system is likely not neutralized. Na: {num_Na}")
 
         if num_Cl and int(num_Cl) >= 1:
-            logger.info(f"Ions added successfully. Cl: {num_Cl}")
+            logger.debug(f"Ions added successfully. Cl: {num_Cl}")
         else:
             logger.warning(f"The number of Cl ions added to the system is smaller or equal to 1. The system is likely not neutralized. Cl: {num_Cl}")
 

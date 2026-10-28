@@ -47,6 +47,9 @@ def main(logfile: str, outdir: Path, tpr: Path, xtc: Path):
     subprocess.run(cmd, check=True, text=True, input="C-alpha\nC-alpha\n")
     if (outdir / "gromos_clusters.xpm").is_file():
         logger.info(f"GROMOS clustering completed successfully. Output files saved in {outdir}")
+    else:
+        logger.warning(f"GROMOS clustering did not complete successfully.")
+        logger.warning(f"Check log {logfile}")
 
     # Create EPS file from XPM
     cmd = ["gmx", "xpm2ps", "-f", str(outdir / "gromos_clusters.xpm"), "-o", str(outdir / "gromos_clusters.eps"), "-quiet"]
@@ -58,8 +61,10 @@ def main(logfile: str, outdir: Path, tpr: Path, xtc: Path):
            str(outdir / "gromos_clusters.eps")]
     subprocess.run(cmd, check=True, text=True)
     if (outdir / "gromos_clusters.png").is_file():
-        logger.info(f"GROMOS cluster matrix plot saved as PNG: {outdir / 'gromos_clusters.png'}")
-
+        logger.debug(f"GROMOS cluster matrix plot saved as PNG: {outdir / 'gromos_clusters.png'}")
+    else:
+        logger.warning(f"GROMOS cluster matrix plot could not be saved.")
+        logger.warning(f"Check log {logfile}")
 
 
 if __name__ == "__main__":

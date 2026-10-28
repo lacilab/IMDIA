@@ -4,6 +4,7 @@ import subprocess
 import MDAnalysis as mda
 import warnings
 import pickle
+from pathlib import Path
 # suppress some MDAnalysis warnings about PSF files
 warnings.filterwarnings('ignore')
 import os
@@ -41,7 +42,7 @@ def main(logfile: str =None, universe: str = None, gmxdir : str = None, outdir :
 
     if not os.path.exists(outdir):
         os.makedirs(outdir, exist_ok=True)
-        logger.info(f"Created output directory: {outdir}")
+        logger.debug(f"Created output directory: {outdir}")
     else:
         logger.warning(f"Output directory already exists: {outdir}")
 
@@ -65,6 +66,8 @@ def main(logfile: str =None, universe: str = None, gmxdir : str = None, outdir :
     else:
         logger.debug(f"gmx hbond: Using stop frame {stop} corresponding to {stop_option} ps")
 
+    outfile = Path(outdir) / "hbonds_gmx_num.xvg"
+
     # Calculate hydrogen bonds between selections
     cmd = ["gmx", "hbond", 
            "-f", f"{gmxdir}/md_post.xtc", 
@@ -74,12 +77,21 @@ def main(logfile: str =None, universe: str = None, gmxdir : str = None, outdir :
            *stop_option,
            "-o", f"{outdir}/hbonds_gmx.ndx", 
            "-pf", "yes", 
-           "-num", f"{outdir}/hbonds_gmx_num.xvg"]
+           "-num", outfile]
     
     logger.debug(f"Running gmx hydrogen bonds analysis between groups: {group1} and {group2}")
-    subprocess.run(cmd, input=f"{group1}\n{group2}\n", text=True, check=True)
-    logger.info(f"Hydrogen bonds analysis completed with GROMACS. Results saved in: {outdir}")
-    
+    process = subprocess.run(cmd, input=f"{group1}\n{group2}\n", text=True, check=True)
+
+    if process.returncode != 0:
+        logger.error(f"gmx hbond failed (exit code {process.returncode}):\n{process.stderr}")
+    else:
+        logger.debug(f"gmx hbond output:\n{process.stdout}\n{process.stderr}")
+
+    if outfile.is_file():
+        logger.info(f"Hydrogen bonds analysis completed with GROMACS. Results saved in: {outfile}")
+    else:
+        logger.warning(f"Hydrogen bonds analysis with GROMACS did not produce {outfile}. "
+                    f"Check log {logfile}.")    
 
 
 if __name__ == "__main__":

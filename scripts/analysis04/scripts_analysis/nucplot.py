@@ -17,7 +17,7 @@ It reuses data already produced by the hbonds pipeline and never recomputes bond
 
 Output: one figure -> outfiles['hbonds_dna_nucplot_full']
 """
-
+from pathlib import Path
 import pandas as pd
 import numpy as np
 import matplotlib
@@ -135,8 +135,8 @@ def _pair_strands(s1, s2):
     return pairs
 
 
-def plot_nucplot_full(dna, pdb, outfile,
-                      min_occupancy=5.0, logger=None):
+def plot_nucplot_full(dna, pdb, outfile, logger,
+                      min_occupancy=5.0):
     """Full-sequence NUCPLOT-style schematic with real Watson-Crick pairing.
 
     Draws every DNA nucleotide of both strands as an antiparallel ladder (true WC
@@ -314,10 +314,12 @@ def plot_nucplot_full(dna, pdb, outfile,
     plt.tight_layout()
     plt.savefig(outfile, dpi=300)
     plt.close()
-    if logger:
-        logger.info("DNA full-duplex NUCPLOT scheme saved as %s (%d pairs shown)",
-                    outfile, len(agg))
 
+    if logger and Path(outfile).is_file():
+        logger.info("DNA full-duplex NUCPLOT scheme saved as %s (%d pairs shown)", outfile, len(agg))
+    else:
+        logger.warning(f"DNA NUCPLOT scheme could not be correctly generated.")
+        logger.warning(f"Check log {logfile}")
 
 # ----------------------------------- main ------------------------------------
 
@@ -345,8 +347,7 @@ def main(logfile: str = None, hbonds_ext: str = None,
         plt.close()
         return
 
-    plot_nucplot_full(dna, pdb, outfile,
-                      min_occupancy=min_occupancy, logger=logger)
+    plot_nucplot_full(dna, pdb, outfile, logger, min_occupancy)
 
 
 if __name__ == "__main__":

@@ -33,7 +33,7 @@ def main(logfile: Path, prmtop: Path, inpcrd: Path, top: Path, gro: Path):
 
     checkpoint_files = list(gmxdir.glob(f"check_02_amb2gro_*.done"))
     if len(checkpoint_files) > 0:
-        logger.warning(f"Checkpoint file(s) found: {', '.join([str(f) for f in checkpoint_files])}")
+        logger.debug(f"Checkpoint file(s) found: {', '.join([str(f) for f in checkpoint_files])}")
         # Check if expected output files exist
         missing = [p for p in expected_files if not p.is_file()]
         if not missing:
@@ -81,7 +81,7 @@ def main(logfile: Path, prmtop: Path, inpcrd: Path, top: Path, gro: Path):
     missing = [p for p in expected_files if not p.is_file()]
     for file in expected_files:
         if file not in missing:
-            logger.info(f"generated {file}")
+            logger.debug(f"generated {file}")
         else:
             logger.error(f"{file} not generated")
 
