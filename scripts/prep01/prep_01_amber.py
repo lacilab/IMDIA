@@ -10,6 +10,7 @@ from pathlib import Path
 import MDAnalysis as mda
 from scripts.utils.helpers import setup_logger
 from scripts.utils.forcefields import select_forcefields
+from scripts.utils import ligands
 
 # Number of tleap error lines repeated at ERROR level when tleap fails.
 TLEAP_MAX_ERRORS = 20
@@ -52,10 +53,32 @@ def add_hydrogens(file: str, logger_name: str, logfile: Path, ffs: list[str] = [
 	"""
 	logger.debug(f"Running tleap with input:\n{tleap_input}")
 	# Errors are logged by _run_tleap; the caller checks that the output file exists.
-	if _run_tleap(tleap_input, logger, f"adding hydrogens to {file}"):
+	ok, lines = _run_tleap(tleap_input, logger, f"adding hydrogens to {file}")
+	if ok:
 		logger.debug(f"Hydrogens added with tleap. {outfile} was created.")
 
-	return outfile
+	# Residues LEaP has no template for (they load, but get no atom types).
+	return outfile, _unknown_residues(lines)
+
+
+def _unknown_residues(lines: list[str]) -> list[tuple[str, int]]:
+	"""
+	Residues tleap reported as having no template while loading a PDB file.
+
+	Returns (residue name, LEaP sequence number) pairs, unique and in order, from
+	"Creating new UNIT for residue: <NAME> sequence: <N>" lines, or from
+	"Unknown residue: <NAME> number: <N>" lines if the first kind is absent.
+	"""
+	found = []
+	for pattern in (r"Creating new UNIT for residue:\s*(\S+)\s+sequence:\s*(\d+)",
+					r"Unknown residue:\s*(\S+)\s+number:\s*(\d+)"):
+		for line in lines:
+			match = re.search(pattern, line)
+			if match and (match.group(1), int(match.group(2))) not in found:
+				found.append((match.group(1), int(match.group(2))))
+		if found:
+			break
+	return found
 
 
 def gen_chains(complex_file: Path, logger_name: str, logfile: Path, chains: list[str], ffs: list[str] = ['water.opc', 'protein.ff19SB']):
@@ -86,7 +109,7 @@ def gen_chains(complex_file: Path, logger_name: str, logfile: Path, chains: list
 		with open(chain_file, 'w') as f:
 			f.write(process_chain.stdout)
 
-		chain_file = add_hydrogens(chain_file, logger_name, logfile, ffs)
+		chain_file, _ = add_hydrogens(chain_file, logger_name, logfile, ffs)
 		files.append(chain_file)
 
 	return list(files)
@@ -138,18 +161,19 @@ def solvate_gen_parm(complex_file: Path, logger_name: str, logfile: Path, chains
 	logger.debug(f"Running tleap with input:\n{cmd}")
 
 	# True if tleap built and saved the systems without errors.
-	return _run_tleap(cmd, logger, f"solvating {complex_file}")
+	ok, _ = _run_tleap(cmd, logger, f"solvating {complex_file}")
+	return ok
 
 
-def _run_tleap(cmd: str, logger, step: str) -> bool:
+def _run_tleap(cmd: str, logger, step: str) -> tuple[bool, list[str]]:
 	"""
 	Run tleap with the given input and log its output.
 
 	The full output is logged at DEBUG (runs of more than 10 identical lines are
 	collapsed). tleap's error lines (starting with Error, ERROR or FATAL) and its
 	"Exiting LEaP: Errors = N" summary are logged at ERROR, the first TLEAP_MAX_ERRORS
-	of them followed by a count of the rest. Returns False if tleap exits with an
-	error code or reports errors, True otherwise.
+	of them followed by a count of the rest. Returns (ok, output lines); ok is False
+	if tleap exits with an error code or reports errors.
 	"""
 	process = subprocess.run(['tleap', '-f', '-'], input=cmd, capture_output=True, text=True)
 	lines = (process.stdout + process.stderr).splitlines()
@@ -173,7 +197,7 @@ def _run_tleap(cmd: str, logger, step: str) -> bool:
 	match = re.search(r"Errors\s*=\s*(\d+)", summary)
 	n_errors = int(match.group(1)) if match else 0
 	if process.returncode == 0 and n_errors == 0:
-		return True
+		return True, lines
 
 	# tleap failed: its error lines at ERROR, the first ones and a count of the rest.
 	errors = [line.strip() for line in lines if line.strip().startswith(("Error", "ERROR", "FATAL"))]
@@ -182,7 +206,7 @@ def _run_tleap(cmd: str, logger, step: str) -> bool:
 		logger.error(f"tleap: {line}")
 	if len(errors) > TLEAP_MAX_ERRORS:
 		logger.error(f"tleap: ... and {len(errors) - TLEAP_MAX_ERRORS} more error lines (see the DEBUG output or leap.log).")
-	return False
+	return False, lines
 
 
 
@@ -267,7 +291,32 @@ def main(logfile: Path = None, pdbpath: Path = None,
 	# pdb4amber failed: its error is already logged, the later steps need its output.
 	if noH_complex is None or not Path(noH_complex).is_file():
 		_stop(logger, cwd, f"pdb4amber could not process {pdbfile}. Check the structure for missing residues or atoms before running prep again.")
-	protonated_complex = add_hydrogens(noH_complex, logger_name, logfile, ffs)
+	protonated_complex, unknown = add_hydrogens(noH_complex, logger_name, logfile, ffs)
+
+	# Residues without a template in the loaded force fields are removed, then hydrogens are added again.
+	removed = []
+	if unknown:
+		names = sorted({name for name, _ in unknown})
+		# Residues inside a protein or nucleic-acid chain are not removed (it would break the chain).
+		in_chain = ligands.polymer_residues(noH_complex, names)
+		if in_chain:
+			_stop(logger, cwd, f"Residues without a template in the loaded force fields are part of a "
+				  f"polymer chain: {', '.join(in_chain)}. Add a force field or parameters for them.")
+		# The unfiltered file is kept; the filtered one takes its name, so later file names are unchanged.
+		unfiltered = noH_complex.replace('_noH.pdb', '_noH_unfiltered.pdb')
+		os.replace(noH_complex, unfiltered)
+		removed = ligands.remove_residues(unfiltered, names, noH_complex)
+		logger.warning(f"VERY IMPORTANT. IMDIA removed these residues from the structure because they do not have a template in the loaded force fields: {', '.join(removed)}. "
+					   f"\nThe structure before removal is {unfiltered}."
+						"\nKeeping this residues with the current settings would have caused the pipeline to fail, so they were removed by default"
+						"\nIf you want to run the simulation with these residues, include a forcefield that supports them in the parameters."
+						"\nAlternatively, you can try preparing the system with a suitable package or web based tool, and using the prepared files to run the MD simulation in IMDIA."
+					   "\nAdd parameters for them if they are needed in the simulation. ")
+		protonated_complex, unknown = add_hydrogens(noH_complex, logger_name, logfile, ffs)
+		if unknown:
+			_stop(logger, cwd, "tleap still reports residues without a template after removal: "
+				  + ", ".join(f"{name} {number}" for name, number in unknown))
+
 	# tleap can exit normally without writing the PDB, so the output file is checked.
 	if not Path(protonated_complex).is_file():
 		_stop(logger, cwd, f"tleap did not write {protonated_complex}. Check the log files for the comple tleap output.")
@@ -278,6 +327,11 @@ def main(logfile: Path = None, pdbpath: Path = None,
 	for atom in u.atoms:
 		if atom.segid and atom.segid not in chains:
 			chains.append(atom.segid)
+	# A chain whose residues were all removed gets no chain file.
+	if removed:
+		present = {line[21] for line in Path(noH_complex).read_text().splitlines()
+				   if line.startswith(("ATOM", "HETATM"))}
+		chains = [c for c in chains if len(c) != 1 or c in present]
 	logger.debug(f"Extracted chain IDs: {chains}")
 
 	# Generate the receptor & ligand (also match the hydrogens to amber specifics)
