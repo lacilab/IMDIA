@@ -1,5 +1,6 @@
 """Assign fixed protonation states before LEaP adds hydrogens
 """
+import re
 import csv
 import math
 import subprocess
@@ -135,11 +136,12 @@ def parse_pkas(text): # Output of propka by residue index and pKa value
         raise RuntimeError('PROPKA output has no prediction summary')
     pkas = {}
     for line in text.split(marker, 1)[1].splitlines():
+        m = re.match(r'\s*(\S{2,3}?)\s*(\d+)\s', line)
         fields = line.split()
-        if len(fields) < 4 or fields[0] not in STATES:
+        if not m or m.group(1) not in STATES or len(fields) < 4:
             continue
         try:
-            index, pka = int(fields[1]), float(fields[-2].rstrip('*'))
+            index, pka = int(m.group(2)), float(fields[-2].rstrip('*'))
         except ValueError:
             continue
         if index in pkas:
