@@ -361,9 +361,7 @@ rule hbonds_gmx:
             group1=params.index_group1,
             group2=params.index_group2,
             start=START,
-            stop=STOP,
-            dna=DNA,
-            phos=PHOS
+            stop=STOP
         )
 
 

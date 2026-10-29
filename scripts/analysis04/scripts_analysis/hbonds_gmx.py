@@ -16,7 +16,7 @@ def frame2ps(u, frame):
     return int(frame * frame_dt_ps)
 
 def main(logfile: str =None, universe: str = None, gmxdir : str = None, outdir : str =None, indexfile : str = None,
-         group1: str = None, group2: str = None, start: str = None, stop: str = None, dna : bool = False, phos : bool = False):
+         group1: str = None, group2: str = None, start: str = None, stop: str = None):
     """
     Predict hydrogen bonds between two groups using GROMACS.
 
@@ -32,9 +32,6 @@ def main(logfile: str =None, universe: str = None, gmxdir : str = None, outdir :
 
         start      : Start frame index for analysis window.
         stop       : End frame ndex for analysis window.
-
-        dna        : True if DNA is present in the system.
-        phos       : True if phosphorylated residues are present in the system.
     """
     
     ##### Initialize logger
