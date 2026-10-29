@@ -1,28 +1,17 @@
 ### Path to the PDB file for the structure to analyze
-pdbpath: 'usecase_1UBQ_pH/1UBQ.pdb'
+pdbpath: '../data/1BF5/WT/1BF5_WT.pdb'
 
 ### Does the structure contain DNA?
-dna: false
+dna: True
 
 ### Does the structure contain phosphorylated amino acids?
-phos: false
-
-## Define pH for protonation; include in overrides already protonated terminal residues.
-protonation:
-  method: propka
-  ph: 3.0
-  review_pka_window: 1.0
-  overrides: []
+phos: True
 
 ### Replicates to analyze
-repn: [1,2,3]
+repn: [1, 2]
 
 ### Custom AMBER force fields to use (if any)
-# ffs: [water.opc, protein.ff19SB, GLYCAM_06j-1]
-
-### DNA strand ranges per chain (if DNA is present)
-# range_a: [2,-1]
-# range_b: [2,-1]
+# ffs: [water.opc, protein.ff19SB]
 
 ### Custom MD simulation parameters
 # em: 'myscripts/em.mdp'
@@ -30,8 +19,8 @@ repn: [1,2,3]
 # npt: 'myscripts/npt.mdp'
 # md: 'myscripts/md.mdp'
 
-# Duration of the MD production simulation in ps (overwrites md.mdp)
-# 1 ns = 1000 ps
+### Duration of the MD production simulation in ps (overwrites md.mdp)
+### 1 ns = 1000 ps
 # md_time: 100000
 
 ### MD computational resource use 
@@ -51,24 +40,24 @@ snakecores: 12
 methods_hbonds: [mda, gmx]
 
 ### Structure(s) to analyze
-structure: [usecase_1PGB_pH]
+structure: [1BF5]
 
 ### Mutation(s) to analyze
-muts: [WT]
+muts: [WT, E411A]
 
 ### Interaction groups for interaction analysis
 # These can be chain IDs (e.g., "A", "B", "C") or predefined groups (e.g., "Protein", "DNA")
 group1: Protein
-
+group2: DNA
 
 ### Frames for interaction analysis. If not specified, all frames will be analyzed.
-start_frame: 1
+start_frame: 1000
 # stop_frame: 2001
 
 ### Chain groups, for example for RMSF plotting. Each group is a list of chain IDs.
 chaingroups:
-  Protein: [SYSTEM]
-
+  Protein: [A, B]
+  DNA: [C, D]
 
 ### Domains for annotation and plot coloring
 # First level keys are group names (e.g., "Protein", "DNA") and should match chaingroups keys. 
@@ -76,9 +65,27 @@ chaingroups:
 # Domains for the same chaingroup should not overlap, but can be adjacent.
 domains:
   Protein:
-    - start: 1
-      end: 56
+    - start: 540
+      end: 580
       color: blue
-      label: Prot
+      label: Domain1
+    - start: 581
+      end: 600
+      color: red
+      label: Domain2
+  DNA:
+    - start: 1
+      end: 12
+      color: green
+      label: DNA_Domain1
+    - start: 13
+      end: 24
+      color: orange
+      label: DNA_Domain2
 
-
+  
+protonation:
+  method: propka
+  ph: 7.4
+  review_pka_window: 1.0
+  overrides: []
