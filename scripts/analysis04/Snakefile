@@ -414,6 +414,7 @@ rule hbonds_mda:
             start=START,
             stop=STOP,
             dna=DNA,
+            rna=RNA,
             offsets=OFFSETS
         )
 

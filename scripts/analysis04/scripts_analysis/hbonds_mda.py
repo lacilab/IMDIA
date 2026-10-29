@@ -24,7 +24,7 @@ def main(logfile: str = None, universe: str = None,
          outdir : str = None, hbonds_mda_parsed : str = None,
          cores : int = 1,
          start: int = 0, stop: int = None,
-         group1: str = None, group2: str = None, dna : bool = False, offsets : dict = None):
+         group1: str = None, group2: str = None, dna : bool = False, rna : bool = False, offsets : dict = None):
 
     """
     Predict hydrogen bonds between two groups using MDAnalysis.
@@ -46,6 +46,7 @@ def main(logfile: str = None, universe: str = None,
         group2            : Second atom group for hydrogen bond analysis.
 
         dna               : True if DNA is present in the system.
+        rna               : True if RNA is present in the system.
         offsets           : Dictionary specifying residue numbering offsets per chain.
     """
 
@@ -77,11 +78,11 @@ def main(logfile: str = None, universe: str = None,
             new_id = next((k for k, v in offsets.items() if v['id_old'] == group), 'UNK')
             logger.debug(f"MDA - hbond analysis - Group {group} identified as chain, with new id {new_id}.")
             selections.append(u.select_atoms(f"segid {new_id}"))
-        elif group == "DNA" and dna:
-            logger.debug(f"MDA - hbond analysis - Group {group} identified as DNA.")
+        elif (group == "DNA" and dna) or (group == "RNA" and rna):
+            logger.debug(f"MDA - contact analysis - Group {group} identified.")
             selections.append(u.select_atoms("nucleic")) 
         elif group == "Protein":
-            logger.debug(f"MDA - hbond analysis - Group {group} identified as Protein.")
+            logger.debug(f"MDA - hbond analysis - Group {group} identified.")
             protein_sel = u.select_atoms("protein")
             # Get segids of the protein, to avoid leaving out non-standard residues like PTR
             prot_segids = [seg.segid for seg in protein_sel.segments]
