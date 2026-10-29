@@ -11,7 +11,7 @@ from venv import logger
 from scripts.utils.helpers import setup_logger
 from scripts.utils.group_index import group_index
 
-def prep_mmpbsain(logger, infile, start, stop, dna, phos, ffs):
+def prep_mmpbsain(logger, infile, start, stop, dna, rna, phos, ffs):
     """ Prepare mmpbsa.in parameter file for GBSA. """
     # get GROMACS path with which gmx. Take part before "bin"
     gmx_path = shutil.which("gmx").split("/gmx")[0]
@@ -27,6 +27,8 @@ def prep_mmpbsain(logger, infile, start, stop, dna, phos, ffs):
         ffs = ['water.opc', 'protein.ff19SB']
         if dna:
             ffs.append('dna.bsc1')
+        if rna: 
+            ffs.append('rna.OL3')
         if phos:
             ffs.append('phosaa19SB')
 
