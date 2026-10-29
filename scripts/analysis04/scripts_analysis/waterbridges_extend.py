@@ -44,11 +44,11 @@ def main(logfile: str, universe: str, wb_csv: Path, offsets: dict, outfile: Path
     # Adjusted residue numbers based on offsets
     df["sele1_resid_adj"] = (
         df['sele1_resid'] + 
-        df['sele1_chain'].map(lambda chain: offsets[chain]['offset'] if chain != 'UNK' and pd.notna(chain) else 0)
+        df['sele1_chain'].map(lambda x: offsets.get(x, {}).get('offset', x))
     )
     df["sele2_resid_adj"] = (
         df['sele2_resid'] + 
-        df['sele2_chain'].map(lambda chain: offsets[chain]['offset'] if chain != 'UNK' and pd.notna(chain) else 0)
+        df['sele2_chain'].map(lambda x: offsets.get(x, {}).get('offset', x))
     )
 
     # Filter out entries where none of the residues is WAT

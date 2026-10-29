@@ -705,7 +705,8 @@ rule waterbridges:
             group2=GROUP2,
             start=START,
             stop=STOP,
-            dna=DNA
+            dna=DNA,
+            rna=RNA
         )
 
 
