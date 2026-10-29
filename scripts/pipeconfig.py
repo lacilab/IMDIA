@@ -22,6 +22,7 @@ class SystemConfig:
     ffs: list[str]
     rna: bool | None = None  # None = detect from the structure
     protein: bool | None = None  # None = detect from the structure
+    stop_on_gaps: bool = True    # stop before preparation on chain breaks or backbone distortions
 
 @dataclass
 class RunConfig:
@@ -115,7 +116,8 @@ class Pipeline:
             phos=self._flag(params, "phos"),
             rna=self._flag(params, "rna"),
             protein=self._flag(params, "protein"),
-            ffs=params.get("ffs", None)
+            ffs=params.get("ffs", None),
+            stop_on_gaps=self._bool(params, "stop_on_gaps", True),
         )
 
         run = RunConfig(
@@ -145,6 +147,17 @@ class Pipeline:
         if isinstance(value, bool):
             return value
         print(f"ERROR: '{key}' in the parameter file must be true, false or auto (got {value!r}).")
+        sys.exit(1)
+
+    @staticmethod
+    def _bool(params: dict, key: str, default: bool) -> bool:
+        """Read an optional true/false key; the default when missing."""
+        value = params.get(key)
+        if value is None:
+            return default
+        if isinstance(value, bool):
+            return value
+        print(f"ERROR: '{key}' in the parameter file must be true or false (got {value!r}).")
         sys.exit(1)
 
     def _pipeline_logger(self):
@@ -222,6 +235,10 @@ class Pipeline:
         # print(f"Log directory '{logdir}' is ready.")
         pass
 
+    def diag(self) -> None:
+        import scripts.diag00.diag_wrap as diag_wrap
+        diag_wrap.main(self)
+
     def prep(self) -> None:
         import scripts.prep01.prep_wrap as prep_wrap
         prep_wrap.main(self)
@@ -247,6 +264,9 @@ class Pipeline:
     def run_all(self) -> None:
         self.setup()
         print(f"Running pipeline with steps: {self.steps}")
+        # Diagnosis runs on its own (--diag) and always before preparation, once.
+        if "diag" in self.steps or "prep" in self.steps:
+            self.diag()
         if "prep" in self.steps:
             self.prep()
         # For items in self.steps that start with "md"

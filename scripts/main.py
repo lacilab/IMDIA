@@ -6,6 +6,7 @@ from scripts.utils.helpers import VERBOSE_ENV
 def main():
     parser = argparse.ArgumentParser(description="Pipeline for preparing and running MD simulations.")
     parser.add_argument('--params', dest='paramsfile', type=str, default='scripts/params.yml', help='Path to the YAML parameter file.')
+    parser.add_argument('--diag', action='store_true', help='Run diagnosis step. Also runs automatically before --prep.')
     parser.add_argument('--prep', action='store_true', help='Run preparation step.')
     parser.add_argument('--md', action='store_true', help='Run full MD simulation (energy minimization, NVT and NPT equilibration, MD Production).')
     parser.add_argument('--md_em', action='store_true', help='Run energy minimization step.')
@@ -25,6 +26,7 @@ def main():
 
     # Build array of steps to run
     steps_flags = [
+    ("diag", args.diag),
     ("prep", args.prep),
     ("md", args.md),
     ("md_em", args.md_em),
