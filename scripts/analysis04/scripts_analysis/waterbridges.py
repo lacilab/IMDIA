@@ -2,6 +2,7 @@
 
 import os
 import sys
+from pathlib import Path
 import re
 import pickle
 import argparse
@@ -119,7 +120,8 @@ def main(logfile : str = None, universe : str = None, tprfile: str = None, xtcfi
     df.to_csv(outcsv, index=False)
 
     # Check output file
-    if os.path.exists(outcsv):
-        logger.info(f"Water bridges data saved to: {outcsv}")
+    if Path(outcsv).is_file():
+        logger.info(f"Raw water bridge analysis results saved to: {outcsv}")
     else:
-        logger.warning(f"Failed to save water bridges data to: {outcsv}")
+        logger.warning("Raw water bridge analysis results were not correctly saved.")
+        logger.warning(f"Check log {logfile}")

@@ -31,9 +31,9 @@ def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, grou
         logfile   : Path to the log file.
         universe  : Path to the Universe object generated with MDAnalysis, containing the processed MD system.
         pairs_csv : Path to the .csv file with the pairwise contact results.
-        group1            : First atom group for hydrogen bond analysis.
-        group2            : Second atom group for hydrogen bond analysis.
-        outfiles    : Dictionary of the files to be generated, assigned to labels/keys.
+        group1    : First atom group for hydrogen bond analysis.
+        group2    : Second atom group for hydrogen bond analysis.
+        outfiles  : Dictionary of the files to be generated, assigned to labels/keys.
     """
 
     # Initialize logger
@@ -284,6 +284,17 @@ def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, grou
     plt.tight_layout()
     plt.savefig(outfiles['contacts_bubble_filtered'], bbox_inches='tight', dpi=300)
     plt.close()
+
+    outdir = Path(pairs_csv).parent
+
+    # Check all expected outputs were generated
+    missing = [Path(f).name for f in outfiles.values() if not Path(f).is_file()]
+    if missing:
+        logger.warning("Pairwise contact plotting did not complete successfully. Some expected outputs are missing.")
+        logger.warning(f"Missing {len(missing)} file(s): {', '.join(missing)}")
+        logger.warning(f"Check log {logfile}")
+    else:
+        logger.info(f"Pairwise contact plotting completed successfully. Output files are in {outdir}.")
 
 
 if __name__ == "__main__":

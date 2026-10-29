@@ -7,10 +7,11 @@ import subprocess
 import time
 import sys
 from pathlib import Path
-from venv import logger
 import MDAnalysis as mda
 from scripts.utils.helpers import setup_logger
 from scripts.prep01.prep_00_protonation import assign_protonation
+from scripts.utils.forcefields import select_forcefields
+
 
 def remove_hydrogens(filename: str, logger_name: str, logfile: Path):
 	""" Remove hydrogens from the structure and prepare it with pdb4amber. """
@@ -24,10 +25,12 @@ def remove_hydrogens(filename: str, logger_name: str, logfile: Path):
 	
 	process = subprocess.run(cmd, shell=True, text=True, capture_output=True)
 	if process.returncode != 0:
-		logger.error(process.stderr)
+		logger.error(f"There was an error removing hydrogens from {filename} to create {outfile}. Check the logs for the comple pdb4amber error message.")
+		logger.debug(f"pdb4amber error message: \n {process.stderr}")
 		return None  
 	else:
-		logger.info(f"Hydrogen processing complete.\n {process.stdout}")
+		logger.debug(f"Hydrogens removed with pdb4amber. {outfile} was created.")
+		logger.debug(f"pdb4amber log: \n {process.stdout}")
 	return outfile
 
 
@@ -50,18 +53,11 @@ def add_hydrogens(file: str, logger_name: str, logfile: Path, ffs: list[str] = [
 	logger.debug(f"Running tleap with input:\n{tleap_input}") 
 	process = subprocess.run(['tleap', '-f', '-'], input=tleap_input, text=True, capture_output=True)
 	
-	if process.returncode != 0 or re.search(
-		r"Errors\s*=\s*[1-9]", process.stdout
-	):
-		logger.error(
-			f"tleap failed:\n{process.stdout}\n{process.stderr}"
-		)
-		raise RuntimeError("tleap hydrogen addition failed")
-
-	logger.debug(f"tleap output:\n{process.stdout}")
-
-	if not Path(outfile).is_file():
-		raise RuntimeError(f"tleap did not create {outfile}")
+	if process.returncode != 0 or re.search(r"Errors\s*=\s*[1-9]", process.stdout):
+		logger.error(f"tleap failed while adding hydrogens to {file}:\n{process.stdout}\n{process.stderr}")
+		return None
+	logger.debug(f"Hydrogens added with tleap. {outfile} was created.")
+	logger.debug(f"tleap output:\n {process.stdout}")
 
 	return outfile
 
@@ -88,7 +84,7 @@ def gen_chains(complex_file: Path, logger_name: str, logfile: Path, chains: list
 			logger.error(f"Error occurred while generating receptor file:\n {process_chain.stderr}")
 			return None
 		else:
-			logger.info(f"Chain {chain} extraction complete.")
+			logger.debug(f"Chain {chain} extraction complete.")
 
 		# Write receptor data to file
 		with open(chain_file, 'w') as f:
@@ -164,10 +160,18 @@ def solvate_gen_parm(complex_file: Path, logger_name: str, logfile: Path, chains
 
 
 
+def _stop(logger, cwd: Path, message: str):
+	"""Log an error, return to the starting directory and stop the pipeline."""
+	logger.error(message)
+	os.chdir(cwd)
+	sys.exit(1)
+
+
 ########## MAIN ##########
 
 def main(logfile: Path = None, pdbpath: Path = None,
-	dna : bool = False, phos : bool = False, ffs: list = None, protonation: dict = None):
+	dna : bool = False, phos : bool = False, ffs: list = None,
+	protein : bool = True, rna : bool = False, protonation: dict = None):
 
 	"""
     Prepare system using AmberTools. Add solvent and ions, generate prmtop
@@ -176,12 +180,15 @@ def main(logfile: Path = None, pdbpath: Path = None,
     Arguments:
         logfile	    : Path to the log file.
         path-pdb    : Input pdb file path
-        dna         : True if the system contains DNA. Adds DNA.bsc1 force field.
+        protein     : True if the system contains protein. Adds protein.ff19SB force field.
         phos        : True if the system contains phosphorylated residues. Adds phosaa19SB force field.
-        ffs         : List of force fields to use from the list
-                        available in LEaP. Avoid using clashing force fields.
-                        Default: protein.ff19SB, water.opc
+        dna         : True if the system contains DNA. Adds DNA.bsc1 force field.
+        rna         : True if the system contains RNA. Adds RNA.OL3 force field.
+        ffs         : List of force fields to use instead of the automatic choice
+                        (names as in LEaP, e.g. protein.ff19SB). Avoid using clashing
+                        force fields. water.opc is added if no water model is listed.
         protonation : Protonation configuration (default: None)
+    The water model (water.opc) is always loaded, after the other force fields.
     """
 
 	start_time = time.time()
@@ -197,8 +204,6 @@ def main(logfile: Path = None, pdbpath: Path = None,
 	logger.debug(f"Extracted amberdir: {amberdir}, pdbfile: {pdbfile}, structure: {structure}")
 
 
-	ff_default = ['water.opc', 'protein.ff19SB']
-
 	# Change to amberdir so fixed amber log files are stored here
 	cwd = Path.cwd() 
 	os.chdir(amberdir)
@@ -212,7 +217,7 @@ def main(logfile: Path = None, pdbpath: Path = None,
 
 	checkpoint_files = list(Path.cwd().glob("check_01_amber_*.done"))
 	if len(checkpoint_files) > 0:
-		logger.warning(f"Checkpoint file(s) found: {', '.join(f.name for f in checkpoint_files)}")
+		logger.debug(f"Checkpoint file(s) found: {', '.join(f.name for f in checkpoint_files)}")
 		# Check if expected output files exist
 		missing = [p for p in expected_files if not p.exists()]
 		if not missing:
@@ -222,28 +227,21 @@ def main(logfile: Path = None, pdbpath: Path = None,
 
 	# Check if input file is a PDB file
 	if not pdbpath.suffix.lower() == '.pdb':
-		logger.error("Input file must be a PDB file with .pdb extension.")
+		logger.error(f"Input file must be a PDB file with .pdb extension. Check that {pdbpath} meets this criteria.")
 		sys.exit(1)
 
-	if dna:
-		logger.debug("Flag --dna used. This is a DNA-protein complex.")
-		ff_default.append('DNA.bsc1')
-
-	if phos:
-		logger.debug("Flag --phos used. This system contains phosphorylated residues.")
-		ff_default.append('phosaa19SB')
-
+	# Force fields for the molecule types present, water model last.
+	logger.debug(f"Molecule types: protein={protein}, phos={phos}, dna={dna}, rna={rna}")
 	if ffs:
-		logger.debug(f"Custom force fields provided: {ffs}")
-	else:
-		logger.debug(f"No custom force fields provided. Using default: {ff_default}")
-		ffs = ff_default
+		logger.info(f"Custom force fields provided: {ffs}")
+	ffs = select_forcefields(protein=protein, phos=phos, dna=dna, rna=rna, ffs=ffs, logger=logger)
+	logger.info(f"Force fields loaded in LEaP: {ffs}")
 
 	# Remove hydrogens and prepare the PDB.
 	noH_complex = remove_hydrogens(pdbfile, logger_name, logfile)
-
-	if noH_complex is None:
-		raise RuntimeError("pdb4amber preparation failed")
+	# pdb4amber failed: its error is already logged, the later steps need its output.
+	if noH_complex is None or not Path(noH_complex).is_file():
+		_stop(logger, cwd, f"pdb4amber could not process {pdbfile}. Check the structure for missing residues or atoms before running prep again.")
 
 	logger.debug(
 		f"Hydrogens removed from {pdbpath}, saved as {noH_complex}"
@@ -258,9 +256,10 @@ def main(logfile: Path = None, pdbpath: Path = None,
 	)
 
 	# Add hydrogens using the assigned residue states.
-	protonated_complex = add_hydrogens(
-		assigned_complex, logger_name, logfile, ffs
-	)
+	protonated_complex = add_hydrogens(assigned_complex, logger_name, logfile, ffs)
+	# tleap can exit normally without writing the PDB, so the output file is checked.
+	if protonated_complex is None or not Path(protonated_complex).is_file():
+		_stop(logger, cwd, f"tleap did not write {protonated_complex}. Check the log files for the comple tleap output.")
 
 	# Extract chain IDs from the assigned structure.
 	u = mda.Universe(assigned_complex)
@@ -273,6 +272,12 @@ def main(logfile: Path = None, pdbpath: Path = None,
 
 	# Generate the receptor & ligand (also match the hydrogens to amber specifics)
 	chain_files = gen_chains(assigned_complex, logger_name, logfile, chains, ffs)
+	# Every chain needs its own protonated file for the LEaP step below.
+	if chain_files is None:
+		_stop(logger, cwd, "Chain extraction failed. See the error above.")
+	missing_chains = [str(f) for f in chain_files if f is None or not Path(f).is_file()]
+	if missing_chains:
+		_stop(logger, cwd, f"tleap did not write the chain files: {', '.join(missing_chains)}")
 	solvate_gen_parm(protonated_complex, logger_name, logfile,chain_files, ffs)
 
 	protonated_complex.replace('.pdb', '_solvated.prmtop')
@@ -288,7 +293,7 @@ def main(logfile: Path = None, pdbpath: Path = None,
 	missing = [p for p in expected_files if not p.exists()]
 	for file in expected_files:
 		if file not in missing:
-			logger.info(f"generated {file}")
+			logger.debug(f"generated {file}")
 		else:
 			logger.error(f"{file} not generated")
 
@@ -296,7 +301,7 @@ def main(logfile: Path = None, pdbpath: Path = None,
 		checkpoint  = Path(f"check_01_amber_{int(time.time())}.done")
 		checkpoint.parent.mkdir(exist_ok=True)
 		with checkpoint.open('w') as f:
-			msg = f"AmberTools preparation completed successfully for structure {structure}.\n"
+			msg = f"AmberTools preparation completed successfully for structure {structure}."
 			f.write(msg)
 			logger.info(msg)
 			os.chdir(cwd)

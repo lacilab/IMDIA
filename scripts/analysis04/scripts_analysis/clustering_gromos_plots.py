@@ -23,6 +23,18 @@ def main(logfile: str, csv: Path, ndx: Path, outdir: Path):
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)
 
+    # Expected output files
+    filenames = [
+        'pca_clusters_ext.csv',
+        'pca_gromos_clusters.png',
+        'pca_gromos_clusters_top10.png',
+        'gromos_clusters_freq.png',
+        'gromos_clust_ids.png',
+        'gromos_rmsd_dist.png'
+    ]
+    outdir = Path(outdir)
+    outfiles = [outdir / n for n in filenames]
+
     df_pca = pd.read_csv(csv, sep=",", header='infer')
 
     # Parse clusters.ndx and count cluster sizes
@@ -51,7 +63,7 @@ def main(logfile: str, csv: Path, ndx: Path, outdir: Path):
                                'KMeans_Cluster', 'Hierarchical_Cluster',  'Gromos_Cluster']]
     csv_ext = outdir / 'pca_clusters_ext.csv'
     df_reordered.to_csv(csv_ext, index=False)
-    logger.info(f"Extended PCA data with Gromos clusters saved to {csv_ext}")
+    logger.debug(f"Extended PCA data with Gromos clusters saved to {csv_ext}")
 
     # Plot PC1 vs PC2, colored by cluster
     plt.figure(figsize=(8, 6))
@@ -63,7 +75,7 @@ def main(logfile: str, csv: Path, ndx: Path, outdir: Path):
     plt.legend(*scatter.legend_elements(), title="Cluster ID", loc='best')
     plt.savefig(f'{outdir}/pca_gromos_clusters.png')
     plt.close()
-    logger.info(f"Plot of PCA colored by gromos clusters saved to {outdir}/pca_gromos_clusters.png")
+    logger.debug(f"Plot of PCA colored by gromos clusters saved to {outdir}/pca_gromos_clusters.png")
 
     # Plot PC1 vs PC2, first 10 clusters in blue, others in gray
     colors = ['blue' if c <= 10 else 'gray' for c in df_clusters['Cluster']]
@@ -75,7 +87,7 @@ def main(logfile: str, csv: Path, ndx: Path, outdir: Path):
     plt.grid(True)
     plt.savefig(f'{outdir}/pca_gromos_clusters_top10.png')
     plt.close()
-    logger.info(f"Plot of PCA colored by first 10 gromos clusters saved to {outdir}/pca_gromos_clusters_top10.png")
+    logger.debug(f"Plot of PCA colored by first 10 gromos clusters saved to {outdir}/pca_gromos_clusters_top10.png")
 
     # Bar plot of cluster frequencies
     cluster_ids = sorted(set(df_clusters['Cluster']))
@@ -91,7 +103,7 @@ def main(logfile: str, csv: Path, ndx: Path, outdir: Path):
     plt.grid(True, axis='y')
     plt.savefig(f'{outdir}/gromos_clusters_freq.png')
     plt.close()
-    logger.info(f"Bar plot of gromos cluster frequencies saved to {outdir}/gromos_clusters_freq.png")
+    logger.debug(f"Bar plot of gromos cluster frequencies saved to {outdir}/gromos_clusters_freq.png")
 
     # Cluster ID vs time plot
     time, cluster_id = np.loadtxt(f'{outdir}/gromos_clust_ids.xvg', comments=['@','#', "&"], unpack=True)
@@ -102,7 +114,7 @@ def main(logfile: str, csv: Path, ndx: Path, outdir: Path):
     plt.title('Gromos Cluster ID vs Time')
     plt.savefig(f'{outdir}/gromos_clust_ids.png')
     plt.close()
-    logger.info(f"Plot of gromos cluster ID vs time saved to {outdir}/gromos_clust_ids.png")
+    logger.debug(f"Plot of gromos cluster ID vs time saved to {outdir}/gromos_clust_ids.png")
 
     # RMSD distance distribution plot
     x, y = np.loadtxt(f'{outdir}/gromos_clusters_rmsd_dist.xvg', comments=['@','#'], unpack=True)
@@ -113,8 +125,17 @@ def main(logfile: str, csv: Path, ndx: Path, outdir: Path):
     plt.grid(True)
     plt.savefig(f'{outdir}/gromos_rmsd_dist.png')
     plt.close()
-    logger.info(f"RMSD distance distribution plot saved to {outdir}/gromos_rmsd_dist.png")
+    logger.debug(f"RMSD distance distribution plot saved to {outdir}/gromos_rmsd_dist.png")
 
+
+    # Check all expected outputs were generated
+    missing = [f.name for f in outfiles if not f.is_file()]
+    if missing:
+        logger.warning("Gromos clustering and plotting did not complete successfully. Some expected outputs are missing.")
+        logger.warning(f"Missing {len(missing)} file(s): {', '.join(missing)}")
+        logger.warning(f"Check log {logfile}")
+    else:
+        logger.info(f"Gromos clustering and plotting completed successfully. Output files are in {outdir}.")
 
 
 if __name__ == "__main__":

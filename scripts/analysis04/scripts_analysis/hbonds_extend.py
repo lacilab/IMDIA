@@ -3,6 +3,7 @@
 import sys
 import pickle
 import matplotlib
+from pathlib import Path
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -79,7 +80,6 @@ def main(logfile: str = None, pdbfile: str = None, universe: str = None,
 
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)
-
 
     # Load universe
     with open(universe, 'rb') as f:
@@ -180,9 +180,13 @@ def main(logfile: str = None, pdbfile: str = None, universe: str = None,
         np.where(hbonds_grouped['acceptor_atom_name'].apply(is_backbone_atom), 'backbone', 'base')
     )
 
-    # Save
-    hbonds_grouped.to_csv(hbonds_ext, index=False)
-    logger.info(f"Extended hydrogen bonds saved to {hbonds_ext}")
+    # Save and check
+    try:
+        hbonds_grouped.to_csv(hbonds_ext, index=False)
+        logger.info(f"Parsed and extended hydrogen bond results saved to {hbonds_ext}")
+    except OSError as err:
+        logger.warning("Parsed and extended hydrogen bond results were not correctly saved.")
+        logger.warning(f"Check log {logfile}")
 
 
 if __name__ == "__main__":

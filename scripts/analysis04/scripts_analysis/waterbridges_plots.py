@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+from pathlib import Path
 import pandas as pd
 import numpy as np
 import MDAnalysis as mda
@@ -133,4 +133,12 @@ def main(logfile, wb_csv, wb_ext_csv, outfiles, group1, group2):
     plt.savefig(outfiles['wb_per_chain'])
     plt.close()
 
-    logger.debug("Finished plotting water bridge analysis.")
+    # Check for missing files
+    outdir = Path(wb_ext_csv).parent
+    missing = [Path(f).name for f in outfiles.values() if not Path(f).is_file()]
+    if missing:
+        logger.warning("Water bridge plotting did not complete successfully. Some expected outputs are missing.")
+        logger.warning(f"Missing {len(missing)} file(s): {', '.join(missing)}")
+        logger.warning(f"Check log {logfile}")
+    else:
+        logger.info(f"Water bridge plotting completed successfully. Output files are in {outdir}.")

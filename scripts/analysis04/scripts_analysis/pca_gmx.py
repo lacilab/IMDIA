@@ -33,6 +33,22 @@ def main(logfile: Path, outdir: Path, tpr: Path, xtc: Path):
       logger.error(f"XTC file {xtc} does not exist.")
       sys.exit(1)
 
+   # Expected output files
+   filenames = [
+      "pc_cosine_corr.xvg",
+      'eigenval.xvg',
+      'proj_10.xvg',
+      'eigrmsf.xvg',
+      'proj_10.csv',
+      'pc_cosine.png',
+      'cum_var.png',
+      'pc1_pc2.png',
+      'pc_pairgrid.png',
+      'pc_rmsf.png'
+   ]
+   outdir = Path(outdir)
+   outfiles = [outdir / n for n in filenames]
+
    # Build and diagonalize the covariance matrix
    cmd = ["gmx", "covar", "-f", str(xtc), "-s", str(tpr), "-o", str(outdir / "eigenval.xvg"), 
           "-v", str(outdir / "eigenvec.trr"), "-av", str(outdir / "average.pdb"), "-l", str(outdir / "covar.log"), "-quiet"]
@@ -139,6 +155,16 @@ def main(logfile: Path, outdir: Path, tpr: Path, xtc: Path):
    plt.subplots_adjust(hspace=0.4)
    plt.savefig(outdir / 'pc_rmsf.png', bbox_inches='tight')
    plt.close()
+
+
+   # Check all expected outputs were generated
+   missing = [f.name for f in outfiles if not f.is_file()]
+   if missing:
+      logger.warning("PCA did not complete successfully. Some expected outputs are missing.")
+      logger.warning(f"Missing {len(missing)} file(s): {', '.join(missing)}")
+      logger.warning(f"Check log {logfile}")
+   else:
+      logger.info(f"PCA completed successfully. Output files are in {outdir}.")
 
 
 if __name__ == "__main__":

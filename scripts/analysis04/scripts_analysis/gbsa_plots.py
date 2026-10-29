@@ -72,6 +72,15 @@ def main(logfile: str, energy_total: Path, energy_decomp: Path, offsets: dict, o
     logger = setup_logger("analysis", logfile)
     logger.debug("Plotting GBSA results")
 
+    # Expected output files
+    filenames = [
+        'gbsa_full_totalenergy.png',
+        'gbsa_res_totalenergy.png'
+
+    ]
+    outdir = Path(outdir)
+    outfiles = [outdir / n for n in filenames]
+
     # Check files exist and are .csv
     if not energy_total.is_file() or energy_total.suffix != '.csv':
         logger.error(f"Energy total file {energy_total} does not exist or is not a .csv file.")
@@ -132,7 +141,7 @@ def main(logfile: str, energy_total: Path, energy_decomp: Path, offsets: dict, o
         lambda chain: offsets.get(chain, {}).get('offset', 0)
     ).astype(int)) # Adjust resid by chain offset and convert back to string
     # Adjust chain id, new->old
-    df_decomp["chain"] = df_decomp["chain"].map(lambda x: offsets[x]['id_old'])
+    df_decomp["chain"] = df_decomp["chain"].map(lambda x: offsets.get(x, {}).get("id_old", x))
 
     # Get stats by residue for total energy
     # Group by residue identifiers
@@ -176,6 +185,15 @@ def main(logfile: str, energy_total: Path, energy_decomp: Path, offsets: dict, o
     plt.tight_layout()
     plt.savefig(outdir / "gbsa_res_totalenergy.png")
     plt.close()
+
+    # Check all expected outputs were generated
+    missing = [f.name for f in outfiles if not f.is_file()]
+    if missing:
+        logger.warning("GBSA plotting did not complete successfully. Some expected outputs are missing.")
+        logger.warning(f"Missing {len(missing)} file(s): {', '.join(missing)}")
+        logger.warning(f"Check log {logfile}")
+    else:
+        logger.info(f"GBSA plotting completed successfully. Output files are in {outdir}.")
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ import sys
 import os
 import re
 import pickle
+from pathlib import Path
 import MDAnalysis as mda
 from MDAnalysis.analysis.hydrogenbonds.hbond_analysis import HydrogenBondAnalysis as HBA
 import numpy as np
@@ -54,7 +55,7 @@ def main(logfile: str = None, universe: str = None,
 
     if not os.path.exists(outdir):
         os.makedirs(outdir, exist_ok=True)
-        logger.info(f"Created output directory: {outdir}")
+        logger.debug(f"Created output directory: {outdir}")
     else:
         logger.warning(f"Output directory already exists: {outdir}")
 
@@ -119,9 +120,13 @@ def main(logfile: str = None, universe: str = None,
     df['hydrogen'] = (df['hydrogen'] + 1).astype('int')
     df['acceptor'] = (df['acceptor'] + 1).astype('int')
 
-    # Save
-    df.to_csv(hbonds_mda_parsed, index=False)
-    logger.info(f"Parsed hydrogen bonds saved to {hbonds_mda_parsed}")
+    # Save and check
+    try:
+        df.to_csv(hbonds_mda_parsed, index=False)
+        logger.info(f"Parsed hydrogen bonds saved to {hbonds_mda_parsed}")
+    except OSError as err:
+        logger.warning(f"Parsed hydrogen bonds file {hbonds_mda_parsed} was not created: {err}")
+        logger.warning(f"Check log {logfile}")
 
 
 if __name__ == "__main__":

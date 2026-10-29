@@ -44,15 +44,15 @@ def main(logfile : str = None, tprfile : Path = None, xtcfile : Path = None, scr
         logger.error(f"Script directory not found: {scriptdir}")
         return
     if not path.isdir(outdir):
-        logger.info(f"Output directory not found, creating: {outdir}")
+        logger.debug(f"Output directory not found, creating: {outdir}")
         os.makedirs(outdir, exist_ok=True)
 
     shutil.copyfile(f"{scriptdir}/porcupine.pml", f"{outdir}/porcupine.pml")
     if path.isfile(f"{outdir}/porcupine.pml"):
-        logger.info(f"Copied porcupine.pml to: {outdir}/porcupine.pml")
+        logger.debug(f"Copied porcupine.pml to: {outdir}/porcupine.pml")
     shutil.copyfile(f"{scriptdir}/modevectors.py", f"{outdir}/modevectors.py")
     if path.isfile(f"{outdir}/modevectors.py"):
-        logger.info(f"Copied modevectors.py to: {outdir}/modevectors.py")
+        logger.debug(f"Copied modevectors.py to: {outdir}/modevectors.py")
 
     # Generate extreme1.gro using gmx anaeig
     cmd = ["gmx", "anaeig", 
@@ -64,9 +64,9 @@ def main(logfile : str = None, tprfile : Path = None, xtcfile : Path = None, scr
            "-extr", "extreme1.gro"
     ]
     subprocess.run(cmd, cwd=outdir, check=True, text=True, input="C-alpha\nC-alpha\n")
-    logger.info(f"Executed gmx anaeig in directory: {outdir}")
+    logger.debug(f"Executed gmx anaeig in directory: {outdir}")
     if path.isfile(f"{outdir}/extreme1.gro"):
-        logger.info(f"Generated extreme1.gro at: {outdir}/extreme1.gro")
+        logger.debug(f"Generated extreme1.gro at: {outdir}/extreme1.gro")
     
     # Visualise using modevectors.py, no GUI
     cmd = [
@@ -74,7 +74,10 @@ def main(logfile : str = None, tprfile : Path = None, xtcfile : Path = None, scr
     ]
     subprocess.run(cmd, cwd=outdir, check=True, text=True)
     if path.isfile(f"{outdir}/porcupine.png"):
-        logger.info(f"Porcupine plot generated at: {outdir}/porcupine.png")
+        logger.info(f"Porcupine plot of PC1 generated at: {outdir}/porcupine.png")
+    else:
+        logger.warning(f"Porcupine plot of PC1 could not be generated.")
+        logger.warning(f"Check log {logfile}")
 
 
 if __name__ == "__main__":

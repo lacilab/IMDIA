@@ -7,7 +7,7 @@ import numpy as np
 from scripts.utils.helpers import setup_logger
 
 
-def get_original_chain_id(universe, atom_number):
+def get_chain_id(universe, atom_number):
     return universe.atoms[atom_number - 1].chainID
 
 
@@ -61,7 +61,11 @@ def main(logfile: str, universe: str, wb_csv: Path, offsets: dict, outfile: Path
 
     # Save extended df to csv
     agg_df.to_csv(outfile, index=False)
-
+    if Path(outfile).is_file():
+        logger.info(f"Parsed and extended water bridge analysis results saved to {outfile}.")
+    else:
+        logger.warning("Parsed and extended water bridge analysis results could not be correctly saved.")
+        logger.warning(f"Check log {logfile}")
 
 
 if __name__ == "__main__":

@@ -4,25 +4,42 @@ import os
 # ------------------------
 # Load configuration file
 # ------------------------
+# The config file is the system record (system_record.json). It holds:
+#   params        : settings from the parameter file (protein/dna/rna/phos as resolved by the pipeline;
+#                   structure/muts default to the folders of the input PDB, data/<structure>/<mut>/)
+#   chain_mapping : simulation chains matched to the input structure
+#   chains        : composition of the input structure
+# logfile, datadir and rule_groups are passed on the command line.
 LOGFILE        = config.get("logfile", None)
 DATADIR        = config.get("datadir", "data")
 rule_groups    = config.get("rule_groups", "").split(' ')
 
+PARAMS         = config.get("params") or {}
+
 SCRIPTDIR      = os.path.join(os.path.dirname(workflow.snakefile), "scripts_analysis")
-METHODS_HBONDS = config.get("methods_hbonds", ["gmx", "mda"])
-STRUCTURES     = config.get("structure", [])
-MUTS           = config.get("muts", [])
-REPS           = config.get("repn", [])
-DNA            = config.get("dna", False)
-PHOS           = config.get("phos", False)
-DOMAINS        = config.get("domains", {})
-GROUP1         = config.get("group1", None)
-GROUP2         = config.get("group2", None)
-CHAINGROUPS    = config.get("chaingroups", {})
-START          = config.get("start_frame", 0)     
-STOP           = config.get("stop_frame", None)
-FFS            = config.get("ffs", None)
-OFFSETS        = config.get("chains", {})
+METHODS_HBONDS = PARAMS.get("methods_hbonds", ["gmx", "mda"])
+STRUCTURES     = PARAMS.get("structure", [])
+MUTS           = PARAMS.get("muts", [])
+REPS           = PARAMS.get("repn", [])
+PROT           = PARAMS.get("protein", False)
+DNA            = PARAMS.get("dna", False)
+RNA            = PARAMS.get("rna", False)
+PHOS           = PARAMS.get("phos", False)
+DOMAINS        = PARAMS.get("domains", {})
+GROUP1         = PARAMS.get("group1", "Protein" if PROT else None)
+GROUP2         = PARAMS.get("group2", "DNA" if DNA else None)
+CHAINGROUPS    = PARAMS.get("chaingroups", {})
+START          = PARAMS.get("start_frame", 0)
+STOP           = PARAMS.get("stop_frame", None)
+FFS            = PARAMS.get("ffs", None)
+
+# Chains by position: id_old, id_new, offset, verified, resids_new, atoms_new, note.
+# Original residue number = simulation residue number + offset (verified chains only).
+CHAINMAPPING   = (config.get("chain_mapping") or {}).get("chains", {})
+# {id_new: {"id_old", "offset"}} for verified chains that have a chain ID in the simulation.
+OFFSETS        = {c["id_new"]: {"id_old": c["id_old"], "offset": c["offset"]}
+                  for c in CHAINMAPPING.values() if c["verified"] and c["id_new"]}
+
 
 
 ##### GET REPLICATES TO ANALYZE #####
@@ -79,6 +96,18 @@ all_input = {}
 out_rmsf = {}
 out_hbonds_plots = {}
 out_hbonds_plots_merged = {}
+
+# Rule groups: qc, hbonds, wb, contacts, pca, clust, gbsa
+# Rule groups for interaction analysis, which requires group1 and group2 defined: hbonds, wb, contacts, gbsa
+
+## Check interaction groups are valid if rule sets to run include interaction analysis
+if len(set(rule_groups).intersection(["hbonds", "wb", "contacts", "gbsa"])) > 0 or rule_groups == [""]:
+    for i, group in enumerate([GROUP1, GROUP2]):
+        if group is None:
+            print(f"group{i} is set as None. Interaction analysis cannot be performed. Two groups (group1, group2) must be defined to perform interaction analysis.")
+
+### Select output based on rule sets to run
+
 if "qc" in rule_groups or rule_groups == [""]:
     if DNA:
         out_rmsf["rmsf_dna"] = report(f"{PATH_QC}/rmsf_dna.png", 
@@ -570,7 +599,8 @@ rule contact_ratio:
             start=START,
             stop=STOP,
             dna=DNA,
-            outfiles=dict(output)
+            outfiles=dict(output),
+            outdir=PATH_CONTACTS
         )
 
 
@@ -596,7 +626,8 @@ rule contact_pairwise:
             start=START,
             stop=STOP,
             dna=DNA,
-            outfiles=dict(output)
+            outfiles=dict(output),
+            outdir=PATH_CONTACTS
         )
 
 

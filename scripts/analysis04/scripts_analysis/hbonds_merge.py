@@ -31,7 +31,15 @@ def main(logfile, hbonds_files, outfile):
             all_hbonds.append(df)
     merged_hbonds = pd.concat(all_hbonds, axis=0)
     logger.debug(f"Merged {len(hbonds_files)} hbond files into a single DataFrame with {len(merged_hbonds)} entries")
-    merged_hbonds.to_csv(outfile, index=False)
+
+
+    # Save and check
+    try:
+        merged_hbonds.to_csv(outfile, index=False)
+        logger.info(f"Merged hydrogen bond analysis results saved to {outfile}")      
+    except OSError as err:
+        logger.warning(f"Merged hydrogen bond analysis results could not be saved. Check log {logfile}")
+        logger.warning(f"Check log {logfile}")
     return 
 
 if __name__ == "__main__":
