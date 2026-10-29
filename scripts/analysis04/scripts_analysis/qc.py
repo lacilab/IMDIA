@@ -36,7 +36,7 @@ def radgyr(atomgroup, masses, total_mass=None):
         return np.sqrt(rog_sq)
 
 def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles : dict = {}, 
-         dna: bool = False, offsets: dict = None, domains: dict = {}, chaingroups: list = {}):
+         dna: bool = False, rna: bool = False, offsets: dict = None, domains: dict = {}, chaingroups: list = {}):
     """
     Quality control analysis MD results.
 
@@ -284,45 +284,46 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
         plt.savefig(outfiles['rmsf_chaingroups'])
         plt.close()
 
-    ##### If the complex contains dsDNA #####
-    if dna:
-        dna_sel = u.select_atoms("nucleic") 
-        dna_segids = [seg.segid for seg in dna_sel.segments]
+    ##### If the complex contains DNA or RNA #####
+    if dna or rna:
+        nuc_sel = u.select_atoms("nucleic") 
+        nuc_segids = [seg.segid for seg in nuc_sel.segments]
 
-        dna_rmsf = {}
-        for segid in dna_segids:
-            dna_rmsf[segid] = {}
+        nuc_rmsf = {}
+        for segid in nuc_segids:
+            nuc_rmsf[segid] = {}
             p = u.select_atoms(f"segid {segid} and name P")
-            dna_rmsf[segid]['resids'] = p.resids
+            nuc_rmsf[segid]['resids'] = p.resids
             if p.n_atoms == 0:
                 logger.warning(f"Selection for segid {segid} is empty. Please check the chain ids.")
                 continue
             else:
                 logger.debug(f"Selection for segid {segid} has {p.n_atoms} P atoms.")
                 rmsf = rms.RMSF(p).run()
-                dna_rmsf[segid]['rmsf'] = rmsf.results.rmsf
+                nuc_rmsf[segid]['rmsf'] = rmsf.results.rmsf
 
-        # Save DNA RMSF to CSV
-        rmsf_dna = pd.DataFrame()
-        for chain in dna_rmsf.keys():  
+        # Save RMSF to CSV
+        rmsf_nuc = pd.DataFrame()
+        for chain in nuc_rmsf.keys():  
             df_chain = pd.DataFrame({
-                'Residue': dna_rmsf[chain]['resids'] + offsets[chain]['offset'],   
+                'Residue': nuc_rmsf[chain]['resids'] + offsets[chain]['offset'],   
                 'Chain': offsets.get(chain, {}).get('id_old', chain),  
-                'RMSF': dna_rmsf[chain]['rmsf']
+                'RMSF': nuc_rmsf[chain]['rmsf']
             })
-            rmsf_dna = pd.concat([rmsf_dna, df_chain], axis=1)
+            rmsf_nuc = pd.concat([rmsf_nuc, df_chain], axis=1)
 
-        rmsf_dna.to_csv(outfiles['rmsf_dna_csv'], index=False)
+        rmsf_nuc.to_csv(outfiles['rmsf_nuc_csv'], index=False)
 
         # Plot
-        for chain in dna_rmsf.keys():
-            plt.plot(dna_rmsf[chain]['resids'] + offsets[chain]['offset'], dna_rmsf[chain]['rmsf'], label=f"DNA Chain {offsets.get(chain, {}).get('id_old', chain)}")
+        nucname = "DNA" if dna else "RNA"
+        for chain in nuc_rmsf.keys():
+            plt.plot(nuc_rmsf[chain]['resids'] + offsets[chain]['offset'], nuc_rmsf[chain]['rmsf'], label=f"{nucname} Chain {offsets.get(chain, {}).get('id_old', chain)}")
         plt.xlabel('Residue number')
         plt.ylabel('RMSF (Å)')
-        plt.title('RMSF of DNA Chains')
+        plt.title(f'RMSF of {nucname} Chain(s)')
         plt.legend()
         plt.grid(True, alpha=0.3)
-        plt.savefig(outfiles['rmsf_dna'])
+        plt.savefig(outfiles['rmsf_nuc'])
         plt.close()
 
     logger.debug("\nChecking generated files.")

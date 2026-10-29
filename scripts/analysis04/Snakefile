@@ -110,11 +110,17 @@ if len(set(rule_groups).intersection(["hbonds", "wb", "contacts", "gbsa"])) > 0 
 
 if "qc" in rule_groups or rule_groups == [""]:
     if DNA:
-        out_rmsf["rmsf_dna"] = report(f"{PATH_QC}/rmsf_dna.png", 
+        out_rmsf["rmsf_nuc"] = report(f"{PATH_QC}/rmsf_dna.png", 
                 category="QC", subcategory="RMSF", labels={"sample": "{mut} {rep} RMSF DNA"})
-        out_rmsf["rmsf_dna_csv"] = f"{PATH_QC}/rmsf_dna.csv"
-        all_input["rmsf_dna"] = expand(f"{PATH_QC}/rmsf_dna.png", struct=structures, mut=mutations, rep=reps, zip=True)
-        all_input["rmsf_dna_csv"] = expand(f"{PATH_QC}/rmsf_dna.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+        out_rmsf["rmsf_nuc_csv"] = f"{PATH_QC}/rmsf_dna.csv"
+        all_input["rmsf_nuc"] = expand(f"{PATH_QC}/rmsf_dna.png", struct=structures, mut=mutations, rep=reps, zip=True)
+        all_input["rmsf_nuc_csv"] = expand(f"{PATH_QC}/rmsf_dna.csv", struct=structures, mut=mutations, rep=reps, zip=True)
+    if RNA:
+        out_rmsf["rmsf_nuc"] = report(f"{PATH_QC}/rmsf_rna.png", 
+                category="QC", subcategory="RMSF", labels={"sample": "{mut} {rep} RMSF RNA"})
+        out_rmsf["rmsf_nuc_csv"] = f"{PATH_QC}/rmsf_rna.csv"
+        all_input["rmsf_nuc"] = expand(f"{PATH_QC}/rmsf_rna.png", struct=structures, mut=mutations, rep=reps, zip=True)
+        all_input["rmsf_nuc_csv"] = expand(f"{PATH_QC}/rmsf_rna.csv", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["rmsdpng"] = expand(f"{PATH_QC}/rmsd.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["rmsd_cats"] = expand(f"{PATH_QC}/rmsd_cats.png", struct=structures, mut=mutations, rep=reps, zip=True)
     all_input["rmsd_bb"] = expand(f"{PATH_QC}/rmsd_bb.png", struct=structures, mut=mutations, rep=reps, zip=True)
@@ -291,6 +297,7 @@ rule qc:
             outdir=params.outdir,
             outfiles=dict(output),
             dna=DNA,
+            rna=RNA,
             offsets=OFFSETS,
             domains=DOMAINS,
             chaingroups=CHAINGROUPS
@@ -932,7 +939,7 @@ rule gbsa:
             start=START,
             stop=STOP,
             dna=DNA,
-            rna=RNA
+            rna=RNA,
             phos=PHOS,
             ffs=FFS
         )
