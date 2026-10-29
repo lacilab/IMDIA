@@ -66,7 +66,7 @@ def prep_mmpbsain(logger, infile, start, stop, dna, rna, phos, ffs):
 def main(logfile: str = None, scriptdir: str = None, gmxdir: str = None, outdir: str = None, 
          index:str = None, tprfile: str = None,
          xtcfile: str = None, topfile: str = None, cores: int = 1,
-         start: int = None, stop: int = None, 
+         start: int = None, stop: int = None, rna: bool = False,
          dna: bool = False, phos: bool = False,
          index_group1: str = None, index_group2: str = None, ffs: list = None):
 
