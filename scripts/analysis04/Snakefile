@@ -290,7 +290,7 @@ rule qc:
             universe=input.universe,
             outdir=params.outdir,
             outfiles=dict(output),
-            with_dna=DNA,
+            dna=DNA,
             offsets=OFFSETS,
             domains=DOMAINS,
             chaingroups=CHAINGROUPS
@@ -932,6 +932,7 @@ rule gbsa:
             start=START,
             stop=STOP,
             dna=DNA,
+            rna=RNA
             phos=PHOS,
             ffs=FFS
         )

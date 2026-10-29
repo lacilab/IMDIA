@@ -36,7 +36,7 @@ def radgyr(atomgroup, masses, total_mass=None):
         return np.sqrt(rog_sq)
 
 def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles : dict = {}, 
-         with_dna: bool = False, offsets: dict = None, domains: dict = {}, chaingroups: list = {}):
+         dna: bool = False, offsets: dict = None, domains: dict = {}, chaingroups: list = {}):
     """
     Quality control analysis MD results.
 
@@ -45,7 +45,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
         universe    : Path to the Universe object generated with MDAnalysis, containing the processed MD system.
         outdir      : Output directory for results (e.g. rep1/analysis/qc).
         outfiles    : Dictionary of the files to be generated, assigned to labels/keys.
-        with_dna    : True if DNA is present in the system.
+        dna    : True if DNA is present in the system.
         offsets     : Dictionary specifying residue numbering offsets per chain.
         domains     : Dictionary of domains in the structure.
         chaingroups : Dictionary of groups and chains in them.
@@ -285,7 +285,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
         plt.close()
 
     ##### If the complex contains dsDNA #####
-    if with_dna:
+    if dna:
         dna_sel = u.select_atoms("nucleic") 
         dna_segids = [seg.segid for seg in dna_sel.segments]
 
