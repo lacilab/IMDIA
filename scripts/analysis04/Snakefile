@@ -606,6 +606,7 @@ rule contact_ratio:
             start=START,
             stop=STOP,
             dna=DNA,
+            rna=RNA,
             outfiles=dict(output),
             outdir=PATH_CONTACTS
         )
@@ -633,6 +634,7 @@ rule contact_pairwise:
             start=START,
             stop=STOP,
             dna=DNA,
+            rna=RNA,
             outfiles=dict(output),
             outdir=PATH_CONTACTS
         )
