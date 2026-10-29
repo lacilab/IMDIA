@@ -7,6 +7,14 @@ dna: True
 ### Does the structure contain phosphorylated amino acids?
 phos: True
 
+### At which pH should the protein be protonated? 
+protonation:
+  method: propka
+  ph: 7.4
+  review_pka_window: 1.0
+  overrides: []
+
+
 ### Replicates to analyze
 repn: [1, 2]
 
@@ -84,8 +92,3 @@ domains:
       label: DNA_Domain2
 
   
-protonation:
-  method: propka
-  ph: 7.4
-  review_pka_window: 1.0
-  overrides: []
