@@ -175,30 +175,30 @@ def find_wc_pairs(atoms, chains, cutoff=4.0):
     """
     notes, warns = [], []
     mask = struc.filter_nucleotides(atoms) & np.isin(atoms.chain_id, chains)
-    dna = atoms[mask]
-    if dna.array_length() == 0:
+    nucleic = atoms[mask]
+    if nucleic.array_length() == 0:
         empty = pd.DataFrame()
         return empty, empty, {"method": None, "hydrogens": None, "notes": notes, "warnings": warns,
                               "n_observed": 0, "n_inferred": 0, "registers": []}
 
-    h_status = hydrogen_status(dna)
+    h_status = hydrogen_status(nucleic)
     if h_status == "partial":
         warns.append("Only some nucleic-acid bases have hydrogens; using the heavy-atom branch (N) "
                      "for the whole structure.")
     method = "H" if h_status == "all" else "N"
 
-    raw = struc.base_pairs(dna, unique=(method == "H"))
+    raw = struc.base_pairs(nucleic, unique=(method == "H"))
     if len(raw):
         raw = np.unique(np.sort(raw, axis=1), axis=0)  # guard against (i, j) and (j, i)
-    starts = struc.get_residue_starts(dna, add_exclusive_stop=True)
+    starts = struc.get_residue_starts(nucleic, add_exclusive_stop=True)
     stop_of = dict(zip(starts[:-1], starts[1:]))
 
     def residue(start):
-        return dna[start:stop_of[start]]
+        return nucleic[start:stop_of[start]]
 
     edges, glyco = (None, None)
     if len(raw):
-        edges, glyco = _edges_and_orientation(dna, raw, notes, need_edges=(method == "H"))
+        edges, glyco = _edges_and_orientation(nucleic, raw, notes, need_edges=(method == "H"))
 
     rows = []
     for k, (s1, s2) in enumerate(raw):
