@@ -1,3 +1,4 @@
+# Adjust chain id, new->old
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from datetime import datetime
@@ -8,6 +9,7 @@ import subprocess
 import shutil
 from pathlib import Path
 from scripts.utils.helpers import setup_logger
+from scripts.prep01 import prep_00_trim5phos as trim5phos
 from scripts.prep01 import prep_01_amber as amber
 from scripts.prep01 import prep_02_amb2gro as amb2gro
 from scripts.prep01 import prep_03_extractitp as extractitp
@@ -36,6 +38,8 @@ def main(logfile: Path, datadir: Path, filename: str,
     Prepare a PDB structure for MD simulations.
 
     Steps:
+        0.Remove 5'-terminal phosphates of DNA/RNA strands (DNA or RNA systems only);
+          the structure before trimming is kept as <file>_noconect_untrimmed.pdb.
         1.Amber preparation: setup forcefields, add hydrogens.
         2.Conversion from Amber to GROMACS.
         3.Extract .itp files from .top topology file.
@@ -70,7 +74,7 @@ def main(logfile: Path, datadir: Path, filename: str,
         logger.error(f"datadir '{datadir}' does not exist or is not a directory.")
         sys.exit(1)
 
-    
+
     # check input PDB file exists
     path_pdb = datadir / f"{file}.pdb"
     if not path_pdb.is_file():
@@ -106,7 +110,7 @@ def main(logfile: Path, datadir: Path, filename: str,
         logger.debug(f"{str(datadir)}/amber does not exist. Creating new directory.")
         path_amber.mkdir(exist_ok=True)
 
-    # Remove lines starting with CONECT, which are added by MOE and cause issues in AmberTools 
+    # Remove lines starting with CONECT, which are added by MOE and cause issues in AmberTools
     path_noconect = Path(f"{datadir}/amber/{file}_noconect.pdb")
     if path_noconect.is_file():
         logger.debug(f"{str(path_noconect)} already exists. Skipping CONECT removal.")
@@ -138,6 +142,22 @@ def main(logfile: Path, datadir: Path, filename: str,
         sys.exit(1)
 
     ##### PREPARATION ######
+
+    ### 0. Remove 5'-terminal phosphates (LEaP's 5' templates have a 5'-OH end)
+    if dna or rna:
+        trimmed = trim5phos.main(logfile=logfile, pdb=path_noconect)
+        if trimmed.read_bytes() == path_noconect.read_bytes():
+            # Nothing was removed
+            trimmed.unlink()
+            logger.debug(f"No 5'-terminal phosphates to remove in {path_noconect.name}.")
+        else:
+            # The trimmed structure takes the _noconect name, so later file names are unchanged.
+            path_untrimmed = path_noconect.with_name(f"{file}_noconect_untrimmed.pdb")
+            os.replace(path_noconect, path_untrimmed)
+            os.replace(trimmed, path_noconect)
+            logger.info(f"5'-terminal phosphates removed from {path_noconect.name}. The structure before trimming is {path_untrimmed.name}.")
+    else:
+        logger.debug("The system contains no DNA or RNA. Skipping 5'-phosphate trimming.")
 
     ### 1. AmberTools preparation
 
@@ -182,7 +202,7 @@ def main(logfile: Path, datadir: Path, filename: str,
     # Topology and coordinates after ion addition.
     path_top = gmxdir / "topol.top"
     path_ions = gmxdir / "ions.gro"
-    
+
     ### 6. Add Watson-Crick H-bond restraints if DNA or RNA is present
     if dna or rna:
         if not path_ions.is_file():
