@@ -90,6 +90,7 @@ def main(logfile: str = None, scriptdir: str = None, gmxdir: str = None, outdir:
         stop           : Ending frame index for trajectory analysis.
 
         dna            : True if DNA is present in the system.
+        rna            : True if RNA is present in the system.
         phos           : True if phosphorylated residues are present.
 
         index_group1   : First index group for binding energy calculation.
