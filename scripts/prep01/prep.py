@@ -183,6 +183,7 @@ def main(logfile: Path, datadir: Path, filename: str,
     path_prmtop = datadir / "amber" / f"{file}_noconect_protonated_solvated.prmtop"
     path_inpcrd = datadir / "amber" / f"{file}_noconect_protonated_solvated.inpcrd"
     path_top = gmxdir / "topol.top"
+    path_ions = gmxdir / "ions.gro"
     path_gro = gmxdir / "gromacs.gro"
     path_toppar = gmxdir / "toppar"
 
@@ -217,6 +218,7 @@ def main(logfile: Path, datadir: Path, filename: str,
         logger.info("Preparation completed successfully.")
     else:
         logger.error("Preparation did not complete successfully. There are missing files. Check the complete log for more details.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
