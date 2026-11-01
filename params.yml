@@ -11,7 +11,9 @@ phos: True
 protonation:
   method: propka
   ph: 7.4
+  decision_mode: manual
   review_pka_window: 1.0
+  acknowledge_phospho_approximation: true
   overrides: []
 
 
