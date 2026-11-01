@@ -30,3 +30,9 @@ motif_analysis/4h/*/
 .snakemake/
 
 
+
+# Generated preparation outputs
+/usecase_1PGB_pH/amber/
+/usecase_1PGB_pH/gromacs_common/
+/usecase_1UBQ_pH/amber/
+/usecase_1UBQ_pH/gromacs_common/
