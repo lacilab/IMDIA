@@ -69,6 +69,7 @@ def main(logfile: Path, gmxdir: Path, ions: Path = Path("scripts/prep01/ions.mdp
     if process.returncode != 0:
         logger.error("Setup to add ions with gmx grompp returned an error. Check the log file for the complete error message.")
         logger.debug(f"gmx grompp error: {process.stderr}")
+        sys.exit(1)
     else:
         logger.debug(f"gmx grompp output: {process.stdout}")
 
@@ -116,6 +117,7 @@ def main(logfile: Path, gmxdir: Path, ions: Path = Path("scripts/prep01/ions.mdp
     if process.returncode != 0:
         logger.error("Adding ions with gmx genion returned an error. Check the log file for the complete error message.")
         logger.error(f"gmx genion error: {process.stderr}")
+        sys.exit(1)
     else:
         logger.info("Ions added successfully. ")
         logger.debug(f"gmx genion output: {process.stdout}")
