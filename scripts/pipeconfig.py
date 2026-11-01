@@ -23,6 +23,7 @@ class SystemConfig:
     rna: bool | None = None  # None = detect from the structure
     protein: bool | None = None  # None = detect from the structure
     stop_on_gaps: bool = True    # stop before preparation on chain breaks or backbone distortions
+    protonation: dict | None = None
 
 @dataclass
 class RunConfig:
@@ -118,6 +119,7 @@ class Pipeline:
             protein=self._flag(params, "protein"),
             ffs=params.get("ffs", None),
             stop_on_gaps=self._bool(params, "stop_on_gaps", True),
+            protonation=params.get("protonation", None),
         )
 
         run = RunConfig(

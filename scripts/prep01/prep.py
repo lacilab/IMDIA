@@ -7,7 +7,10 @@ import os
 import re
 import subprocess
 import shutil
+import hashlib
+import json
 from pathlib import Path
+from venv import logger
 from scripts.utils.helpers import setup_logger
 from scripts.prep01 import prep_00_trim5phos as trim5phos
 from scripts.prep01 import prep_01_amber as amber
@@ -16,7 +19,10 @@ from scripts.prep01 import prep_03_extractitp as extractitp
 from scripts.prep01 import prep_04_removeamberions as removeamberions
 from scripts.prep01 import prep_05_restraindnahbonds as restraindnahbonds
 from scripts.prep01 import prep_06_addgmxions as addgmxions
-
+from scripts.prep01.prep_00_protonation import (
+    normalize_config,
+    ProtonationReviewRequired,
+)
 
 def _log_version(logger, tool: str):
     """Log the version of an external tool: one line at INFO, the full output at DEBUG."""
@@ -30,10 +36,52 @@ def _log_version(logger, tool: str):
     logger.debug(f"{tool}: {summary or 'no version output'}")
     logger.debug(f"{tool} --version output:\n{output}")
 
+# QC control: function to check preparation inputs so that no reuse if params are different
+def check_preparation_inputs(datadir, path_pdb, settings, logger):
+    """Allow reuse only when the structure and settings match."""
+    amberdir = datadir / "amber"
+    gmxdir = datadir / "gromacs_common"
+    stamp = amberdir / "prep_inputs.json"
+
+    current = {
+        "pdb_sha256": hashlib.sha256(path_pdb.read_bytes()).hexdigest(),
+        "settings": settings,
+    }
+
+    # Normalize to the same representation used in the saved JSON.
+    current = json.loads(json.dumps(current, sort_keys=True))
+
+    if stamp.is_file():
+        try:
+            previous = json.loads(stamp.read_text())
+        except (OSError, ValueError):
+            previous = None
+
+        reusable = previous == current
+    else:
+        # Existing files without a record cannot be verified.
+        reusable = not any(
+            folder.is_dir() and any(folder.iterdir())
+            for folder in (amberdir, gmxdir)
+        )
+
+    if not reusable:
+        logger.error(
+            "Preparation cannot reuse these files: inputs or settings "
+            "changed, or the previous inputs cannot be verified."
+        )
+        logger.error(
+            "Move amber/ and gromacs_common/ aside, then rerun prep. "
+            "Keep your original PDB and params.yml."
+        )
+        sys.exit(1)
+
+    amberdir.mkdir(exist_ok=True)
+    stamp.write_text(json.dumps(current, indent=2, sort_keys=True) + "\n")
 
 def main(logfile: Path, datadir: Path, filename: str,
     dna : bool = False, phos : bool = False, rna : bool = False,
-    ffs : str = None):
+    ffs : str = None, protonation: dict = None):
     """
     Prepare a PDB structure for MD simulations.
 
@@ -57,6 +105,7 @@ def main(logfile: Path, datadir: Path, filename: str,
         rna      : True if the system contains RNA. Adds RNA.OL3 force field.
         ffs      : List of force fields to use in LEaP instead of the automatic choice
                    (water.opc is added if no water model is listed).
+        protonation : Protonation configuration (default: None)
 
     dna, rna and phos are detected from the structure by the pipeline unless set in
     params.yml.
@@ -80,6 +129,20 @@ def main(logfile: Path, datadir: Path, filename: str,
     if not path_pdb.is_file():
         logger.error(f"Input PDB file '{str(path_pdb)}' not found.")
         sys.exit(1)
+
+    protonation = normalize_config(protonation)
+    check_preparation_inputs(
+        datadir,
+        path_pdb,
+        {
+            "protonation": protonation,
+            "forcefields": ffs,
+            "dna": dna,
+            "rna": rna,
+            "phos": phos,
+        },
+        logger,
+    )
 
     ##### CHECK KEY SOFTWARE DEPENDENCIES ######
     # Check GROMACS is ready and print version
@@ -161,7 +224,21 @@ def main(logfile: Path, datadir: Path, filename: str,
 
     ### 1. AmberTools preparation
 
-    amber.main(logfile=logfile, pdbpath=path_noconect, dna=dna, phos=phos, ffs=ffs, rna=rna)
+    try:
+        amber.main(logfile=logfile, pdbpath=path_noconect, dna=dna, phos=phos, ffs=ffs, rna=rna, protonation=protonation)
+
+    except ProtonationReviewRequired:
+        message = "PREPARATION INCOMPLETE: manual protonation review required."
+
+        if sys.stderr.isatty():
+            message = f"\033[31m{message}\033[0m"
+
+        logger.error(message)
+        logger.error(
+            "Review the overrides template, update "
+            "protonation.overrides in params.yml, and rerun prep."
+        )
+        sys.exit(1)
 
     logger.debug(f"The current directory is {os.getcwd()}")
 
@@ -182,6 +259,7 @@ def main(logfile: Path, datadir: Path, filename: str,
     path_prmtop = datadir / "amber" / f"{file}_noconect_protonated_solvated.prmtop"
     path_inpcrd = datadir / "amber" / f"{file}_noconect_protonated_solvated.inpcrd"
     path_top = gmxdir / "topol.top"
+    path_ions = gmxdir / "ions.gro"
     path_gro = gmxdir / "gromacs.gro"
     path_toppar = gmxdir / "toppar"
 
@@ -217,6 +295,7 @@ def main(logfile: Path, datadir: Path, filename: str,
         logger.info("Preparation completed successfully.")
     else:
         logger.error("Preparation did not complete successfully. There are missing files. Check the complete log for more details.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

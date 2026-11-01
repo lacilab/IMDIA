@@ -7,6 +7,16 @@ dna: True
 ### Does the structure contain phosphorylated amino acids?
 phos: True
 
+### At which pH should the protein be protonated?
+protonation:
+  method: propka
+  ph: 7.4
+  decision_mode: manual
+  review_pka_window: 1.0
+  acknowledge_phospho_approximation: false
+  overrides: []
+
+
 ### Replicates to analyze
 repn: [1, 2]
 
@@ -23,7 +33,7 @@ repn: [1, 2]
 ### 1 ns = 1000 ps
 # md_time: 100000
 
-### MD computational resource use 
+### MD computational resource use
 # ntmpi: "2"
 # ntomp: "16"
 # ngpu: "1"
@@ -60,7 +70,7 @@ chaingroups:
   DNA: [C, D]
 
 ### Domains for annotation and plot coloring
-# First level keys are group names (e.g., "Protein", "DNA") and should match chaingroups keys. 
+# First level keys are group names (e.g., "Protein", "DNA") and should match chaingroups keys.
 # Each domain is defined by a start and end residue number, a color, and a label.
 # Domains for the same chaingroup should not overlap, but can be adjacent.
 domains:
@@ -83,4 +93,4 @@ domains:
       color: orange
       label: DNA_Domain2
 
-  
+

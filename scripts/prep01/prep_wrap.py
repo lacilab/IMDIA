@@ -29,5 +29,5 @@ def main(pipe: Pipeline):
 
     prep.main(logfile=LOGFILE, datadir=pipe.paths.mutdir, filename=pipe.paths.pdbfile,
         dna=pipe.system.dna, phos=pipe.system.phos, rna=pipe.system.rna,
-        ffs=pipe.system.ffs)
+        ffs=pipe.system.ffs, protonation=pipe.system.protonation)
     

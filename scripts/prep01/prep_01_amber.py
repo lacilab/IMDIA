@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 import MDAnalysis as mda
 from scripts.utils.helpers import setup_logger
+from scripts.prep01.prep_00_protonation import assign_protonation
 from scripts.utils.forcefields import select_forcefields
 from scripts.utils import ligands
 
@@ -48,6 +49,8 @@ def add_hydrogens(file: str, logger_name: str, logfile: Path, ffs: list[str] = [
 	tleap_input = f"""
 		{ffs_import}
 		complex = loadPdb {file}
+		check complex
+charge complex
 		savePdb complex {outfile}
 		quit
 	"""
@@ -56,7 +59,6 @@ def add_hydrogens(file: str, logger_name: str, logfile: Path, ffs: list[str] = [
 	ok, lines = _run_tleap(tleap_input, logger, f"adding hydrogens to {file}")
 	if ok:
 		logger.debug(f"Hydrogens added with tleap. {outfile} was created.")
-
 	# Residues LEaP has no template for (they load, but get no atom types).
 	return outfile, _unknown_residues(lines)
 
@@ -221,7 +223,7 @@ def _stop(logger, cwd: Path, message: str):
 
 def main(logfile: Path = None, pdbpath: Path = None,
 	dna : bool = False, phos : bool = False, ffs: list = None,
-	protein : bool = True, rna : bool = False):
+	protein : bool = True, rna : bool = False, protonation: dict = None):
 
 	"""
     Prepare system using AmberTools. Add solvent and ions, generate prmtop
@@ -237,6 +239,7 @@ def main(logfile: Path = None, pdbpath: Path = None,
         ffs         : List of force fields to use instead of the automatic choice
                         (names as in LEaP, e.g. protein.ff19SB). Avoid using clashing
                         force fields. water.opc is added if no water model is listed.
+        protonation : Protonation configuration (default: None)
     The water model (water.opc) is always loaded, after the other force fields.
     """
 
@@ -286,7 +289,7 @@ def main(logfile: Path = None, pdbpath: Path = None,
 	ffs = select_forcefields(protein=protein, phos=phos, dna=dna, rna=rna, ffs=ffs, logger=logger)
 	logger.info(f"Force fields loaded in LEaP: {ffs}")
 
-	# Prepare the complex (make sure the hydrogens naming matches amber)
+	# Remove hydrogens and prepare the PDB.
 	noH_complex = remove_hydrogens(pdbfile, logger_name, logfile)
 	# pdb4amber failed: its error is already logged, the later steps need its output.
 	if noH_complex is None or not Path(noH_complex).is_file():
@@ -311,18 +314,43 @@ def main(logfile: Path = None, pdbpath: Path = None,
 						"\nKeeping this residues with the current settings would have caused the pipeline to fail, so they were removed by default."
 						"\nIf you want to run the simulation with these residues, include a forcefield that supports them in the parameters."
 						"\nAlternatively, you can try preparing the system with a suitable package or web based tool, and using the prepared files to run the MD simulation in IMDIA."
-					   "\nAdd parameters for them if they are needed in the simulation. ")
+				   "\nAdd parameters for them if they are needed in the simulation. ")
 		protonated_complex, unknown = add_hydrogens(noH_complex, logger_name, logfile, ffs)
 		if unknown:
 			_stop(logger, cwd, "tleap still reports residues without a template after removal: "
 				  + ", ".join(f"{name} {number}" for name, number in unknown))
+	# Keep the reference consistent if unsupported ligands were removed.
+	reference_pdb = pdbfile
+	if removed:
+		reference_pdb = f"{structure}_filtered_original.pdb"
+		ligands.remove_residues(pdbfile, names, reference_pdb)
 
+	# Assign protonation after ligand filtering.
+	assigned_complex = assign_protonation(
+		pdbfile=noH_complex,
+		original_pdb=reference_pdb,
+		config=protonation,
+		logger=logger,
+	)
+
+	# Build hydrogens using the assigned states.
+	protonated_complex, unknown = add_hydrogens(
+		assigned_complex, logger_name, logfile, ffs
+	)
+	if unknown:
+		_stop(
+			logger, cwd,
+			"Assigned residues have no force-field template: "
+			+ ", ".join(
+				f"{name} {number}" for name, number in unknown
+			)
+		)
 	# tleap can exit normally without writing the PDB, so the output file is checked.
-	if not Path(protonated_complex).is_file():
+	if protonated_complex is None or not Path(protonated_complex).is_file():
 		_stop(logger, cwd, f"tleap did not write {protonated_complex}. Check the log files for the comple tleap output.")
 
-	# Extract chain ids from the PDB file
-	u = mda.Universe(pdbfile)
+	# Extract chain IDs from the assigned structure.
+	u = mda.Universe(assigned_complex)
 	chains = []
 	for atom in u.atoms:
 		if atom.segid and atom.segid not in chains:
@@ -335,11 +363,11 @@ def main(logfile: Path = None, pdbpath: Path = None,
 	logger.debug(f"Extracted chain IDs: {chains}")
 
 	# Generate the receptor & ligand (also match the hydrogens to amber specifics)
-	chain_files = gen_chains(noH_complex, logger_name, logfile, chains, ffs)
+	chain_files = gen_chains(assigned_complex, logger_name, logfile, chains, ffs)
 	# Every chain needs its own protonated file for the LEaP step below.
 	if chain_files is None:
 		_stop(logger, cwd, "Chain extraction failed. See the error above.")
-	missing_chains = [f for f in chain_files if not Path(f).is_file()]
+	missing_chains = [str(f) for f in chain_files if f is None or not Path(f).is_file()]
 	if missing_chains:
 		_stop(logger, cwd, f"tleap did not write the chain files: {', '.join(missing_chains)}")
 	# tleap's errors are already logged; the working directory is restored before stopping.
