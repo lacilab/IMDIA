@@ -292,9 +292,9 @@ def main(logfile: Path, datadir: Path, filename: str,
         logger.debug("The system contains no DNA or RNA. Skipping H-bond restraints.")
 
     if os.path.isfile(path_ions):
-        logger.info("Preparation completed successfully.")
+        logger.info("\033[32mPreparation completed successfully.\033[0m")
     else:
-        logger.error("Preparation did not complete successfully. There are missing files. Check the complete log for more details.")
+        logger.error("\033[31mPreparation did not complete successfully. There are missing files. Check the complete log for more details.\033[0m")
         sys.exit(1)
 
 
