@@ -6,16 +6,210 @@ import re
 import subprocess
 import time
 import sys
+import math
 from pathlib import Path
 import MDAnalysis as mda
 from scripts.utils.helpers import setup_logger
-from scripts.prep01.prep_00_protonation import assign_protonation
+from scripts.prep01.prep_01b_protonation import (
+    assign_protonation, canonical, is_hydrogen, residue_key, residues, xyz,
+    terminal_residues, PROTEIN_NAMES, PHOSPHO_RESIDUES, NUCLEIC_NAMES,
+    WATER_NAMES, nucleic_base,
+)
 from scripts.utils.forcefields import select_forcefields
 from scripts.utils import ligands
 
 # Number of tleap error lines repeated at ERROR level when tleap fails.
 TLEAP_MAX_ERRORS = 20
 
+# Helper to match residue IDs by order original and prepared
+
+def _residue_pairs(reference, prepared):
+    """Match ordered residues despite changes in numbering or chain IDs."""
+    left, right = residues(reference), residues(prepared)
+
+    if len(left) != len(right):
+        raise ValueError(
+            'Preparation changed residue count; explicit mapping is required'
+        )
+
+    pairs = []
+    for (key, name), (other, converted) in zip(left.items(), right.items()):
+        matching = canonical(name) == canonical(converted)
+
+        if name in WATER_NAMES and converted in WATER_NAMES:
+            matching = True
+
+        if name in NUCLEIC_NAMES and converted in NUCLEIC_NAMES:
+            matching = nucleic_base(name) == nucleic_base(converted)
+
+        if not matching:
+            raise ValueError(
+                f'Preparation changed residue identity/order: '
+                f'{key} {name} -> {converted}'
+            )
+
+        pairs.append((key, other))
+
+    return pairs
+
+# Helper to remove newly generated TER records
+def _restore_peptide_continuity(original, prepared, logger):
+    # Remove newly added TER records only where the original segment was
+    # continuous and the prepared backbone C–N distance supports a peptide bond.
+    source = Path(original).read_text().splitlines(keepends=True)
+    target = Path(prepared).read_text().splitlines(keepends=True)
+    mapping = {new: old for old, new in _residue_pairs(source, target)}
+
+    segments, segment, previous_chain = {}, 0, None
+    for line in source:
+        if line.startswith('TER'):
+            segment += 1
+            previous_chain = None
+        elif line.startswith(('ATOM  ', 'HETATM')):
+            key = residue_key(line)
+            if previous_chain is not None and key[0] != previous_chain:
+                segment += 1
+            segments[key], previous_chain = segment, key[0]
+
+    atoms, following, next_key = {}, {}, None
+    for i in range(len(target) - 1, -1, -1):
+        line = target[i]
+        following[i] = next_key
+        if line.startswith(('ATOM  ', 'HETATM')):
+            next_key = residue_key(line)
+            atoms[next_key, line[12:16].strip()] = line
+
+    names, previous, removed, output = residues(target), None, 0, []
+    for i, line in enumerate(target):
+        if line.startswith(('ATOM  ', 'HETATM')):
+            previous = residue_key(line)
+
+        if (
+            line.startswith('TER')
+            and previous is not None
+            and following[i] is not None
+        ):
+            next_key = following[i]
+            protein = all(
+                canonical(names[key]) in PROTEIN_NAMES
+                or names[key] in PHOSPHO_RESIDUES
+                for key in (previous, next_key)
+            )
+
+            if (
+                protein
+                and previous[0] == next_key[0]
+                and segments[mapping[previous]] == segments[mapping[next_key]]
+            ):
+                carbon = atoms.get((previous, 'C'))
+                nitrogen = atoms.get((next_key, 'N'))
+
+                if (
+                    carbon and nitrogen
+                    and 1.0 <= math.dist(xyz(carbon), xyz(nitrogen)) <= 1.8
+                ):
+                    removed += 1
+                    continue
+
+        output.append(line)
+
+    if removed:
+        path = Path(prepared)
+        path.with_suffix('.before_TER_cleanup.pdb').write_text(''.join(target))
+        path.write_text(''.join(output))
+        logger.info(
+            f'Removed {removed} added TER records across continuous peptide '
+            'bonds; original breaks retained.'
+        )
+
+def _complete_terminal_oxygens(prepared, built, logger):
+	# Copy verified missing terminal OXT atoms from LEaP, preserving existing atoms.
+	path = Path(prepared)
+	lines = path.read_text().splitlines(keepends=True)
+	donor = Path(built).read_text().splitlines(keepends=True)
+	pairs = _residue_pairs(lines, donor)
+
+	atoms, last, built_atoms = {}, {}, {}
+	for i, line in enumerate(lines):
+		if line.startswith(('ATOM  ', 'HETATM')):
+			key = residue_key(line)
+			atom_key = key, line[12:16].strip()
+			if atom_key in atoms:
+				raise ValueError(f'Duplicate prepared atom: {atom_key}')
+			atoms[atom_key], last[key] = line, i
+
+	for line in donor:
+		if line.startswith(('ATOM  ', 'HETATM')) and not is_hydrogen(line):
+			atom_key = residue_key(line), line[12:16].strip()
+			if atom_key in built_atoms:
+				raise ValueError(f'Duplicate LEaP atom: {atom_key}')
+			built_atoms[atom_key] = line
+
+	endpoints, names = terminal_residues(lines), residues(lines)
+	nitrogens = [
+		(key, xyz(line))
+		for (key, atom), line in atoms.items()
+		if atom == 'N'
+	]
+	serial = max((int(line[6:11]) for line in atoms.values()), default=0)
+	additions = {}
+
+	for key, other in pairs:
+		oxygen = built_atoms.get((other, 'OXT'))
+		if oxygen is None or (key, 'OXT') in atoms:
+			continue
+
+		if (
+			canonical(names[key]) not in PROTEIN_NAMES
+			and names[key] not in PHOSPHO_RESIDUES
+		):
+			continue
+
+		carbon = atoms.get((key, 'C'))
+		if key not in endpoints or carbon is None or (key, 'O') not in atoms:
+			raise ValueError(f'Unexpected LEaP terminal oxygen at {key}')
+
+		if any(
+			other_key != key and math.dist(xyz(carbon), point) <= 1.8
+			for other_key, point in nitrogens
+		):
+			raise ValueError(
+				f'LEaP added OXT to a peptide-bonded carbonyl at {key}; '
+				'review chain breaks'
+			)
+
+		built_carbon = built_atoms.get((other, 'C'))
+		if (
+			built_carbon is None
+			or math.dist(xyz(carbon), xyz(built_carbon)) > 0.002
+			or not 1.0 <= math.dist(xyz(carbon), xyz(oxygen)) <= 1.6
+		):
+			raise ValueError(
+				f'Invalid LEaP terminal oxygen coordinates at {key}'
+			)
+
+		serial += 1
+		if serial > 99999:
+			raise ValueError(
+				'Terminal completion exceeds the PDB atom-serial limit'
+			)
+
+		additions[last[key]] = (
+			oxygen[:6] + f'{serial:5d}' + oxygen[11:17]
+			+ carbon[17:27] + oxygen[27:]
+		)
+
+	if additions:
+		path.with_suffix('.before_terminal_completion.pdb').write_text(
+			''.join(lines)
+		)
+		path.write_text(
+			''.join(line + additions.get(i, '') for i, line in enumerate(lines))
+		)
+		logger.info(
+			f'Completed {len(additions)} missing terminal oxygen atoms '
+			'using the loaded LEaP templates.'
+		)
 
 def remove_hydrogens(filename: str, logger_name: str, logfile: Path):
 	""" Remove hydrogens from the structure and prepare it with pdb4amber. """
@@ -35,6 +229,12 @@ def remove_hydrogens(filename: str, logger_name: str, logfile: Path):
 	else:
 		logger.debug(f"Hydrogens removed with pdb4amber. {outfile} was created.")
 		logger.debug(f"pdb4amber log: \n {process.stdout}")
+	    # Repair added chain breaks before passing the structure to LEaP.
+	try:
+		_restore_peptide_continuity(filename, outfile, logger)
+	except (ValueError, OSError) as exc:
+		logger.error(f'Cannot establish peptide continuity: {exc}')
+		return None
 	return outfile
 
 
@@ -60,7 +260,7 @@ charge complex
 	if ok:
 		logger.debug(f"Hydrogens added with tleap. {outfile} was created.")
 	# Residues LEaP has no template for (they load, but get no atom types).
-	return outfile, _unknown_residues(lines)
+	return (outfile if ok else None), _unknown_residues(lines)
 
 
 def _unknown_residues(lines: list[str]) -> list[tuple[str, int]]:
@@ -325,6 +525,17 @@ def main(logfile: Path = None, pdbpath: Path = None,
 		reference_pdb = f"{structure}_filtered_original.pdb"
 		ligands.remove_residues(pdbfile, names, reference_pdb)
 
+	# Complete terminal heavy atoms before PROPKA and PDB2PQR read the structure.
+	if protonated_complex is None or not Path(protonated_complex).is_file():
+		_stop(
+			logger, cwd,
+			'LEaP could not complete the initial structure; inspect leap.log.',
+		)
+
+	try:
+		_complete_terminal_oxygens(noH_complex, protonated_complex, logger)
+	except (ValueError, OSError) as exc:
+		_stop(logger, cwd, f'Terminal oxygen completion failed: {exc}')
 	# Assign protonation after ligand filtering.
 	assigned_complex = assign_protonation(
 		pdbfile=noH_complex,
