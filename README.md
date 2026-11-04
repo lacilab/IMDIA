@@ -1,3 +1,4 @@
+**Cite this code:** https://doi.org/10.5281/zenodo.23954931
 # Table of contents
 - [Introduction](#introduction)
 - [Installation](#installation)
@@ -20,6 +21,7 @@
 # Introduction
 
 IMDIA (Integrated Molecular Dynamics Interaction Analysis) is a Python pipeline for molecular dynamics that integrates preparation, production, and analysis, with minimal setup and increased automation. It is particularly aimed at the study of protein-protein and protein-DNA systems and the effects of mutations, and specifically point mutations, on these complexes. Part of the analysis functionalities focus on these interactions; for example, looking at the interactions between protein chains or between the protein complex and the DNA.
+
 
 IMDIA consists of five modules:
 
