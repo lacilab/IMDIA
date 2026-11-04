@@ -30,6 +30,21 @@ def main(logfile: Path, outdir: Path, csv: Path):
       sys.exit(1)
 
     outdir.mkdir(parents=True, exist_ok=True)
+
+    # Expected output files
+    filenames = [
+        'pca_clusters.csv',
+        'clust_kmeans.png',
+        'clust_kmeans_sizes.png',
+        'clust_kmeans_time.png',
+        'clust_hierarchical.png',
+        'clust_hierarchical_sizes.png',
+        'clust_hierarchical_time.png',
+        'clust_silhouette.png',
+        'summary.txt'
+    ]
+    outdir = Path(outdir)
+    outfiles = [outdir / n for n in filenames]
     
     # Plot first two PCs
     df = pd.read_csv(csv)
@@ -60,8 +75,8 @@ def main(logfile: Path, outdir: Path, csv: Path):
     best_kmeans = max(kmeans_results.keys(), key=lambda k: kmeans_results[k]['score'])
     best_hclust = max(hclust_results.keys(), key=lambda k: hclust_results[k]['score'])
     
-    logger.info(f"Best KMeans: k={best_kmeans}, score={kmeans_results[best_kmeans]['score']:.3f}")
-    logger.info(f"Best Hierarchical: k={best_hclust}, score={hclust_results[best_hclust]['score']:.3f}")
+    logger.debug(f"Best KMeans: k={best_kmeans}, score={kmeans_results[best_kmeans]['score']:.3f}")
+    logger.debug(f"Best Hierarchical: k={best_hclust}, score={hclust_results[best_hclust]['score']:.3f}")
 
     # Save cluster labels to CSV
     df['KMeans_Cluster'] = kmeans_results[best_kmeans]['labels']
@@ -193,7 +208,15 @@ def main(logfile: Path, outdir: Path, csv: Path):
                 f.write(f"Representative frame index: {rep_frame}\n")
             
             f.write("\n")
-    
+
+    # Check all expected outputs were generated
+    missing = [f.name for f in outfiles if not f.is_file()]
+    if missing:
+        logger.warning("K-means and hierarchical clustering did not complete successfully. Some expected outputs are missing.")
+        logger.warning(f"Missing {len(missing)} file(s): {', '.join(missing)}")
+        logger.warning(f"Check log {logfile}")
+    else:
+        logger.info(f"K-means and hierarchical clustering completed successfully. Output files are in {outdir}.")
     
 
 if __name__ == "__main__":

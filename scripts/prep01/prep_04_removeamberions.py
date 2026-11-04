@@ -52,7 +52,7 @@ def main(logfile: Path, gmxdir: Path):
     # Check if checkpoint file from previous run exists
     checkpoint_files = list(gmxdir.glob(f"check_04_removeamberions_*.done"))
     if len(checkpoint_files) > 0:
-        logger.warning(f"Checkpoint file(s) found: {', '.join([str(f) for f in checkpoint_files])}")
+        logger.debug(f"Checkpoint file(s) found: {', '.join([str(f) for f in checkpoint_files])}")
         # check if updated_gromacs.gro exists
         path_updated_gro = gmxdir / "updated_gromacs.gro"
         if os.path.isfile(path_updated_gro):
@@ -99,7 +99,7 @@ def main(logfile: Path, gmxdir: Path):
         logger.error("Could not find both Na and Cl lines in gromacs.gro.")
         sys.exit(1)
     else:
-        logger.info(f"Found Na at line {line_Na} and Cl at line {line_Cl} in gromacs.gro.")
+        logger.debug(f"Found Na at line {line_Na} and Cl at line {line_Cl} in gromacs.gro.")
 
     
     line1, line2 = sorted([line_Na, line_Cl])
@@ -165,7 +165,7 @@ def main(logfile: Path, gmxdir: Path):
 
     # check updated_gromacs.gro was created
     if updated_gro.is_file():
-        logger.info(f"Updated gromacs.gro file created at {str(updated_gro)}.")
+        logger.debug(f"Updated gromacs.gro file created at {str(updated_gro)}.")
     else:
         logger.error(f"Failed to create updated gromacs.gro file at {str(updated_gro)}.")
         sys.exit(1)
@@ -174,7 +174,7 @@ def main(logfile: Path, gmxdir: Path):
     with open(updated_gro) as f:
         num_Na_updated, num_Cl_updated = count_lines(updated_gro, "Na", "Cl")
     if num_Na_updated == 0 and num_Cl_updated == 0:
-        logger.info("Successfully removed Amber ions from gromacs.gro. No Na or Cl lines found in updated_gromacs.gro.")
+        logger.debug("Successfully removed Amber ions from gromacs.gro. No Na or Cl lines found in updated_gromacs.gro.")
     else:
         logger.warning(f"Found {num_Na_updated} Na and {num_Cl_updated} Cl lines in updated_gromacs.gro, but expected 0.")
 

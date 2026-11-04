@@ -6,7 +6,7 @@ import sys
 from scripts.utils.helpers import setup_logger
 from scripts.utils.group_index import group_index
 
-def main(logfile: Path, repdir: Path, dna: bool = False, phos: bool = False):
+def main(logfile: Path, repdir: Path, dna: bool = False, rna: bool = False, phos: bool = False):
     """
     Post-process MD results to make them ready for analysis and visualization.
 
@@ -21,6 +21,7 @@ def main(logfile: Path, repdir: Path, dna: bool = False, phos: bool = False):
        logfile : Path to the log file.
        repdir  : Directory containing the MD results for this replicate.
        dna     : True if the system contains DNA.
+       rna     : True if the system contains RNA.
        phos    : True if the system contains phosphorylated residues.
     """
 
@@ -29,8 +30,10 @@ def main(logfile: Path, repdir: Path, dna: bool = False, phos: bool = False):
 
     def log_process_output(process, step_name):
         if process.returncode != 0:
-            logger.error(f"{step_name} error:\n {process.stderr}")
+            logger.error(f"There was an error during {step_name} in post-processing. Check the log files for the complete error message.")
+            logger.debug(f"{step_name} error:\n {process.stderr}")
         elif process.stdout:
+            logger.info(f"{step_name} in post-processing completed without errors. Check the log files for complete log messages.")
             logger.debug(f"{step_name} output:\n {process.stdout}")  
 
     checkpoint_files = list(repdir.glob("check_02_post_*.done"))
@@ -40,7 +43,7 @@ def main(logfile: Path, repdir: Path, dna: bool = False, phos: bool = False):
         sys.exit(0)
 
     # Get main group name
-    group = group_index(gmxdir=repdir, logfile=logfile, logname='post', structurefile=repdir / "md.gro", dna=dna, phos=phos)
+    group = group_index(gmxdir=repdir, logfile=logfile, logname='post', structurefile=repdir / "md.gro", dna=dna, rna=rna, phos=phos)
 
     ##### POST-PROCESSING STEPS ######
     # Remove PBC artifacts
@@ -84,11 +87,15 @@ def main(logfile: Path, repdir: Path, dna: bool = False, phos: bool = False):
     # Rename post-processed trajectory
     os.rename(repdir / "md_noPBC_mol_com_cluster_fit.xtc", repdir / "md_post.xtc")
 
+    # Output file names
+    md_sys = repdir / "md_sys.pdb"
+    md_prot = repdir / "md_prot.pdb"
+
     # Output .pdb files at frame 10
     cmd = ["gmx", "trjconv", 
            "-s", repdir / "md.tpr", 
            "-f", repdir / "md_post.xtc", 
-           "-o", repdir / "md_sys.pdb", 
+           "-o", md_sys, 
            #"-pbc", "mol", 
            #"-ur", "compact", 
            "-dump", "10", 
@@ -96,10 +103,11 @@ def main(logfile: Path, repdir: Path, dna: bool = False, phos: bool = False):
     process = subprocess.run(cmd, input="System\n", check=True, text=True, capture_output=True)
     log_process_output(process, "gmx trjconv - output pdb")
 
+
     cmd = ["gmx", "trjconv", 
            "-s", repdir / "md.tpr", 
            "-f", repdir / "md_post.xtc", 
-           "-o", repdir / "md_prot.pdb", 
+           "-o", md_prot, 
            #"-pbc", "mol", 
            #"-ur", "compact", 
            "-dump", "10", 
@@ -111,10 +119,12 @@ def main(logfile: Path, repdir: Path, dna: bool = False, phos: bool = False):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     checkpoint = repdir / f"check_03_post_{timestamp}.done"
     checkpoint.parent.mkdir(exist_ok=True, parents=True)
-    with checkpoint.open('w') as f:
-        f.write(f"Post-processing completed at {timestamp}\n")
-        logger.info(f"Post-processing completed successfully. Checkpoint created: {checkpoint}")
-        return
+    if os.path.isfile(md_sys) and os.path.isfile(md_prot):
+       logger.info(f"Post-processing generated files {md_sys} and {md_prot}.")
+       with checkpoint.open('w') as f:
+              f.write(f"Post-processing completed at {timestamp}\n")
+              logger.info(f"Post-processing completed successfully. Checkpoint created: {checkpoint}")
+              return
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@
 import sys
 import pickle
 import matplotlib
+from pathlib import Path
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -31,7 +32,7 @@ def is_backbone_atom(atom_name, backbone_atoms = {'P', 'OP1', 'OP2'}):
     return atom_name in backbone_atoms or "'" in atom_name
 
 
-def get_atom_info(structure_file, atom_ids, chains):
+def get_atom_info(structure_file, atom_ids, offsets):
     """Map atom index to residue number, residue name and atom name."""
     u = mda.Universe(structure_file)
     atom_info = {}
@@ -42,24 +43,16 @@ def get_atom_info(structure_file, atom_ids, chains):
                 'res_name': a.resnames[0],
                 'res_num': a.resids[0],
                 'atom_name': a.names[0],
-                'chain': get_ori_chain(a.segids[0].strip(), chains)
+                'chain': offsets[a.chainIDs[0]]['id_old']
             }
     return atom_info
-
-def get_ori_chain(chain_new, chains):
-    """ Get original chain ID from updated ID."""
-    for chain, info in chains.items():
-        if info['new_id'] == chain_new:
-            return chain
-    return chain_new
-
 
 ######## MAIN ########
 
 def main(logfile: str = None, pdbfile: str = None, universe: str = None, 
          hbonds_parsed : str = None, hbonds_ext : str = None, 
          hbonds_perframe : str = None,
-         offsets : dict = None, domains : dict = {}, chaingroups : dict = {}, chains : dict = {}):
+        domains : dict = {}, chaingroups : dict = {}, offsets : dict = None):
 
     """
     Extend hydrogen bond prediction results with data about the donor and acceptor atoms, corresponding residues and domains
@@ -79,16 +72,14 @@ def main(logfile: str = None, pdbfile: str = None, universe: str = None,
 
         hbonds_perframe : Path to output .png plot.
 
-        offsets         : Dictionary specifying residue numbering offsets per chain.
         domains         : Dictionary of domains in the structure.
         chaingroups     : Dictionary of groups and chains in them.
-        chains          : Dictionary of original ID chains and corresponding updated IDs, and offsets.
+        offsets         : Dictionary specifying residue numbering offsets per chain.
     """
 
 
     ##### Initialize logger
     logger = setup_logger("analysis", logfile)
-
 
     # Load universe
     with open(universe, 'rb') as f:
@@ -131,7 +122,7 @@ def main(logfile: str = None, pdbfile: str = None, universe: str = None,
     unique_atom_ids = set(hbonds_grouped['donor']).union(set(hbonds_grouped['acceptor']))
 
     # Get atom information only for relevant atoms from PDB file
-    atom_info = get_atom_info(pdbfile, unique_atom_ids, chains)
+    atom_info = get_atom_info(pdbfile, unique_atom_ids, offsets)
 
     # Add donor information
     hbonds_grouped['donor_res_name'] = hbonds_grouped['donor'].map(lambda x: atom_info.get(x, {}).get('res_name', 'UNK'))
@@ -160,9 +151,12 @@ def main(logfile: str = None, pdbfile: str = None, universe: str = None,
     )
     
     # Adjusted residue number to global complete protein
-    offset_map = {chain: data["offset"] for chain, data in offsets.items()}
-    hbonds_grouped['donor_res_num_adjusted'] = (hbonds_grouped['donor_res_num'] + hbonds_grouped['donor_chain'].map(offset_map)).astype(int)
-    hbonds_grouped['acceptor_res_num_adjusted'] = (hbonds_grouped['acceptor_res_num'] + hbonds_grouped['acceptor_chain'].map(offset_map)).astype(int)
+    hbonds_grouped['donor_res_num_adjusted'] = (hbonds_grouped['donor_res_num'] + hbonds_grouped['donor_chain'].map(lambda x: offsets.get(x, {}).get('offset', 0)))
+    hbonds_grouped['acceptor_res_num_adjusted'] = (hbonds_grouped['acceptor_res_num'] + hbonds_grouped['acceptor_chain'].map(lambda x: offsets.get(x, {}).get('offset', 0)))
+
+    # Adjust chain names new->old to match chain groups specified in params.yml
+    hbonds_grouped['donor_chain'] = hbonds_grouped['donor_chain'].map(lambda x: offsets.get(x, {}).get('id_old', x))
+    hbonds_grouped['acceptor_chain'] = hbonds_grouped['acceptor_chain'].map(lambda x: offsets.get(x, {}).get('id_old', x))
 
     # Chain groups
     hbonds_grouped['donor_group'] = hbonds_grouped['donor_chain'].map(lambda x: next((k for k, v in chaingroups.items() if x in v), 'None'))
@@ -186,9 +180,13 @@ def main(logfile: str = None, pdbfile: str = None, universe: str = None,
         np.where(hbonds_grouped['acceptor_atom_name'].apply(is_backbone_atom), 'backbone', 'base')
     )
 
-    # Save
-    hbonds_grouped.to_csv(hbonds_ext, index=False)
-    logger.info(f"Extended hydrogen bonds saved to {hbonds_ext}")
+    # Save and check
+    try:
+        hbonds_grouped.to_csv(hbonds_ext, index=False)
+        logger.info(f"Parsed and extended hydrogen bond results saved to {hbonds_ext}")
+    except OSError as err:
+        logger.warning("Parsed and extended hydrogen bond results were not correctly saved.")
+        logger.warning(f"Check log {logfile}")
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ import sys
 import os
 import re
 import pickle
+from pathlib import Path
 import MDAnalysis as mda
 from MDAnalysis.analysis.hydrogenbonds.hbond_analysis import HydrogenBondAnalysis as HBA
 import numpy as np
@@ -23,7 +24,7 @@ def main(logfile: str = None, universe: str = None,
          outdir : str = None, hbonds_mda_parsed : str = None,
          cores : int = 1,
          start: int = 0, stop: int = None,
-         group1: str = None, group2: str = None, dna : bool = False):
+         group1: str = None, group2: str = None, dna : bool = False, rna : bool = False, offsets : dict = None):
 
     """
     Predict hydrogen bonds between two groups using MDAnalysis.
@@ -45,6 +46,8 @@ def main(logfile: str = None, universe: str = None,
         group2            : Second atom group for hydrogen bond analysis.
 
         dna               : True if DNA is present in the system.
+        rna               : True if RNA is present in the system.
+        offsets           : Dictionary specifying residue numbering offsets per chain.
     """
 
     ##### Initialize logger
@@ -53,7 +56,7 @@ def main(logfile: str = None, universe: str = None,
 
     if not os.path.exists(outdir):
         os.makedirs(outdir, exist_ok=True)
-        logger.info(f"Created output directory: {outdir}")
+        logger.debug(f"Created output directory: {outdir}")
     else:
         logger.warning(f"Output directory already exists: {outdir}")
 
@@ -72,13 +75,14 @@ def main(logfile: str = None, universe: str = None,
     selections = []
     for group in [group1, group2]:
         if re.match(r"^[A-Za-z]$", group):
-            logger.debug(f"MDA - hbond analysis - Group {group} identified as chain.")
-            selections.append(u.select_atoms(f"segid {group}"))
-        elif group == "DNA" and dna:
-            logger.debug(f"MDA - hbond analysis - Group {group} identified as DNA.")
+            new_id = next((k for k, v in offsets.items() if v['id_old'] == group), 'UNK')
+            logger.debug(f"MDA - hbond analysis - Group {group} identified as chain, with new id {new_id}.")
+            selections.append(u.select_atoms(f"segid {new_id}"))
+        elif (group == "DNA" and dna) or (group == "RNA" and rna):
+            logger.debug(f"MDA - contact analysis - Group {group} identified.")
             selections.append(u.select_atoms("nucleic")) 
         elif group == "Protein":
-            logger.debug(f"MDA - hbond analysis - Group {group} identified as Protein.")
+            logger.debug(f"MDA - hbond analysis - Group {group} identified.")
             protein_sel = u.select_atoms("protein")
             # Get segids of the protein, to avoid leaving out non-standard residues like PTR
             prot_segids = [seg.segid for seg in protein_sel.segments]
@@ -98,7 +102,7 @@ def main(logfile: str = None, universe: str = None,
         logger.debug(f"MDA - hbond analysis - Running parallel Dask with {cores} cores")
         hbonds_array = an_perblock(logger, tprfile, xtcfile, cores, hbond_factory, start, stop, sele_index, dha_angle, da_angle)
     else:
-        logger.debug(f"MDA - hbond analysis - Running single-core analysis")
+        logger.debug(f"MDA - hbond analysis - Running single-core analysis.")
         hbonds = HBA(
             universe=u_tpr,
             between=[sele_index],
@@ -117,9 +121,13 @@ def main(logfile: str = None, universe: str = None,
     df['hydrogen'] = (df['hydrogen'] + 1).astype('int')
     df['acceptor'] = (df['acceptor'] + 1).astype('int')
 
-    # Save
-    df.to_csv(hbonds_mda_parsed, index=False)
-    logger.info(f"Parsed hydrogen bonds saved to {hbonds_mda_parsed}")
+    # Save and check
+    try:
+        df.to_csv(hbonds_mda_parsed, index=False)
+        logger.info(f"Parsed hydrogen bonds saved to {hbonds_mda_parsed}")
+    except OSError as err:
+        logger.warning(f"Parsed hydrogen bonds file {hbonds_mda_parsed} was not created: {err}")
+        logger.warning(f"Check log {logfile}")
 
 
 if __name__ == "__main__":

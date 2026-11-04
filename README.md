@@ -21,8 +21,9 @@
 
 IMDIA (Integrated Molecular Dynamics Interaction Analysis) is a Python pipeline for molecular dynamics that integrates preparation, production, and analysis, with minimal setup and increased automation. It is particularly aimed at the study of protein-protein and protein-DNA systems and the effects of mutations, and specifically point mutations, on these complexes. Part of the analysis functionalities focus on these interactions; for example, looking at the interactions between protein chains or between the protein complex and the DNA.
 
-IMDIA consists of four modules:
+IMDIA consists of five modules:
 
+0. Diagnosis
 1. System preparation
 2. Molecular dynamics simulation
 3. Post-processing
@@ -42,6 +43,7 @@ Clone this repository to use it.
 IMDIA requires the following packages:
 - Ambertools
 - Biopython 
+- Biotite
 - Dask
 - GROMACS
 - gmx-MMPBSA
@@ -57,7 +59,7 @@ IMDIA requires the following packages:
 To create a conda environment with the required packages, run:
 
 ```
-conda create --name pipemd ambertools biopython dask-core gromacs=2024.3 matplotlib mdanalysis mpi4py parmed pdb-tools pymol snakemake umap-learn 
+conda create --name pipemd ambertools biotite biopython dask-core gromacs=2024.3 matplotlib mdanalysis mpi4py parmed pdb-tools pymol snakemake umap-learn 
 
 conda activate pipemd
 
@@ -112,16 +114,17 @@ A model of ```params.yml``` is provided to use as a template.
 
 The following parameters are parsed from ```params.yml```:
 
-| Parameter      | Type | Use                                                                                                         | Used in  | Compulsory |Default | Example        |
+| Parameter      | Type | Use            | Used in  | Compulsory |Default | Example        |
 | :--------------| :--- | :-------------------------------------------------                        | :------  | :------| :------ |:------------- |
 | pdbpath        | str  | Path of the starting .pdb file.                                           | prep, md, post, an | * |   
 | repn           | list | List of replicates (int).                                                 | md, post, an | * |   [ ]   | [1, 2, 3]  |
-| ffs            | list | List of Amber forcefields to use                                          | prep, an |        |         | [phosaa10, GLYCAM_06j-1] |
-| dna            | bool | Specify if the system contains DNA.                                       | prep, md, post, an |        | False   | True  |
-| phos           | bool | Specify if the protein contains phosphorilated residues.                  | prep, md, post, an |        | False   | True  |
-| range_a        | str  | Range of residues in DNA chain A that are paired with chain B. 0 indexed. | prep |        | [0,-1] (full chain)  | [2,-1]  |
-| range_b        | str  | Range of residues in DNA chain B that are paired with chain A. 0 indexed. | prep |        | [0,-1] (full chain)  | [2,-2]  |
-| md_time: 2000  | int  | Duration of the MD production simulation in ps (overwrites md.mdp). If the MD was previously ran and did not reach this target duration, the simulation will be extended from the last checkpoint, independently of whether it was previously completed or not. Bear in mind that an md_time greater than the latest checkpoint will cause an error.       | md | | | 10000 | 20000 (for 20 ns) |
+| ffs            | list | List of Amber forcefields to use                                          | prep, an |        |         | [phosaa10] |
+| stop_on_gaps   | bool | Specify if the run should stop if the diagnosis step detects chain breaks and/or backbone distortions | diag, prep | | True | False |
+| protein        | bool | Specify if the system contains protein(s). If the parameter is missing, IMDIA analyzes the system to determine its composition. | prep, md, post, an | | auto | True  |
+| phos           | bool | Specify if the protein contains phosphorilated residues. If the parameter is missing, IMDIA analyzes the system to determine its composition. | prep, md, post, an |        | False   | True  |
+| dna            | bool | Specify if the system contains DNA. If the parameter is missing, IMDIA analyzes the system to determine its composition. | prep, md, post, an | | False | True  |
+| rna             | bool | Specify if the system contains RNA. If the parameter is missing, IMDIA analyzes the system to determine its composition. | prep, md, post, an | | False | False |
+| md_time  | int  | Duration of the MD production simulation in ps (overwrites md.mdp). If the MD was previously ran and did not reach this target duration, the simulation will be extended from the last checkpoint, independently of whether it was previously completed or not. Bear in mind that an md_time greater than the latest checkpoint will cause an error.       | md | | | 10000 | 20000 (for 20 ns) |
 | em             | str  | Path to the .mdp file with custom energy minimization parameters          | md |        | None (use default) | myscripts/em.mdp |
 | nvt            | str  | Path to the .mdp file with custom NVT equilibration parameters            | md |        | None (use default) | myscripts/nvt.mdp |
 | npt            | str  | Path to the .mdp file with custom NPT equilibration parameters            | md |        | None (use default) | myscripts/npt.mdp |
@@ -135,12 +138,12 @@ The following parameters are parsed from ```params.yml```:
 | npme           | str  | Number of separate ranks to be used for PME in MD.          | md |        | -1 (Let GROMACS guess.)   | 1  |
 | snakecores     | int  | Number of CPU cores to use for the analysis.                | an |        |     all    | 36 |
 | methods_hbonds | list | Packages to use for hydrogen bond analysis: MDAnalysis and/or GROMACS. Values: gmx, mda. | an |        | [gmx, mda] | [mda]
-| structure      | list | Structure(s) to analyze.                                       | an | * |  [ ]       | [1BF5, 1YVL] |
-| muts           | list | Mutations or variants of the previous structures to analyze.   | an | * |     [ ]      | [WT, N460H] |
+| structure      | list | Structure(s) to analyze. If empty, it's parsed from pdbpath.                                       | an |  |  [ ]       | [1BF5, 1YVL] |
+| muts           | list | Mutations or variants of the previous structures to analyze. If empty, it's parsed from pdbpath.   | an |  |     [ ]      | [WT, N460H] |
 | start_frame    | int  | First frame to analyze in interaction analysis.                | an |        | 1 | 1000 |
 | stop_frame     | int  | Last frame to analyze in interaction analysis.                 | an |        | None | 2001 |
-| group1         | str  | First group of interest for interaction analysis, which studies the interaction between group1 and group2. These can be chain IDs (e.g., "A", "B", "C") or predefined groups (e.g., "Protein", "DNA")  | an (hbonds, contacts, water bridges) | * | | Protein |
-| group2         | str  | Second group of interest for interaction analysis, which studies the interaction between group1 and group2. These can be chain IDs (e.g., "A", "B", "C") or predefined groups (e.g., "Protein", "DNA") | an (hbonds, contacts, water bridges) | * | | DNA |
+| group1         | str  | First group of interest for interaction analysis, which studies the interaction between group1 and group2. These can be chain IDs (e.g., "A", "B", "C") or predefined groups (e.g., "Protein", "DNA")  | an (hbonds, contacts, water bridges) | * | Protein | A |
+| group2         | str  | Second group of interest for interaction analysis, which studies the interaction between group1 and group2. These can be chain IDs (e.g., "A", "B", "C") or predefined groups (e.g., "Protein", "DNA") | an (hbonds, contacts, water bridges) | * | DNA | B |
 | chaingroups    | dict | Named groups of chain lists. Used to group them together for plotting. | an |  |  | (See below)
 | domains        | dict | Domains or segments of the protein. These are used for annotation and plotting. First level keys are group names, which must match chaingroup keys. Each domain is defined by: start (int), end (int), color (str), labe(str). Domains for the same chaingroup should not overlap, but can be adjacent.| an | | | (See below) |
 
@@ -190,7 +193,18 @@ The modules can be run sequentially through a single command or separatelly. The
 To run the complete pipeline, from the repository root, run:
 ```
 python -m scripts.main --params <params.yml path> --prep --md --post --analysis
+
 ```
+
+## 0. Diagnosis
+This step analysis the input structure to detect chain breaks (gaps), backbone distortions and missing heavy atoms. It lists the incidences it found, their severity, and suggested fixes. By default, the pipeline stops if chain breaks or distortions are found, as these are likely to compromise the simulations. This behaviour can be overriden through the parameter `stop_on_gaps` in the parameter file.
+
+To run this step:
+```
+python -m scripts.main --params <params.yml path> --diag
+```
+
+Diagnosis is also automatically run whenever the preparation step is run.
 
 ## 1. System preparation
 
@@ -202,7 +216,8 @@ python -m scripts.main --params <params.yml path> --prep
 It is recommended to visually inspect the starting .pdb structure to identify and correct any missing atoms, residues, or unresolved regions. If necessary, mutations can be added with software such as ChimeraX or PyMOL, selecting the mutated residue rotamers with the smallest number of clashes. Starting from this file, the preparation step outputs the structure and topology files of the complex in an octahedral solvate box with a padding distance of 10.0 Å, with neutral charge and Na+ and Cl- ionic concentrations of 0.15 M. 
 
 Steps performed by this command:
-- Force field setup and solvation with LeAP. The default forcefields are ff19SB for proteins, phosaa19SB for phosphorylated residues, OPC for water and bsc1 for DNA. 
+- Trim 5' phosphate groups that do not belong to a complete nucleotide from DNA and RNA chain ends.
+- Force field setup and solvation with LeAP. The default forcefields are ff19SB for proteins, phosaa19SB for phosphorylated residues, OPC for water, bsc1 for DNA, and OL3 for RNA. IMDIA detects the system composition and automatically asigns these forcefields based on what it detects. Custom AMBER forcefields can be selected through the parameter file.
 - Conversion to GROMACS compatible files with ParmEd.
 - Extraction of topology into one .itp file per chain or compound.
 - Neutralization and target ionic concentration with GROMACS.

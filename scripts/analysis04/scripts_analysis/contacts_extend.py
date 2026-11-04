@@ -45,6 +45,10 @@ def main(logfile: str, universe: str, contacts_csv: Path, offsets: dict, outfile
         df['sele2_chain'].map(lambda chain: offsets[chain]['offset'] if chain in offsets.keys() else 0)
     )
 
+    # Adjust chain names to original names
+    df['sele1_chain'] = df['sele1_chain'].map(lambda x: offsets[x]['id_old'])
+    df['sele2_chain'] = df['sele2_chain'].map(lambda x: offsets[x]['id_old'])
+
     # Aggregate by residue pair, with avg distance and count of interactions / number of frames 
     agg_df = df.groupby(['sele1_resnm', 'sele1_resid_adj', 'sele1_chain', 
                               'sele2_resnm', 'sele2_resid_adj', 'sele2_chain']).agg(
@@ -56,6 +60,12 @@ def main(logfile: str, universe: str, contacts_csv: Path, offsets: dict, outfile
 
     # Save extended df to csv
     agg_df.to_csv(outfile, index=False)
+
+    if Path(outfile).is_file():
+        logger.info(f"Pairwise contact analysis results parsed successfully. Output: {outfile}.")
+    else:
+        logger.warning(f"Pairwise contact analysis results were not parsed successfully. Output {outfile} is missing.")
+        logger.warning(f"Check log {logfile}")
 
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@ from venv import logger
 from scripts.utils.helpers import setup_logger
 from scripts.utils.group_index import group_index
 
-def prep_mmpbsain(logger, infile, start, stop, dna, phos, ffs):
+def prep_mmpbsain(logger, infile, start, stop, dna, rna, phos, ffs):
     """ Prepare mmpbsa.in parameter file for GBSA. """
     # get GROMACS path with which gmx. Take part before "bin"
     gmx_path = shutil.which("gmx").split("/gmx")[0]
@@ -27,6 +27,8 @@ def prep_mmpbsain(logger, infile, start, stop, dna, phos, ffs):
         ffs = ['water.opc', 'protein.ff19SB']
         if dna:
             ffs.append('dna.bsc1')
+        if rna: 
+            ffs.append('rna.OL3')
         if phos:
             ffs.append('phosaa19SB')
 
@@ -64,7 +66,7 @@ def prep_mmpbsain(logger, infile, start, stop, dna, phos, ffs):
 def main(logfile: str = None, scriptdir: str = None, gmxdir: str = None, outdir: str = None, 
          index:str = None, tprfile: str = None,
          xtcfile: str = None, topfile: str = None, cores: int = 1,
-         start: int = None, stop: int = None, 
+         start: int = None, stop: int = None, rna: bool = False,
          dna: bool = False, phos: bool = False,
          index_group1: str = None, index_group2: str = None, ffs: list = None):
 
@@ -88,6 +90,7 @@ def main(logfile: str = None, scriptdir: str = None, gmxdir: str = None, outdir:
         stop           : Ending frame index for trajectory analysis.
 
         dna            : True if DNA is present in the system.
+        rna            : True if RNA is present in the system.
         phos           : True if phosphorylated residues are present.
 
         index_group1   : First index group for binding energy calculation.
@@ -102,7 +105,7 @@ def main(logfile: str = None, scriptdir: str = None, gmxdir: str = None, outdir:
     # Create output directory if it doesn't exist
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-        logger.info(f"Created output directory: {outdir}")
+        logger.debug(f"Created output directory: {outdir}")
     else:
         logger.warning(f"Directory already exists: {outdir}")
 
@@ -110,7 +113,7 @@ def main(logfile: str = None, scriptdir: str = None, gmxdir: str = None, outdir:
     input_file_src = os.path.join(scriptdir, "mmpbsa.in")
     input_file_dst = os.path.join(outdir, "mmpbsa.in")
     shutil.copy(input_file_src, input_file_dst)
-    logger.info(f"Copied GBSA input file from {input_file_src} to {input_file_dst}")
+    logger.debug(f"Copied GBSA input file from {input_file_src} to {input_file_dst}")
     prep_mmpbsain(logger, input_file_dst, start, stop, dna, phos, ffs)
     logger.debug(f"Prepared GBSA input file: {input_file_dst}")
     logger.debug(f"Computing GBSA with selections: {index_group1} and {index_group2}")
@@ -134,6 +137,24 @@ def main(logfile: str = None, scriptdir: str = None, gmxdir: str = None, outdir:
            ]
     
     subprocess.run(cmd, cwd=outdir, check=True, text=True)
+
+    # Expected output files (minimum, required downstream)
+    filenames = [
+        'FINAL_ENERGY.csv',
+        'FINAL_ENERGY_DECOMP.csv'
+
+    ]
+    outdir = Path(outdir)
+    outfiles = [outdir / n for n in filenames]
+
+    # Check all expected outputs were generated
+    missing = [f.name for f in outfiles if not f.is_file()]
+    if missing:
+        logger.warning("GBSA analysis did not complete successfully. Some expected outputs are missing.")
+        logger.warning(f"Missing {len(missing)} file(s): {', '.join(missing)}")
+        logger.warning(f"Check log {logfile}")
+    else:
+        logger.info(f"GBSA analysis completed successfully. Output files are in {outdir}.")
 
 if __name__ == "__main__":
     main()

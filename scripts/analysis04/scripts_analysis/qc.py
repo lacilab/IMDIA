@@ -4,6 +4,7 @@ import sys
 import os
 import argparse
 import pickle
+from pathlib import Path
 import pandas as pd
 import numpy as np
 import matplotlib
@@ -35,7 +36,7 @@ def radgyr(atomgroup, masses, total_mass=None):
         return np.sqrt(rog_sq)
 
 def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles : dict = {}, 
-         with_dna: bool = False, offsets: dict = None, domains: dict = {}, chaingroups: list = {}):
+         dna: bool = False, rna: bool = False, offsets: dict = None, domains: dict = {}, chaingroups: list = {}):
     """
     Quality control analysis MD results.
 
@@ -44,7 +45,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
         universe    : Path to the Universe object generated with MDAnalysis, containing the processed MD system.
         outdir      : Output directory for results (e.g. rep1/analysis/qc).
         outfiles    : Dictionary of the files to be generated, assigned to labels/keys.
-        with_dna    : True if DNA is present in the system.
+        dna    : True if DNA is present in the system.
         offsets     : Dictionary specifying residue numbering offsets per chain.
         domains     : Dictionary of domains in the structure.
         chaingroups : Dictionary of groups and chains in them.
@@ -222,7 +223,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
     for chain in prot_segids:
         df_chain = pd.DataFrame({
             'Residue': rmsf_all[chain]['resids'] + offsets[chain]['offset'],   
-            'Chain': chain,  
+            'Chain': offsets[chain]['id_old'],  
             f'RMSF': rmsf_all[chain]['rmsf']
         })
         rmsf_prot = pd.concat([rmsf_prot, df_chain], axis=1)
@@ -231,7 +232,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
 
     # Plot all protein chain RMSF together
     for chain in prot_segids:
-        plt.plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f'Chain {chain}')
+        plt.plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f"Chain {offsets[chain]['id_old']}")
     plt.xlabel('Residue number (adjusted)')
     plt.ylabel('RMSF (Å)')
     plt.title('RMSF of Protein Chains')
@@ -242,7 +243,9 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
 
     # Plot each chaingroup
     # One plot row per chaingroup, one plot per chain not in a chaingroup
-    chains_with_groups = set(chain for group in chaingroups.values() for chain in group)
+    #chains_with_groups = set(chain for group in chaingroups.values() for chain in group)
+    old_to_new = {v['id_old']: k for k, v in offsets.items()}
+    chains_with_groups = set(old_to_new[chain] for group in chaingroups.values() for chain in group if chain in old_to_new)
     chains_without_groups = [chain for chain in all_segids if chain not in chains_with_groups]
     num_groups = len(chaingroups) + len(chains_without_groups)
     logger.debug(f"Number of chaingroups: {len(chaingroups)}, Chains without groups: {len(chains_without_groups)}, Total subplots: {num_groups}")
@@ -255,7 +258,7 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
             chain_list = chaingroups[group]
             for j, chain in enumerate(chain_list):
                 if chain in rmsf_all:
-                    axes[i].plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f'Chain {chain}')
+                    axes[i].plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f"Chain {offsets.get(chain, {}).get('id_old', chain)}")
                 else:
                     logger.warning(f"Chain {chain} not found in rmsf_all.")
                 # Color by protein domains
@@ -272,71 +275,70 @@ def main(logfile: str = None, universe: str = None, outdir: str = None, outfiles
             axes[i].set_title(f'RMSF of chain group {group}')
         for i, chain in enumerate(chains_without_groups):
             j = len(chaingroups) + i
-            axes[j].plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f'Chain {chain}')
+            axes[j].plot(rmsf_all[chain]['resids'] + offsets[chain]['offset'], rmsf_all[chain]['rmsf'], label=f"Chain {offsets.get(chain, {}).get('id_old', chain)}")
             axes[j].set_xlabel('Residue number (adjusted)')
             axes[j].set_ylabel('RMSF (Å)')
-            axes[j].set_title(f'RMSF of Chain {chain}')
+            axes[j].set_title(f"RMSF of Chain {offsets.get(chain, {}).get('id_old', chain)}")
             axes[j].legend()
         plt.tight_layout()
         plt.savefig(outfiles['rmsf_chaingroups'])
         plt.close()
 
-    ##### If the complex contains dsDNA #####
-    if with_dna:
-        dna_sel = u.select_atoms("nucleic") 
-        dna_segids = [seg.segid for seg in dna_sel.segments]
+    ##### If the complex contains DNA or RNA #####
+    if dna or rna:
+        nuc_sel = u.select_atoms("nucleic") 
+        nuc_segids = [seg.segid for seg in nuc_sel.segments]
 
-        dna_rmsf = {}
-        for segid in dna_segids:
-            dna_rmsf[segid] = {}
+        nuc_rmsf = {}
+        for segid in nuc_segids:
+            nuc_rmsf[segid] = {}
             p = u.select_atoms(f"segid {segid} and name P")
-            dna_rmsf[segid]['resids'] = p.resids
+            nuc_rmsf[segid]['resids'] = p.resids
             if p.n_atoms == 0:
                 logger.warning(f"Selection for segid {segid} is empty. Please check the chain ids.")
                 continue
             else:
                 logger.debug(f"Selection for segid {segid} has {p.n_atoms} P atoms.")
                 rmsf = rms.RMSF(p).run()
-                dna_rmsf[segid]['rmsf'] = rmsf.results.rmsf
+                nuc_rmsf[segid]['rmsf'] = rmsf.results.rmsf
 
-        # Save DNA RMSF to CSV
-        rmsf_dna = pd.DataFrame()
-        for chain in dna_rmsf.keys():  
+        # Save RMSF to CSV
+        rmsf_nuc = pd.DataFrame()
+        for chain in nuc_rmsf.keys():  
             df_chain = pd.DataFrame({
-                'Residue': dna_rmsf[chain]['resids'] + offsets[chain]['offset'],   
-                'Chain': chain,  
-                f'RMSF': dna_rmsf[chain]['rmsf']
+                'Residue': nuc_rmsf[chain]['resids'] + offsets[chain]['offset'],   
+                'Chain': offsets.get(chain, {}).get('id_old', chain),  
+                'RMSF': nuc_rmsf[chain]['rmsf']
             })
-            rmsf_dna = pd.concat([rmsf_dna, df_chain], axis=1)
+            rmsf_nuc = pd.concat([rmsf_nuc, df_chain], axis=1)
 
-        rmsf_dna.to_csv(outfiles['rmsf_dna_csv'], index=False)
+        rmsf_nuc.to_csv(outfiles['rmsf_nuc_csv'], index=False)
 
         # Plot
-        for chain in dna_rmsf.keys():
-            plt.plot(dna_rmsf[chain]['resids'] + offsets[chain]['offset'], dna_rmsf[chain]['rmsf'], label=f'DNA Chain {chain}')
+        nucname = "DNA" if dna else "RNA"
+        for chain in nuc_rmsf.keys():
+            plt.plot(nuc_rmsf[chain]['resids'] + offsets[chain]['offset'], nuc_rmsf[chain]['rmsf'], label=f"{nucname} Chain {offsets.get(chain, {}).get('id_old', chain)}")
         plt.xlabel('Residue number')
         plt.ylabel('RMSF (Å)')
-        plt.title('RMSF of DNA Chains')
+        plt.title(f'RMSF of {nucname} Chain(s)')
         plt.legend()
         plt.grid(True, alpha=0.3)
-        plt.savefig(outfiles['rmsf_dna'])
+        plt.savefig(outfiles['rmsf_nuc'])
         plt.close()
 
     logger.debug("\nChecking generated files.")
 
     expected_files = outfiles.values()
 
-    missing = [p for p in expected_files if not os.path.isfile(p)]
-    for file in expected_files:
-        if file not in missing:
-            logger.debug(f"generated {file}")
-        else:
-            logger.warning(f"{file} not generated")
-
-    if not missing:
-        logger.info("QC completed successfully. All expected files were generated.")
+    # Check all expected outputs were generated
+    missing = [Path(f).name for f in outfiles.values() if not Path(f).is_file()]
+    if missing:
+        logger.warning("QC did not complete successfully. Some expected outputs are missing.")
+        logger.warning(f"Missing {len(missing)} file(s): {', '.join(missing)}")
+        logger.warning(f"Check log {logfile}")
     else:
-        logger.warning("QC completed with warnings. Some expected files are missing.")
+        logger.info(f"QC successfully. Output files are in {outdir}.")
+
 
 if __name__ == "__main__":
     main()

@@ -9,8 +9,10 @@ discard/*
 logs/
 __pycache__/
 scripts/analysis04/.snakemake
+scripts/analysis04/scripts_analysis/old
 scripts/04_analysis/.snakemake
 scripts/__pycache__
+scripts/notebooks
 scripts/*/__pycache__/
 scripts/analysis04/scripts_analysis/__pycache__/
 
@@ -28,3 +30,9 @@ motif_analysis/4h/*/
 .snakemake/
 
 
+
+# Generated preparation outputs
+/usecase_1PGB_pH/amber/
+/usecase_1PGB_pH/gromacs_common/
+/usecase_1UBQ_pH/amber/
+/usecase_1UBQ_pH/gromacs_common/

@@ -31,9 +31,9 @@ def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, grou
         logfile   : Path to the log file.
         universe  : Path to the Universe object generated with MDAnalysis, containing the processed MD system.
         pairs_csv : Path to the .csv file with the pairwise contact results.
-        group1            : First atom group for hydrogen bond analysis.
-        group2            : Second atom group for hydrogen bond analysis.
-        outfiles    : Dictionary of the files to be generated, assigned to labels/keys.
+        group1    : First atom group for hydrogen bond analysis.
+        group2    : Second atom group for hydrogen bond analysis.
+        outfiles  : Dictionary of the files to be generated, assigned to labels/keys.
     """
 
     # Initialize logger
@@ -80,16 +80,23 @@ def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, grou
         index=sorted(df_pivot_ratio.index, key=lambda x: label_sort_key(str(x))),
         columns=sorted(df_pivot_ratio.columns, key=lambda x: label_sort_key(str(x)))
     )
+
     # Dynamic size based on number of residues
     nx = len(df_pivot_ratio.columns)
     ny = len(df_pivot_ratio.index)
-    fig = plt.figure(figsize=(max(10, nx * 0.25), max(8, ny * 0.25)))
-    sns.heatmap(df_pivot_ratio, cmap='rocket_r', linewidths=0.5, 
-                linecolor='lightgray', cbar_kws={'label': 'Count / Number of frames', "shrink": 0.4})
-    plt.title(f'Contact Count (< 5 Å) between {group1} and {group2} by Residue Pair', fontsize=16, y=1.02)
+    fig, ax = plt.subplots(figsize=(max(10, nx * 0.25), max(8, ny * 0.25)))
+
+    if nx > 0 and ny > 0:
+        sns.heatmap(df_pivot_ratio, cmap='rocket_r', linewidths=0.5,
+                    linecolor='lightgray', cbar_kws={'label': 'Count / Number of frames', "shrink": 0.4}, ax=ax)
+    else:
+        ax.text(0.5, 0.5, "No contact data found",
+                ha='center', va='center', transform=ax.transAxes)
+
+    ax.set_title(f'Contact Count (< 5 Å) between {group1} and {group2} by Residue Pair', fontsize=16, y=1.02)
     plt.xticks(rotation=-90)
-    plt.ylabel(f'{group1} Residue (adj)', fontsize=14)
-    plt.xlabel(f'{group2} Residue (adj)', fontsize=14)
+    ax.set_ylabel(f'{group1} Residue (adj)', fontsize=14)
+    ax.set_xlabel(f'{group2} Residue (adj)', fontsize=14)
     plt.tight_layout()
     plt.savefig(outfiles['contacts_heatmap_count'])
     plt.close()
@@ -100,16 +107,23 @@ def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, grou
         index=sorted(df_pivot_dist.index, key=lambda x: label_sort_key(str(x))),
         columns=sorted(df_pivot_dist.columns, key=lambda x: label_sort_key(str(x)))
     )
+
     # Dynamic size based on number of residues
     nx = len(df_pivot_dist.columns)
     ny = len(df_pivot_dist.index)
-    fig = plt.figure(figsize=(max(10, nx * 0.25), max(8, ny * 0.25)))
-    sns.heatmap(df_pivot_dist, cmap='rocket', linewidths=0.5, 
-                linecolor='lightgray', cbar_kws={'label': 'Mean Distance (Å)', "shrink": 0.4})
-    plt.title(f'Mean Contact Distance between {group1} and {group2} by Residue Pair', fontsize=16, y=1.02)
+    fig, ax = plt.subplots(figsize=(max(10, nx * 0.25), max(8, ny * 0.25)))
+
+    if nx > 0 and ny > 0:
+        sns.heatmap(df_pivot_dist, cmap='rocket', linewidths=0.5,
+                    linecolor='lightgray', cbar_kws={'label': 'Mean Distance (Å)', "shrink": 0.4}, ax=ax)
+    else:
+        ax.text(0.5, 0.5, "No contact data found",
+                ha='center', va='center', transform=ax.transAxes)
+
+    ax.set_title(f'Mean Contact Distance between {group1} and {group2} by Residue Pair', fontsize=16, y=1.02)
     plt.xticks(rotation=-90)
-    plt.ylabel(f'{group1} Residue (adj)', fontsize=14)
-    plt.xlabel(f'{group2} Residue (adj)', fontsize=14)
+    ax.set_ylabel(f'{group1} Residue (adj)', fontsize=14)
+    ax.set_xlabel(f'{group2} Residue (adj)', fontsize=14)
     plt.tight_layout()
     plt.savefig(outfiles['contacts_heatmap_distance'])
     plt.close()
@@ -119,40 +133,63 @@ def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, grou
     # Grid coordinates
     x_labels = df_pivot_ratio.columns.tolist()
     y_labels = df_pivot_ratio.index.tolist()
-    x = np.arange(len(x_labels))
-    y = np.arange(len(y_labels))
-    xx, yy = np.meshgrid(x, y)
-
-    # Flatten data
-    ratio_vals = df_pivot_ratio.to_numpy().ravel()
-    dist_vals = df_pivot_dist.to_numpy().ravel()
-
-    min_ratio = math.floor(np.nanmin(ratio_vals))
-    max_ratio = math.ceil(np.nanmax(ratio_vals))
-    step = math.ceil((max_ratio - min_ratio) / 4)
-
-    # Size scaling
-    size_scale = 1200 / max_ratio
-    sizes = ratio_vals * size_scale
-    padding = 0.6
 
     fig, ax = plt.subplots(figsize=(max(10, len(x_labels) * 0.5), max(8, len(y_labels) * 0.5)))
 
-    sc = ax.scatter(xx, yy, s=sizes, c=dist_vals, cmap='rocket', alpha=0.9,
-                    edgecolors='lightgray', linewidths=0.5)
+    if len(x_labels) > 0 and len(y_labels) > 0:
+        x = np.arange(len(x_labels))
+        y = np.arange(len(y_labels))
+        xx, yy = np.meshgrid(x, y)
 
-    # Tight limits (removes big margins)
-    ax.set_xlim(-0.5 - padding, len(x_labels)-0.5 + padding)
-    ax.set_ylim(-0.5 - padding, len(y_labels)-0.5 + padding)
+        # Flatten data
+        ratio_vals = df_pivot_ratio.to_numpy().ravel()
+        dist_vals = df_pivot_dist.to_numpy().ravel()
 
-    # Set ticks
-    ax.set_xticks(np.arange(len(x_labels)))
-    ax.set_xticklabels(x_labels, rotation=-90)
-    ax.set_yticks(np.arange(len(y_labels)))
-    ax.set_yticklabels(y_labels)
+        min_ratio = math.floor(np.nanmin(ratio_vals))
+        max_ratio = math.ceil(np.nanmax(ratio_vals))
+        step = math.ceil((max_ratio - min_ratio) / 4)
 
-    # Invert Y-axis
-    ax.invert_yaxis()
+        # Size scaling
+        size_scale = 1200 / max_ratio
+        sizes = ratio_vals * size_scale
+        padding = 0.6
+
+        sc = ax.scatter(xx, yy, s=sizes, c=dist_vals, cmap='rocket', alpha=0.9,
+                        edgecolors='lightgray', linewidths=0.5)
+
+        # Tight limits (removes big margins)
+        ax.set_xlim(-0.5 - padding, len(x_labels)-0.5 + padding)
+        ax.set_ylim(-0.5 - padding, len(y_labels)-0.5 + padding)
+
+        # Set ticks
+        ax.set_xticks(np.arange(len(x_labels)))
+        ax.set_xticklabels(x_labels, rotation=-90)
+        ax.set_yticks(np.arange(len(y_labels)))
+        ax.set_yticklabels(y_labels)
+
+        # Invert Y-axis
+        ax.invert_yaxis()
+
+        # Colorbar
+        cbar = plt.colorbar(sc, ax=ax, shrink=0.4)
+        cbar.set_label('Mean Distance (Å)', fontsize=14)
+
+        # Size legend
+        size_handles = []
+        for r in np.arange(min_ratio + step, max_ratio + step, step):
+            size_handles.append(plt.Line2D([0], [0], marker='o', color='w',
+                                        markerfacecolor='lightgray',
+                                        markersize=np.sqrt(r * size_scale),
+                                        markeredgecolor='black', label=f'{r:.1f}'))
+        fig.legend(handles=size_handles, title='Ratio\n(Count/Number of frames)',
+                loc='center left', bbox_to_anchor=(0.9, 0.2),
+                ncol=1, frameon=True, fontsize=12,
+                labelspacing=2, handletextpad=1.1, borderpad=1.3)
+
+        ax.grid(True, alpha=0.3)
+    else:
+        ax.text(0.5, 0.5, "No contact data found",
+                ha='center', va='center', transform=ax.transAxes)
 
     # Labels/title
     ax.set_xlabel(f'{group2} Residue (adj)', fontsize=14)
@@ -162,102 +199,102 @@ def main(logfile: str, universe: str, pairs_csv: Path, pairs_ext_csv: Path, grou
         fontsize=20, y=1.02
     )
 
-    # Colorbar
-    cbar = plt.colorbar(sc, ax=ax, shrink=0.4)
-    cbar.set_label('Mean Distance (Å)', fontsize=14)
-
-    # Size legend
-    size_handles = []
-    for r in np.arange(min_ratio + step, max_ratio + step, step):
-        size_handles.append(plt.Line2D([0], [0], marker='o', color='w',
-                                    markerfacecolor='lightgray',
-                                    markersize=np.sqrt(r * size_scale),
-                                    markeredgecolor='black', label=f'{r:.1f}'))
-    fig.legend(handles=size_handles, title='Ratio\n(Count/Number of frames)', 
-            loc='center left', bbox_to_anchor=(0.9, 0.2),
-            ncol=1, frameon=True, fontsize=12,
-            labelspacing=2, handletextpad=1.1, borderpad=1.3)
-
-
-    ax.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig(outfiles['contacts_bubble'], bbox_inches='tight', dpi=300, pad_inches=0.1)
     plt.close()
 
     ##### COMBINED BUBBLE PLOT - FILTERED - Count and Average Distance ######
-    # Filter to pairs with ratio in the top 75%
-    threshold = round(np.nanpercentile(ratio_vals, 75),0)
-    filter_mask = ratio_vals >= threshold
-    x_filtered = xx.ravel()[filter_mask]
-    y_filtered = yy.ravel()[filter_mask]
-    sizes_filtered = sizes[filter_mask]
-    dist_filtered = dist_vals[filter_mask]
 
+    fig, ax = plt.subplots(figsize=(max(10, len(x_labels) * 0.3), max(8, len(y_labels) * 0.3)))
 
-    # Full grid ticks/labels (no empty rows)
-    unique_x = np.sort(np.unique(x_filtered).astype(int))
-    unique_y = np.sort(np.unique(y_filtered).astype(int))
+    if len(x_labels) > 0 and len(y_labels) > 0:
+        # Filter to pairs with ratio in the top 75%
+        threshold = round(np.nanpercentile(ratio_vals, 75), 0)
+        filter_mask = ratio_vals >= threshold
+        x_filtered = xx.ravel()[filter_mask]
+        y_filtered = yy.ravel()[filter_mask]
+        sizes_filtered = sizes[filter_mask]
+        dist_filtered = dist_vals[filter_mask]
 
-    # Remap to dense coordinates [0,1,2,...] instead of sparse [2,5,7,12,...]
-    x_remap = {old: new for new, old in enumerate(unique_x)}
-    y_remap = {old: new for new, old in enumerate(unique_y)}
+        # Full grid ticks/labels (no empty rows)
+        unique_x = np.sort(np.unique(x_filtered).astype(int))
+        unique_y = np.sort(np.unique(y_filtered).astype(int))
 
-    # Transform filtered coordinates
-    x_dense = np.array([x_remap[int(xi)] for xi in x_filtered])
-    y_dense = np.array([y_remap[int(yi)] for yi in y_filtered])
+        # Remap to dense coordinates [0,1,2,...] instead of sparse [2,5,7,12,...]
+        x_remap = {old: new for new, old in enumerate(unique_x)}
+        y_remap = {old: new for new, old in enumerate(unique_y)}
 
-    fig, ax = plt.subplots(figsize=(max(10, len(x_dense) * 0.3), max(8, len(y_dense) * 0.3)))
-    sc = ax.scatter(x_dense, y_dense, s=sizes_filtered, c=dist_filtered,
-                    cmap='rocket', alpha=0.9, edgecolors='lightgray', linewidths=0.5)
+        # Transform filtered coordinates
+        x_dense = np.array([x_remap[int(xi)] for xi in x_filtered])
+        y_dense = np.array([y_remap[int(yi)] for yi in y_filtered])
 
-    # Padding (margins conflicts with set_xlim/ylim)
-    ax.set_xlim(-0.5-padding, len(unique_x)-0.5+padding)
-    ax.set_ylim(-0.5-padding, len(unique_y)-0.5+padding)
+        sc = ax.scatter(x_dense, y_dense, s=sizes_filtered, c=dist_filtered,
+                        cmap='rocket', alpha=0.9, edgecolors='lightgray', linewidths=0.5)
 
-    # Set ticks (before inversion)
-    ax.set_xticks(np.arange(len(unique_x)))
-    ax.set_xticklabels([x_labels[i] for i in unique_x], rotation=-90, fontsize=14)
-    ax.set_yticks(np.arange(len(unique_y)))
-    ax.set_yticklabels([y_labels[i] for i in unique_y], fontsize=14)
+        # Padding (margins conflicts with set_xlim/ylim)
+        ax.set_xlim(-0.5-padding, len(unique_x)-0.5+padding)
+        ax.set_ylim(-0.5-padding, len(unique_y)-0.5+padding)
 
-    # Invert Y-axis
-    ax.invert_yaxis()
+        # Set ticks (before inversion)
+        ax.set_xticks(np.arange(len(unique_x)))
+        ax.set_xticklabels([x_labels[i] for i in unique_x], rotation=-90, fontsize=14)
+        ax.set_yticks(np.arange(len(unique_y)))
+        ax.set_yticklabels([y_labels[i] for i in unique_y], fontsize=14)
+
+        # Invert Y-axis
+        ax.invert_yaxis()
+
+        # Colorbar
+        cbar = plt.colorbar(sc, ax=ax, shrink=0.4)
+        cbar.set_label('Mean Distance (Å)', fontsize=14)
+
+        # Size legend (moved LEFT side to avoid colorbar overlap)
+        step = math.ceil((max_ratio - threshold) / 3)
+        size_handles = []
+        for r in np.arange(threshold, max_ratio + step, step):
+            size_handles.append(
+                plt.Line2D([0], [0], marker='o', color='w',
+                        markerfacecolor='lightgray',
+                        markersize=np.sqrt(r * size_scale),
+                        markeredgecolor='black',
+                        label=f'{r:.1f}')
+            )
+
+        fig.legend(handles=size_handles, title='Ratio\n(Count/Number of frames)',
+                loc='center left', bbox_to_anchor=(0.9, 0.2),
+                ncol=1, frameon=True, fontsize=12,
+                labelspacing=2, handletextpad=1.1, borderpad=1.3)
+
+        ax.grid(True, alpha=0.3)
+        title_suffix = f'\nFiltered to pairs with ratio >= {threshold:.2f} (top 75%)'
+    else:
+        ax.text(0.5, 0.5, "No contact data found",
+                ha='center', va='center', transform=ax.transAxes)
+        title_suffix = ''
 
     # Labels/title
     ax.set_xlabel(f'{group2} Residue (adj)', fontsize=16)
     ax.set_ylabel(f'{group1} Residue (adj)', fontsize=16)
     ax.set_title(
-        f'Contacts between {group1} and {group2}\n'
-        f'Filtered to pairs with ratio >= {threshold:.2f} (top 75%)',
+        f'Contacts between {group1} and {group2}{title_suffix}',
         fontsize=20, y=1.02
     )
 
-    # Colorbar
-    cbar = plt.colorbar(sc, ax=ax, shrink=0.4)
-    cbar.set_label('Mean Distance (Å)', fontsize=14)
-
-    # Size legend (moved LEFT side to avoid colorbar overlap)
-    step = math.ceil((max_ratio - threshold) / 3)
-    size_handles = []
-    for r in np.arange(threshold, max_ratio + step, step):
-        size_handles.append(
-            plt.Line2D([0], [0], marker='o', color='w', 
-                    markerfacecolor='lightgray', 
-                    markersize=np.sqrt(r * size_scale),
-                    markeredgecolor='black', 
-                    label=f'{r:.1f}')
-        )
-
-    fig.legend(handles=size_handles, title='Ratio\n(Count/Number of frames)', 
-            loc='center left', bbox_to_anchor=(0.9, 0.2),
-            ncol=1, frameon=True, fontsize=12,
-            labelspacing=2, handletextpad=1.1, borderpad=1.3)
-
     # Layout
     plt.tight_layout()
-    plt.grid(True, alpha=0.3)
     plt.savefig(outfiles['contacts_bubble_filtered'], bbox_inches='tight', dpi=300)
     plt.close()
+
+    outdir = Path(pairs_csv).parent
+
+    # Check all expected outputs were generated
+    missing = [Path(f).name for f in outfiles.values() if not Path(f).is_file()]
+    if missing:
+        logger.warning("Pairwise contact plotting did not complete successfully. Some expected outputs are missing.")
+        logger.warning(f"Missing {len(missing)} file(s): {', '.join(missing)}")
+        logger.warning(f"Check log {logfile}")
+    else:
+        logger.info(f"Pairwise contact plotting completed successfully. Output files are in {outdir}.")
 
 
 if __name__ == "__main__":

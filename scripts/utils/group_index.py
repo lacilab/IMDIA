@@ -15,14 +15,15 @@ def log_process_output(logger, process, step_name):
     elif process.stdout:
         logger.debug(f"{step_name} output:\n {process.stdout}")   
 
-def get_name_main(logger, structurefile: Path = None, dna: bool = False, phos: bool = False):
+def get_name_main(logger, structurefile: Path = None, dna: bool = False, rna: bool = False, phos: bool = False):
     """
-    Build the main group name based on the presence of DNA, phosphate groups, and metal ions in the structure file.
+    Build the main group name based on the presence of DNA, RNA, phosphate groups, and metal ions in the structure file.
     
     Arguments:
         logger        : Logger object.
         structurefile : Path to PDB structure file.
         dna           : True if DNA is present in the system.
+        rna           : True if RNA is present in the system.
         phos          : True if the system contains phosphorylated residues.
     """
     
@@ -38,11 +39,16 @@ def get_name_main(logger, structurefile: Path = None, dna: bool = False, phos: b
     else:
         logger.debug("No metal ions found in structure.")
 
-    # Identify nucleotides from list present in the structure file
-    NUCLEOTIDES = ['DA','DC','DT','DG','DC3','DC5','DG3','DG5', "DA3", "DA5", "DT3", "DT5"]
-    present_nucleotides = [nt for nt in NUCLEOTIDES if nt in residue_names_in_structure]
-    if present_nucleotides:
-        logger.debug(f"Nucleotides found in structure: {present_nucleotides}")
+    # Identify DNA and RNA residues from the names present in the structure file
+    # (AMBER names: DA5/DA/DA3/DAN, A5/A/A3/AN; GROMACS/CHARMM names: RA5/RA/RA3/RAN).
+    DNA_RESIDUES = ['DA','DC','DT','DG','DC3','DC5','DG3','DG5', "DA3", "DA5", "DT3", "DT5", "DU", "DU3", "DU5",
+                    "DAN", "DCN", "DGN", "DTN"]
+    RNA_RESIDUES = [f"{prefix}{base}{suffix}" for prefix in ("", "R") for base in "ACGU"
+                    for suffix in ("", "5", "3", "N")]
+    present_dna = [nt for nt in DNA_RESIDUES if nt in residue_names_in_structure]
+    present_rna = [nt for nt in RNA_RESIDUES if nt in residue_names_in_structure]
+    if present_dna or present_rna:
+        logger.debug(f"Nucleotides found in structure: DNA {present_dna}, RNA {present_rna}")
     else:
         logger.debug("No nucleotides found in structure.")
 
@@ -51,6 +57,8 @@ def get_name_main(logger, structurefile: Path = None, dna: bool = False, phos: b
     group_protein = "Protein"
     if dna:
         group_main += "_DNA"
+    if rna:
+        group_main += "_RNA"
     if phos:
         group_main += "_P"
         group_protein += "_P"
@@ -58,7 +66,7 @@ def get_name_main(logger, structurefile: Path = None, dna: bool = False, phos: b
         group_main += "_Metals"
         group_protein += "_Metals"
 
-    return group_main, group_protein, present_metals, present_nucleotides
+    return group_main, group_protein, present_metals, present_dna, present_rna
 
 def targets_in_index(logger, gmxdir: Path, target_groups: list[str]):
     """
@@ -88,7 +96,7 @@ def targets_in_index(logger, gmxdir: Path, target_groups: list[str]):
             logger.debug(f'The index file {gmxdir}/index.ndx does not contain all target groups {targets_comp}. Proceeding with index creation step.')
             return False
         
-def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, phos: bool, mtl: list[str], nt: list[str], chains=None, outfile: str = "index.ndx"):
+def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, rna: bool, phos: bool, mtl: list[str], dna_nt: list[str], rna_nt: list[str], chains=None, outfile: str = "index.ndx"):
     """
     Create an index file with the target groups.
     
@@ -97,9 +105,11 @@ def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, phos
         gmxdir        : Path to the directory with the MD results (e.g. rep1/gromacs).
         structurefile : Path to PDB structure file.
         dna           : True if DNA is present in the system.
+        rna           : True if RNA is present in the system.
         phos          : True if the system contains phosphorylated residues.
         mtl           : List of unique metals present in the system.
-        nt            : List of unique nucleotides present in the system.
+        dna_nt        : List of unique DNA residue names present in the system.
+        rna_nt        : List of unique RNA residue names present in the system.
         chains        : List of chain IDs for which to create groups (e.g. ['A', 'B'])
         outfile       : Path to output .ndx file.
     """
@@ -139,6 +149,8 @@ def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, phos
     group_phosphate = []
     if dna and "DNA" in groups:
         group_dna = groups.index("DNA")
+    if rna and "RNA" in groups:
+        group_rna = groups.index("RNA")
     if phos:
         group_phosphate = [str(groups.index(group)) for group in groups if group in PHOSRES]
         logger.debug(f"list of phosphate groups found: {group_phosphate}")
@@ -163,12 +175,24 @@ def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, phos
         """
         i += 1
 
-    if dna and "DNA" not in groups and len(nt) > 0:
+    # make_ndx makes a group for only the first of the DNA/RNA/Other residue types, and does
+    # not know some terminal names (e.g. AMBER A5/U3), so missing groups are built from names.
+    for kind, wanted, names in (("DNA", dna, dna_nt), ("RNA", rna, rna_nt)):
+        if not wanted or kind in groups:
+            continue
+        if not names:
+            logger.error(f"{kind} is expected in the system, but make_ndx made no {kind} group and "
+                         f"no known {kind} residue name was found in {structurefile}.")
+            sys.exit(1)
         groups_input += f"""
-        {"r " + " | r ".join(nt)}
-        name {i} DNA
+        {"r " + " | r ".join(names)}
+        name {i} {kind}
         """
-        group_dna = i
+        logger.debug(f"{kind} group built from residue names {names} as number {i}")
+        if kind == "DNA":
+            group_dna = i
+        else:
+            group_rna = i
         i += 1
 
     if phos and len(group_phosphate) > 0:
@@ -184,6 +208,9 @@ def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, phos
     if dna:
         parts.append(group_dna)
         labels.append("DNA")
+    if rna:
+        parts.append(group_rna)
+        labels.append("RNA")
     if phos:
         parts.extend(group_phosphate)
         labels.append("P")
@@ -233,7 +260,7 @@ def create_index_file(logger, gmxdir: Path, structurefile: Path, dna: bool, phos
         logger.info(f"Index file with target groups saved as {gmxdir}/{outfile}")
     return 
 
-def group_index(gmxdir: Path = None, logfile: Path = None, logname: str = 'log', structurefile: Path = None, dna: bool = False, phos: bool = False):
+def group_index(gmxdir: Path = None, logfile: Path = None, logname: str = 'log', structurefile: Path = None, dna: bool = False, rna: bool = False, phos: bool = False):
     """
     Get the group name of the main complex, insert it into .mdp parameter files 
     and call create_index_file to generate index with required groups.
@@ -244,13 +271,14 @@ def group_index(gmxdir: Path = None, logfile: Path = None, logname: str = 'log',
         logname   : Name of the logger.
         structurefile : Path to PDB structure file.
         dna           : True if DNA is present in the system.
+        rna           : True if RNA is present in the system.
         phos          : True if the system contains phosphorylated residues.
     """    
     ##### INITIALIZE LOG
     logger = setup_logger(logname, logfile)
 
     # Get main group name and list of metals and nucleotides present in the structure file
-    group_main, group_protein, mtl, nt = get_name_main(logger, structurefile, dna, phos)
+    group_main, group_protein, mtl, dna_nt, rna_nt = get_name_main(logger, structurefile, dna, rna, phos)
 
     # In the MD step, substitute group name in nvt.mdp, npt.mdp, md.mdp
     if logname == 'md' and group_main != 'Protein':
@@ -266,13 +294,13 @@ def group_index(gmxdir: Path = None, logfile: Path = None, logname: str = 'log',
     if targets_in_index(logger, gmxdir, [group_main]):
         return group_main
     else: # If not, create index file with target groups
-        create_index_file(logger, gmxdir, structurefile, dna, phos, mtl, nt)
+        create_index_file(logger, gmxdir, structurefile, dna, rna, phos, mtl, dna_nt, rna_nt)
     
     return group_main
 
 
 def group_index_interactions(gmxdir: str = None, logfile: str = None, logname: str = 'log', structurefile: str = None, indexfile: str = None,
-                             group1: str = None, group2: str = None, dna: bool = False, phos: bool = False, chains: dict = None): 
+                             group1: str = None, group2: str = None, dna: bool = False, rna: bool = False, phos: bool = False, chains: dict = None): 
     """
     Get the group name of the main complex, insert it into .mdp parameter files 
     and call create_index_file to generate index with required groups.
@@ -286,6 +314,7 @@ def group_index_interactions(gmxdir: str = None, logfile: str = None, logname: s
         group1    : First atom group for hydrogen bond analysis.
         group2    : Second atom group for hydrogen bond analysis.
         dna           : True if DNA is present in the system.
+        rna           : True if RNA is present in the system.
         phos          : True if the system contains phosphorylated residues.
         chains          : Dictionary of original ID chains and corresponding updated IDs, and offsets.
     """    
@@ -299,7 +328,7 @@ def group_index_interactions(gmxdir: str = None, logfile: str = None, logname: s
         sys.exit(1)
 
     # Get main group name and list of metals and nucleotides present in the structure file
-    group_main, group_protein, mtl, nt = get_name_main(logger, structurefile, dna, phos)
+    group_main, group_protein, mtl, dna_nt, rna_nt = get_name_main(logger, structurefile, dna, rna, phos)
 
     # Check if an index file with the target groups already exists
     ndx_names = []
@@ -307,12 +336,14 @@ def group_index_interactions(gmxdir: str = None, logfile: str = None, logname: s
     for i, group in enumerate([group1, group2]):
             if re.match(r"^[A-Za-z]$", group):
                 # Map old chain IDs to new ones
-                if group in chains.keys():
-                    chain_id = chains[group]['new_id']
-                ndx_names.append(f"Chain_{chain_id}")
-                target_chains.append(chain_id)
+                new_id = next((k for k, v in chains.items() if v['id_old'] == group), None)
+                if new_id:
+                    ndx_names.append(f"Chain_{new_id}")
+                    target_chains.append(new_id)
             elif group == "DNA" and dna:
                 ndx_names.append("DNA")
+            elif group == "RNA" and rna:
+                ndx_names.append("RNA")
             elif group == "Protein":
                 ndx_names.append(group_protein)
     logger.debug(f"Target groups for interaction analysis: {ndx_names}")
@@ -328,6 +359,6 @@ def group_index_interactions(gmxdir: str = None, logfile: str = None, logname: s
         logger.debug(f"Copied index as {gmxdir / f'interaction_{group1}_{group2}.ndx'}")
     # If not, create index file with target groups
     else: 
-        create_index_file(logger, gmxdir, structurefile, dna, phos, mtl, nt, target_chains, f"interaction_{group1}_{group2}.ndx")
+        create_index_file(logger, gmxdir, structurefile, dna, rna, phos, mtl, dna_nt, rna_nt, target_chains, f"interaction_{group1}_{group2}.ndx")
     logger.debug(f"Returning {ndx_names}")
     return ndx_names

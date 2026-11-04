@@ -2,6 +2,7 @@
 
 import os
 import sys
+from pathlib import Path
 import re
 import pickle
 import argparse
@@ -15,10 +16,13 @@ from scripts.utils.parallel import an_perblock
 
 # Custom forcefield atom names
 class WaterBridgeAnalysis_OtherFF(WaterBridgeAnalysis):
-    DEFAULT_DONORS = {"OtherFF": tuple(set(["O", "H2", "N", "NE", "NH1", "NH2", "ND2", "SG", "NE2", "ND1", 
-                                            "NZ", "OG", "OG1", "OH"]))}
-    DEFAULT_ACCEPTORS = {"OtherFF": tuple(set(["O", "H2", "OC1", "OC2", "OD1", "OD2", 
-                                                "SG", "OE1", "OE2", "ND1", "NE2", "SD", "OG", "OG1", "OH"]))}
+    # Protein side chains and backbone, water oxygen, and nucleic-acid atoms (AMBER names)
+    DEFAULT_DONORS = {"OtherFF": tuple(set([
+        "O", "H2", "N", "NE", "NH1", "NH2", "ND2", "SG", "NE2", "ND1", "NZ", "OG", "OG1", "OH",
+        "N1", "N2", "N3", "N4", "N6", "O2'", "O3'", "O5'"]))}
+    DEFAULT_ACCEPTORS = {"OtherFF": tuple(set([
+        "O", "OC1", "OC2", "OD1", "OD2", "SG", "OE1", "OE2", "ND1", "NE2", "SD", "OG", "OG1", "OH",
+        "OP1", "OP2", "O2'", "O3'", "O4'", "O5'", "N1", "N3", "N7", "O2", "O4", "O6"]))}
 
 def water_bridge_factory(u, start, stop, sel1, sel2, distance, angle):
     wba = WaterBridgeAnalysis_OtherFF(
@@ -38,7 +42,7 @@ def water_bridge_factory(u, start, stop, sel1, sel2, distance, angle):
 
 def main(logfile : str = None, universe : str = None, tprfile: str = None, xtcfile: str = None, outcsv : str = None, cores : int = 1,
          group1: str = None, group2: str = None, 
-         start: int = None, stop: int = None, dna : bool = False):
+         start: int = None, stop: int = None, dna : bool = False, rna : bool = False):
     """
     Analyze water-mediated bridges between target groups in an MD trajectory.
 
@@ -75,11 +79,14 @@ def main(logfile : str = None, universe : str = None, tprfile: str = None, xtcfi
         if re.match(r"^[A-Za-z]$", group):
             logger.debug(f"MDA - water bridge analysis - Group {group} identified as chain.")
             selections.append(f"segid {group}")
-        elif group == "DNA" and dna:
-            logger.debug(f"MDA - water bridge analysis - Group {group} identified as DNA.")
-            selections.append("nucleic") 
+        elif (group == "DNA" and dna) or (group == "RNA" and rna):
+            logger.debug(f"MDA - contact analysis - Group {group} identified.")
+            nucleic_sel = u.select_atoms("nucleic")
+            nucleic_segids = [seg.segid for seg in nucleic_sel.segments]
+            logger.debug(f"Nucleic segids identified: {nucleic_segids}")
+            selections.append("segid " + " ".join(nucleic_segids))
         elif group == "Protein":
-            logger.debug(f"MDA - water bridge analysis - Group {group} identified as Protein.")
+            logger.debug(f"MDA - water bridge analysis - Group {group} identified.")
             protein_sel = u.select_atoms("protein")
             # Get segids of the protein, to avoid leaving out non-standard residues like PTR
             prot_segids = [seg.segid for seg in protein_sel.segments]
@@ -119,7 +126,8 @@ def main(logfile : str = None, universe : str = None, tprfile: str = None, xtcfi
     df.to_csv(outcsv, index=False)
 
     # Check output file
-    if os.path.exists(outcsv):
-        logger.info(f"Water bridges data saved to: {outcsv}")
+    if Path(outcsv).is_file():
+        logger.info(f"Raw water bridge analysis results saved to: {outcsv}")
     else:
-        logger.warning(f"Failed to save water bridges data to: {outcsv}")
+        logger.warning("Raw water bridge analysis results were not correctly saved.")
+        logger.warning(f"Check log {logfile}")
