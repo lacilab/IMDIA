@@ -122,94 +122,118 @@ def _restore_peptide_continuity(original, prepared, logger):
             'bonds; original breaks retained.'
         )
 
-def _complete_terminal_oxygens(prepared, built, logger):
-	# Copy verified missing terminal OXT atoms from LEaP, preserving existing atoms.
-	path = Path(prepared)
-	lines = path.read_text().splitlines(keepends=True)
-	donor = Path(built).read_text().splitlines(keepends=True)
-	pairs = _residue_pairs(lines, donor)
+def _complete_protein_heavy_atoms(prepared, built, logger):
+    """Copy missing protein heavy atoms from the initial LEaP build."""
+    path = Path(prepared)
+    lines = path.read_text().splitlines(keepends=True)
+    donor = Path(built).read_text().splitlines(keepends=True)
+    pairs = _residue_pairs(lines, donor)
+    forward = dict(pairs)
+    reverse = {other: key for key, other in pairs}
+    names = residues(lines)
 
-	atoms, last, built_atoms = {}, {}, {}
-	for i, line in enumerate(lines):
-		if line.startswith(('ATOM  ', 'HETATM')):
-			key = residue_key(line)
-			atom_key = key, line[12:16].strip()
-			if atom_key in atoms:
-				raise ValueError(f'Duplicate prepared atom: {atom_key}')
-			atoms[atom_key], last[key] = line, i
+    atoms, last, built_atoms = {}, {}, {}
+    for index, line in enumerate(lines):
+        if not line.startswith(('ATOM  ', 'HETATM')):
+            continue
+        key = residue_key(line)
+        atom_key = key, line[12:16].strip()
+        if atom_key in atoms:
+            raise ValueError(f'Duplicate prepared atom: {atom_key}')
+        atoms[atom_key], last[key] = line, index
 
-	for line in donor:
-		if line.startswith(('ATOM  ', 'HETATM')) and not is_hydrogen(line):
-			atom_key = residue_key(line), line[12:16].strip()
-			if atom_key in built_atoms:
-				raise ValueError(f'Duplicate LEaP atom: {atom_key}')
-			built_atoms[atom_key] = line
+    for line in donor:
+        if not line.startswith(('ATOM  ', 'HETATM')) or is_hydrogen(line):
+            continue
+        atom_key = residue_key(line), line[12:16].strip()
+        if atom_key in built_atoms:
+            raise ValueError(f'Duplicate LEaP atom: {atom_key}')
+        built_atoms[atom_key] = line
 
-	endpoints, names = terminal_residues(lines), residues(lines)
-	nitrogens = [
-		(key, xyz(line))
-		for (key, atom), line in atoms.items()
-		if atom == 'N'
-	]
-	serial = max((int(line[6:11]) for line in atoms.values()), default=0)
-	additions = {}
+    missing = {}
+    for (other, atom), line in built_atoms.items():
+        key = reverse[other]
+        if (canonical(names[key]) in PROTEIN_NAMES
+                or names[key] in PHOSPHO_RESIDUES):
+            if (key, atom) not in atoms:
+                if atom in {'N', 'CA', 'C', 'O'}:
+                    raise ValueError(
+                        f'Missing backbone atom {atom} at {key}; repair the structure'
+                    )
+                missing.setdefault(key, []).append((atom, line))
 
-	for key, other in pairs:
-		oxygen = built_atoms.get((other, 'OXT'))
-		if oxygen is None or (key, 'OXT') in atoms:
-			continue
+    # Verify that rebuilt atoms use the original coordinate frame.
+    for (key, atom), line in atoms.items():
+        if key not in missing or is_hydrogen(line):
+            continue
+        counterpart = built_atoms.get((forward[key], atom))
+        if counterpart is None or math.dist(xyz(line), xyz(counterpart)) > 0.002:
+            raise ValueError(f'LEaP changed an existing atom at {(key, atom)}')
 
-		if (
-			canonical(names[key]) not in PROTEIN_NAMES
-			and names[key] not in PHOSPHO_RESIDUES
-		):
-			continue
+    endpoints = terminal_residues(lines)
+    nitrogens = [
+        (key, xyz(line))
+        for (key, atom), line in atoms.items()
+        if atom == 'N'
+    ]
+    serial = max((int(line[6:11]) for line in atoms.values()), default=0)
+    additions, added, sidechain = {}, 0, 0
 
-		carbon = atoms.get((key, 'C'))
-		if key not in endpoints or carbon is None or (key, 'O') not in atoms:
-			raise ValueError(f'Unexpected LEaP terminal oxygen at {key}')
+    for key, entries in missing.items():
+        anchor = atoms.get((key, 'CA'))
+        if anchor is None:
+            raise ValueError(f'Missing protein CA anchor at {key}')
 
-		if any(
-			other_key != key and math.dist(xyz(carbon), point) <= 1.8
-			for other_key, point in nitrogens
-		):
-			raise ValueError(
-				f'LEaP added OXT to a peptide-bonded carbonyl at {key}; '
-				'review chain breaks'
-			)
+        for atom, line in entries:
+            if atom == 'OXT':
+                carbon = atoms.get((key, 'C'))
+                if key not in endpoints or carbon is None or (key, 'O') not in atoms:
+                    raise ValueError(f'Unexpected LEaP terminal oxygen at {key}')
+                if any(
+                    other != key and math.dist(xyz(carbon), point) <= 1.8
+                    for other, point in nitrogens
+                ):
+                    raise ValueError(
+                        f'LEaP added OXT to a peptide-bonded carbonyl at {key}; '
+                        'review chain breaks'
+                    )
+                if not 1.0 <= math.dist(xyz(carbon), xyz(line)) <= 1.6:
+                    raise ValueError(f'Invalid LEaP terminal oxygen coordinates at {key}')
+            else:
+                sidechain += 1
 
-		built_carbon = built_atoms.get((other, 'C'))
-		if (
-			built_carbon is None
-			or math.dist(xyz(carbon), xyz(built_carbon)) > 0.002
-			or not 1.0 <= math.dist(xyz(carbon), xyz(oxygen)) <= 1.6
-		):
-			raise ValueError(
-				f'Invalid LEaP terminal oxygen coordinates at {key}'
-			)
+            serial += 1
+            if serial > 99999:
+                raise ValueError('Heavy-atom completion exceeds the PDB atom-serial limit')
 
-		serial += 1
-		if serial > 99999:
-			raise ValueError(
-				'Terminal completion exceeds the PDB atom-serial limit'
-			)
+            xyz(line)
+            element = line[76:78].strip() or atom.lstrip('0123456789')[:1]
+            if element.upper() not in {'C', 'N', 'O', 'P', 'S'}:
+                raise ValueError(f'Unsupported rebuilt protein element at {(key, atom)}')
 
-		additions[last[key]] = (
-			oxygen[:6] + f'{serial:5d}' + oxygen[11:17]
-			+ carbon[17:27] + oxygen[27:]
-		)
+            line = line.rstrip('\r\n').ljust(80)
+            line = (
+                line[:6] + f'{serial:5d}' + line[11:17]
+                + anchor[17:27] + line[27:76] + f'{element.upper():>2}'
+                + line[78:] + '\n'
+            )
+            additions[last[key]] = additions.get(last[key], '') + line
+            added += 1
 
-	if additions:
-		path.with_suffix('.before_terminal_completion.pdb').write_text(
-			''.join(lines)
-		)
-		path.write_text(
-			''.join(line + additions.get(i, '') for i, line in enumerate(lines))
-		)
-		logger.info(
-			f'Completed {len(additions)} missing terminal oxygen atoms '
-			'using the loaded LEaP templates.'
-		)
+    if additions:
+        path.with_suffix('.before_heavy_atom_completion.pdb').write_text(''.join(lines))
+        path.write_text(''.join(
+            line + additions.get(index, '')
+            for index, line in enumerate(lines)
+        ))
+        logger.info(
+            f'Completed {added} missing protein heavy atoms using the loaded LEaP templates.'
+        )
+        if sidechain:
+            logger.warning(
+                f'{sidechain} side-chain heavy atoms were rebuilt from template geometry; '
+                'inspect their conformations and contacts before production.'
+            )
 
 def remove_hydrogens(filename: str, logger_name: str, logfile: Path):
 	""" Remove hydrogens from the structure and prepare it with pdb4amber. """
@@ -533,9 +557,9 @@ def main(logfile: Path = None, pdbpath: Path = None,
 		)
 
 	try:
-		_complete_terminal_oxygens(noH_complex, protonated_complex, logger)
+		_complete_protein_heavy_atoms(noH_complex, protonated_complex, logger)
 	except (ValueError, OSError) as exc:
-		_stop(logger, cwd, f'Terminal oxygen completion failed: {exc}')
+		_stop(logger, cwd, f'Protein heavy-atom completion failed: {exc}')
 	# Assign protonation after ligand filtering.
 	assigned_complex = assign_protonation(
 		pdbfile=noH_complex,

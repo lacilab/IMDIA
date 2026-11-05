@@ -4,6 +4,8 @@
 
 PROPKA terminal-group predictions are reported separately; LEaP controls terminal
 charges and templates. Modified-residue states retain the existing input policy.
+Metal contacts provide flagged donor-based candidates; this does not generate
+metal-site parameters. Temporary atomic-ion omission requires explicit opt-in.
 """
 import csv
 import contextlib
@@ -38,6 +40,20 @@ NUCLEIC_NAMES = {
     for suffix in ('', '3', '5', 'N')
 }
 WATER_NAMES = {'HOH', 'WAT', 'TP3', 'SOL'}
+METAL_ELEMENTS = set(
+    'LI BE NA MG AL K CA SC TI V CR MN FE CO NI CU ZN GA '
+    'RB SR Y ZR NB MO TC RU RH PD AG CD IN SN CS BA LA CE PR ND PM SM EU GD '
+    'TB DY HO ER TM YB LU HF TA W RE OS IR PT AU HG TL PB BI U'.split()
+)
+ATOMIC_ION_ELEMENTS = METAL_ELEMENTS | {'F', 'CL', 'BR', 'I'}
+METAL_DONOR_ELEMENTS = {'N', 'O', 'S', 'F', 'CL', 'BR', 'I'}
+METAL_SIDECHAIN_DONORS = {
+    'CYS': {'SG'}, 'HIS': {'ND1', 'NE2'},
+    'ASP': {'OD1', 'OD2'}, 'GLU': {'OE1', 'OE2'},
+    'LYS': {'NZ'}, 'TYR': {'OH'},
+}
+REPORT_ONLY_METALS = {'LI', 'NA', 'K', 'RB', 'CS'}
+
 PHOSPHO_RESIDUES = {
     'S1P': {'parent': 'SER', 'phosphate_charge': -1, 'residue_charge': -1, 'attachment': 'OG'},
     'SEP': {'parent': 'SER', 'phosphate_charge': -2, 'residue_charge': -2, 'attachment': 'OG'},
@@ -90,6 +106,7 @@ REPORT_FIELDS = [
     'alternative_pka', 'assigned_charge', 'chain_mismatch', 'tautomer_mismatch',
     'decision_required', 'decision_status', 'decision_reasons',
     'pka_status', 'suppressed_by', 'covalent_partners',
+    'metal_proposed_state', 'metal_donor_atoms',
 ]
 
 
@@ -105,7 +122,8 @@ def normalize_config(config):
         raise ValueError('protonation must be a mapping')
     unknown = set(config) - {'method', 'ph', 'review_pka_window', 'overrides',
                              'decision_mode',
-                             'acknowledge_phospho_approximation'}
+                             'acknowledge_phospho_approximation',
+                             'acknowledge_metal_approximation', 'metal_cutoff'}
     if unknown:
         raise ValueError('Unknown protonation key(s): ' + ', '.join(sorted(map(str, unknown))))
     method = config.get('method', 'none')
@@ -120,6 +138,12 @@ def normalize_config(config):
             'protonation.acknowledge_phospho_approximation '
             'must be a YAML boolean'
         )
+    metal_acknowledge = config.get('acknowledge_metal_approximation', False)
+    if not isinstance(metal_acknowledge, bool):
+        raise ValueError('protonation.acknowledge_metal_approximation must be a YAML boolean')
+    metal_cutoff = float(config.get('metal_cutoff', 2.8))
+    if not math.isfinite(metal_cutoff) or metal_cutoff <= 0:
+        raise ValueError('protonation.metal_cutoff must be finite and positive')
     if method == 'none':
         return {'method': 'none'}
 
@@ -136,7 +160,8 @@ def normalize_config(config):
         raise ValueError('overrides must be a list')
     return dict(method=method, ph=ph, review_pka_window=window, overrides=overrides,
                 decision_mode=decision_mode,
-                acknowledge_phospho_approximation=acknowledge)
+                acknowledge_phospho_approximation=acknowledge,
+                acknowledge_metal_approximation=metal_acknowledge, metal_cutoff=metal_cutoff)
 
 
 def residue_key(line):
@@ -163,7 +188,7 @@ def residues(lines):
     return found
 
 
-def predictor_input(lines, indices, states, drop=None, atom_aliases=None):
+def predictor_input(lines, indices, states, drop=None, atom_aliases=None, omitted=()):
     """Renumber only the temporary predictor input.
 
     drop lists atoms omitted from the PDB2PQR surrogate. PROPKA receives the
@@ -178,12 +203,12 @@ def predictor_input(lines, indices, states, drop=None, atom_aliases=None):
             previous_chain = None
         if line.startswith(ATOM_RECORDS):
             key = residue_key(line)
+            if key in omitted or line[12:16].strip() in (drop or {}).get(key, set()):
+                continue
             # PROPKA uses TER, rather than chain-ID changes, to start a new N terminus.
             if previous_chain is not None and key[0] != previous_chain:
                 output.append('TER   \n')
             previous_chain = key[0]
-            if line[12:16].strip() in (drop or {}).get(key, set()):
-                continue
             atom_name = line[12:16].strip()
             alias = (atom_aliases or {}).get(key, {}).get(atom_name)
             if alias is not None:
@@ -338,8 +363,8 @@ def row_key(row):
 
 
 def choose_states(prepared, indices, pkas, overrides, old_keys, config, logger,
-                  coupled=None, details=None):
-    """Apply overrides first, then select candidate states from pH and pKa.
+                  coupled=None, details=None, metal_candidates=None):
+    """Apply overrides, then metal candidates, then states from pH and pKa.
 
     Neutral histidines stay unresolved until PDB2PQR chooses HID or HIE.
     """
@@ -360,6 +385,9 @@ def choose_states(prepared, indices, pkas, overrides, old_keys, config, logger,
         label = residue_label(old_keys[key], name)
         if key in overrides:
             state, reason = overrides[key], 'manual override'
+        elif key in (metal_candidates or {}):
+            state = metal_candidates[key]
+            reason = 'metal donor coordination heuristic'
         elif pka is None:
             reason = 'missing prediction'
             errors.append(f'{label}: no pKa prediction; supply override')
@@ -394,6 +422,8 @@ def choose_states(prepared, indices, pkas, overrides, old_keys, config, logger,
                            'calculated' if pka is not None else 'missing'),
             'suppressed_by': suppressed_by,
             'covalent_partners': '; '.join(detail.get('covalent_partners', [])),
+            'metal_proposed_state': (metal_candidates or {}).get(key),
+            'metal_donor_atoms': '',
         })
     return decisions, targets, rows, errors
 
@@ -474,6 +504,10 @@ def review_decisions(rows, config):
     pending = []
     for row in rows:
         reasons = []
+        if 'metal-contact-review' in row['flags'].split():
+            reasons.append('candidate metal coordination site')
+        if 'metal-omission-approximation' in row['flags'].split():
+            reasons.append('histidine optimized with standalone ions omitted')
         if row['near_pka']:
             reasons.append('predicted pKa is within the review window')
         if row['coupled']:
@@ -502,7 +536,8 @@ def review_decisions(rows, config):
 
 
 def write_review_status(path, rows, config, pending, errors, surrogate_used,
-                        acknowledgment_required, execution_status, phospho_residues=None):
+                        acknowledgment_required, execution_status, phospho_residues=None,
+                        metal_ack_required=False):
     """Record pending choices and completion status without claiming chemical validation."""
     phospho_residues = phospho_residues or []
     uses_ptr = surrogate_used and any(row['name'] == 'PTR' for row in phospho_residues)
@@ -516,8 +551,9 @@ def write_review_status(path, rows, config, pending, errors, surrogate_used,
         'scientific_status': ('review_required' if any(r['flags'] for r in rows)
                               or phospho_residues else 'not_validated'),
         'production_readiness': 'not_assessed',
-        'assignment_policy': 'calculated PROPKA group candidates, including values suppressed '
-                             'in the text report; not proof of a preferred joint state',
+        'assignment_policy': 'explicit overrides, then metal-donor heuristic candidates, '
+                             'then calculated PROPKA group candidates; '
+                             'not proof of a preferred joint state',
         'pka_geometry_source': 'prepared structure before PDB2PQR; no self-consistent iteration',
         'phosphate_state_source': 'input residue names; not predicted or validated here',
         'structural_check_scope': ('residue mapping; optimizer atom identity and permitted '
@@ -530,6 +566,8 @@ def write_review_status(path, rows, config, pending, errors, surrogate_used,
             for r in pending
         ],
         'explicit_overrides': config['overrides'],
+        'metal_approximation_acknowledged': config.get('acknowledge_metal_approximation', False),
+        'metal_acknowledgment_required': metal_ack_required,
         'phospho_surrogate_used_for_automatic_histidines': surrogate_used,
         'phospho_approximation_acknowledged': config['acknowledge_phospho_approximation'],
         'phospho_acknowledgment_required': acknowledgment_required,
@@ -621,7 +659,8 @@ def xyz(line):
     return values
 
 
-def pdb2pqr_plan(lines, prepared, terminals, old_keys, allow_phospho_approximation=False):
+def pdb2pqr_plan(lines, prepared, terminals, old_keys, allow_phospho_approximation=False,
+                 omitted=()):
     """Prepare the histidine input without silently dropping components.
 
     Return temporary names, withheld phosphate atoms, protein atoms to transfer,
@@ -632,7 +671,18 @@ def pdb2pqr_plan(lines, prepared, terminals, old_keys, allow_phospho_approximati
     withheld = {}
     transferable = {}
     unsupported = []
+    omitted = set(omitted)
+    if omitted - prepared.keys():
+        raise ValueError('Omitted ion is absent from prepared residues')
     for key, name in prepared.items():
+        if key in omitted:
+            records = [line for line in lines if line.startswith(ATOM_RECORDS)
+                       and residue_key(line) == key]
+            if (len(records) != 1 or records[0][76:78].strip().upper() not in ATOMIC_ION_ELEMENTS
+                    or canonical(name) in PROTEIN_NAMES
+                    or name in NUCLEIC_NAMES | WATER_NAMES or name in PHOSPHO_RESIDUES):
+                raise ValueError(f'Only standalone atomic ions may be omitted: {key}')
+            continue
         if canonical(name) in PROTEIN_NAMES:
             submitted[key] = name
         elif name in WATER_NAMES:
@@ -725,7 +775,7 @@ def nucleic_base(name):
     return name
 
 
-def read_pdb2pqr(text, prepared, indices, transferable, submitted, original_atoms):
+def read_pdb2pqr(text, prepared, indices, transferable, submitted, original_atoms, omitted=()):
     """Check protein and environment atoms before accepting the optimizer output.
 
     DNA retention is checked directly, not inferred from a returned histidine state.
@@ -757,6 +807,8 @@ def read_pdb2pqr(text, prepared, indices, transferable, submitted, original_atom
             raise ValueError(f'PDB2PQR changed residue identity at {key}')
         if line[16].strip():
             raise ValueError(f'PDB2PQR returned ambiguous alternate location at {key}')
+        if key in omitted:
+            raise ValueError(f'PDB2PQR returned an omitted ion: {key}')
         state = line[17:20].strip()
         requested = submitted[key]
         if key in protein_keys:
@@ -797,7 +849,7 @@ def read_pdb2pqr(text, prepared, indices, transferable, submitted, original_atom
         raise ValueError(f'PDB2PQR changed protein heavy atoms; missing={missing}, extra={extra}')
     expected = {}
     for (key, name), line in original_atoms.items():
-        if key in protein_keys:
+        if key in protein_keys or key in omitted:
             continue
         if prepared[key] in SURROGATES:
             norm = SURROGATE_ATOM_ALIASES.get(prepared[key], {}).get(name, name)
@@ -866,15 +918,23 @@ def _audit_coordinate_changes(path, original_atoms, coords, prepared, old_keys, 
 
 
 def pdb2pqr_histidines(lines, prepared, indices, decisions, targets, path, config,
-                      logger, old_keys):
+                      logger, old_keys, omitted=(), protected=()):
     """Choose neutral histidine tautomers and audit any side-chain flips.
 
     PDB2PQR may use a default tautomer. A returned state does not prove a unique
     hydrogen-bond arrangement; validate the ring hydrogens and preserve its geometry.
     """
+    if omitted and not config.get('acknowledge_metal_approximation', False):
+        raise ProtonationReviewRequired('Ion omission for PDB2PQR requires explicit acknowledgment')
     submitted, withheld, original_atoms, all_atoms = pdb2pqr_plan(
         lines, prepared, terminal_residues(lines), old_keys,
-        allow_phospho_approximation=config.get('acknowledge_phospho_approximation', False))
+        allow_phospho_approximation=config.get('acknowledge_phospho_approximation', False),
+        omitted=omitted)
+    if omitted:
+        console_message(logger, 'warning',
+                        f'Temporarily omitting {len(omitted)} standalone ions from PDB2PQR; '
+                        'the ions remain in the final structure. Histidine choices from '
+                        'this optimization are flagged.')
     prediction_states = dict(submitted)
     for key in {key for key, _ in original_atoms}:
         prediction_states[key] = 'HIS' if key in targets else decisions.get(key, prepared[key])
@@ -892,10 +952,15 @@ def pdb2pqr_histidines(lines, prepared, indices, decisions, targets, path, confi
                         f'{residue_label(old_keys[other], prepared[other])}. Check proton position.')
     atom_aliases = {key: SURROGATE_ATOM_ALIASES.get(prepared[key], {}) for key in withheld}
     input_text = predictor_input(lines, indices, prediction_states, drop=withheld,
-                                 atom_aliases=atom_aliases)
+                                 atom_aliases=atom_aliases, omitted=omitted)
     text = _run_pdb2pqr(input_text, path)
     states, hydrogens, coords = read_pdb2pqr(
-        text, prepared, indices, original_atoms, prediction_states, all_atoms)
+        text, prepared, indices, original_atoms, prediction_states, all_atoms, omitted=omitted)
+    for atom_key, coordinate in coords.items():
+        if atom_key[0] in protected:
+            after = tuple(float(coordinate[i:i+8]) for i in (0, 8, 16))
+            if math.dist(xyz(original_atoms[atom_key]), after) > 0.002:
+                raise ValueError(f'PDB2PQR moved a candidate metal-coordinating residue: {atom_key}')
     for key in {key for key, _ in original_atoms}:
         requested = prediction_states[key]
         if key not in targets and states.get(key) != requested:
@@ -944,9 +1009,9 @@ def write_assigned_pdb(path, lines, decisions, coords):
 
 
 def _require_manual_choices(pending, acknowledgment_required, report, template,
-                            status_path, logger):
-    """Stop before writing when choices or phosphate-method opt-in are pending."""
-    if not pending and not acknowledgment_required:
+                            status_path, logger, metal_ack_required=False):
+    """Stop before writing when choices or approximation opt-ins are pending."""
+    if not pending and not acknowledgment_required and not metal_ack_required:
         return
     if pending:
         console_message(logger, 'warning',
@@ -965,10 +1030,121 @@ def _require_manual_choices(pending, acknowledgment_required, report, template,
             'Alternatively, supply reviewed neutral-HIS overrides or use a '
             'preparation method retaining phosphate chemistry.'
         )
+    if metal_ack_required:
+        console_message(logger, 'warning',
+                        'Temporary ion omission for histidine optimization is disabled. '
+                        'To accept this approximation, set '
+                        'protonation.acknowledge_metal_approximation to true in params.yml. '
+                        'The ions remain in the final structure.')
     raise ProtonationReviewRequired(
         'Protonation preparation needs explicit choices or method opt-in; '
         'the assigned structure was not written. '
         f'Report: {report}; overrides template: {template}; status: {status_path}')
+
+
+def metal_contact_report(lines, prepared, old_keys, path, logger, overrides=None, cutoff=2.8):
+    """Report contacts and propose states using a generic coordination heuristic."""
+    overrides = overrides or {}
+    atoms = []
+    for line in lines:
+        if not line.startswith(ATOM_RECORDS) or is_hydrogen(line):
+            continue
+        key, name = residue_key(line), line[12:16].strip()
+        element = line[76:78].strip().upper()
+        # Standard polymer atom names have unambiguous one-letter elements.
+        # This covers generated terminal atoms such as OXT with blank columns.
+        if not element and (
+                canonical(prepared[key]) in PROTEIN_NAMES
+                or prepared[key] in NUCLEIC_NAMES | WATER_NAMES
+                or prepared[key] in PHOSPHO_RESIDUES):
+            element = name.lstrip('0123456789')[:1].upper()
+        if not element:
+            raise ValueError(f'Metal screening requires an element record: {key} {name}')
+        atoms.append((key, name, element, xyz(line)))
+
+    metals = [atom for atom in atoms if atom[2] in METAL_ELEMENTS]
+    counts = {}
+    for key, _, _, _ in atoms:
+        counts[key] = counts.get(key, 0) + 1
+    ions = {
+        key for key, _, element, _ in atoms
+        if element in ATOMIC_ION_ELEMENTS and counts[key] == 1
+        and canonical(prepared[key]) not in PROTEIN_NAMES
+        and prepared[key] not in NUCLEIC_NAMES | WATER_NAMES
+        and prepared[key] not in PHOSPHO_RESIDUES
+    }
+    output = path.with_suffix('.metal_contacts.json')
+    output.unlink(missing_ok=True)
+    if not metals:
+        return {}, {}, ions, set(), []
+
+    def identity(key, atom):
+        chain, number, icode = old_keys[key]
+        return dict(chain=chain, residue=number, insertion_code=icode,
+                    resname=prepared[key], atom=atom)
+
+    records, review, protected = [], {}, set()
+    partners = {}
+    for metal_key, metal_atom, element, position in metals:
+        for key, atom, donor_element, point in atoms:
+            if donor_element not in METAL_DONOR_ELEMENTS:
+                continue
+            distance = math.dist(position, point)
+            if distance > cutoff:
+                continue
+            records.append(dict(
+                metal=identity(metal_key, metal_atom), metal_element=element,
+                donor=identity(key, atom), distance_angstrom=distance,
+                same_residue=key == metal_key,
+            ))
+            if key == metal_key or element in REPORT_ONLY_METALS:
+                continue
+            protected.add(key)
+            base = canonical(prepared[key])
+            if atom in METAL_SIDECHAIN_DONORS.get(base, set()):
+                review.setdefault(key, set()).add(atom)
+                partners.setdefault(key, set()).add((metal_key, metal_atom))
+
+    candidates, errors = {}, []
+    for key, donors in review.items():
+        base = canonical(prepared[key])
+        state = None
+        if prepared[key] == 'CYX':
+            errors.append(f'{residue_label(old_keys[key], prepared[key])}: '
+                          'disulfide sulfur has a candidate metal contact; review connectivity')
+            continue
+        if base == 'CYS' and donors == {'SG'}:
+            state = 'CYM'
+        elif base == 'HIS' and len(donors) == 1 and len(partners[key]) == 1:
+            state = 'HID' if 'NE2' in donors else 'HIE'
+        elif base in {'ASP', 'GLU'}:
+            state = base
+        elif base == 'LYS' and donors == {'NZ'}:
+            state = 'LYN'
+        if state is not None:
+            candidates[key] = state
+        elif key not in overrides:
+            errors.append(f'{residue_label(old_keys[key], prepared[key])}: '
+                          f'ambiguous or unsupported metal donor state via {sorted(donors)}; '
+                          'supply a reviewed override or use a supported custom model')
+        if state is not None and key in overrides and overrides[key] != state:
+            console_message(logger, 'warning',
+                            f'{residue_label(old_keys[key], prepared[key])}: explicit '
+                            f'override {overrides[key]} differs from metal candidate {state}.')
+
+    output.write_text(json.dumps(dict(
+        interpretation='Distance-screened contacts and heuristic protonation candidates',
+        cutoff_angstrom=cutoff,
+        omitted_ions=[identity(k, next(a for rk, a, _, _ in atoms if rk == k)) for k in sorted(ions)],
+        metals=[dict(identity(k, a), element=e) for k, a, e, _ in metals],
+        contacts=records,
+        candidates=[dict(identity(k, ''), proposed_state=s) for k, s in candidates.items()],
+        errors=errors,
+    ), indent=2, allow_nan=False) + '\n')
+    console_message(logger, 'warning',
+                    f'{len(metals)} metal atoms; {len(candidates)} donor-based state candidates. '
+                    f'Report: {output.name}. No metal-ligand bonds or parameters are generated.')
+    return review, candidates, ions, protected, errors
 
 
 def assign_protonation(pdbfile, original_pdb, config, logger):
@@ -994,13 +1170,19 @@ def assign_protonation(pdbfile, original_pdb, config, logger):
     for suffix in ('.pdb2pqr.input.pdb', '.pdb2pqr.pdb', '.pdb2pqr.log',
                    '.pdb2pqr.changes.csv', '.protonation.review.json'):
         path.with_suffix(suffix).unlink(missing_ok=True)
+    metal_review, metal_candidates, metal_ions, metal_protected, metal_errors = metal_contact_report(
+        lines, prepared_residues, original_keys, path, logger, overrides,
+        cutoff=config['metal_cutoff'])
     pka_values, coupled_groups, pka_details = run_propka(
         lines, prepared_residues, indices, path, logger)
     coupled = {key for key, name in prepared_residues.items()
                if (canonical(name), indices[key], key[0]) in coupled_groups and name != 'CYX'}
     decisions, histidine_targets, rows, errors = choose_states(
         prepared_residues, indices, pka_values, overrides, original_keys, config,
-        logger, coupled, pka_details)
+        logger, coupled, pka_details, metal_candidates=metal_candidates)
+    errors.extend(metal_errors)
+    for row in rows:
+        row['metal_donor_atoms'] = ', '.join(sorted(metal_review.get(row_key(row), set())))
     terminal_states = [residue_label(original_keys[key], decisions[key])
                        for key in terminal_residues(lines)
                        if decisions.get(key) in UNUSUAL_STATES]
@@ -1011,6 +1193,8 @@ def assign_protonation(pdbfile, original_pdb, config, logger):
     phospho_names = set(prepared_residues.values()) & PHOSPHO_RESIDUES.keys()
     unsupported_phosphohistidines = phospho_names & PHOSPHO_HISTIDINES
     needs_phospho_surrogate = bool(histidine_targets and phospho_names & SURROGATES.keys())
+    metal_ack_required = bool(histidine_targets and metal_ions
+                              and not config['acknowledge_metal_approximation'])
     acknowledgment_required = False
     protein_coordinates = {}
     if histidine_targets and not errors and unsupported_phosphohistidines:
@@ -1022,11 +1206,11 @@ def assign_protonation(pdbfile, original_pdb, config, logger):
                       'Use reviewed neutral-HIS overrides or a method that keeps the full chemistry.')
     if histidine_targets and not errors and needs_phospho_surrogate:
         acknowledgment_required = not config['acknowledge_phospho_approximation']
-    if histidine_targets and not errors and not acknowledgment_required:
+    if histidine_targets and not errors and not acknowledgment_required and not metal_ack_required:
         try:
             histidine_states, protein_coordinates = pdb2pqr_histidines(
                 lines, prepared_residues, indices, decisions, histidine_targets,
-                path, config, logger, original_keys)
+                path, config, logger, original_keys, omitted=metal_ions, protected=metal_protected)
             decisions.update(histidine_states)
             for row in rows:
                 if row_key(row) in histidine_states:
@@ -1041,7 +1225,9 @@ def assign_protonation(pdbfile, original_pdb, config, logger):
                     row['reason'] = 'failed PDB2PQR optimization: ' + str(exc)
     elif histidine_targets:
         reason = ('experimental phosphate simplification is not enabled'
-                  if acknowledgment_required else 'earlier preparation errors')
+                  if acknowledgment_required else
+                  'temporary ion omission is not enabled' if metal_ack_required else
+                  'earlier preparation errors')
         for row in rows:
             if row_key(row) in histidine_targets:
                 row['reason'] = 'skipped PDB2PQR optimization: ' + reason
@@ -1052,6 +1238,15 @@ def assign_protonation(pdbfile, original_pdb, config, logger):
     # A distance cutoff cannot determine which choices are unaffected.
     surrogate_targets = histidine_targets if surrogate_used else set()
     flag_rows(rows, surrogate_targets, phospho_names)
+    for row in rows:
+        key = row_key(row)
+        if key in metal_review:
+            row['flags'] = (row['flags'] + ' metal-contact-review').strip()
+            if key in metal_candidates and key in overrides and overrides[key] != metal_candidates[key]:
+                row['flags'] += ' metal-override-conflict'
+        if (metal_ions and key in histidine_targets
+                and row['reason'] == 'PDB2PQR hydrogen-bond optimization'):
+            row['flags'] = (row['flags'] + ' metal-omission-approximation').strip()
     phospho_records = [
         dict(name=name, original_chain=original_keys[key][0],
              original_residue=original_keys[key][1], original_icode=original_keys[key][2],
@@ -1064,14 +1259,15 @@ def assign_protonation(pdbfile, original_pdb, config, logger):
     log_reviews(rows, config, report, template, logger)
     if errors:
         execution_status = 'failed'
-    elif acknowledgment_required:
+    elif acknowledgment_required or metal_ack_required:
         execution_status = 'awaiting_approximation_opt_in'
     elif pending_choices:
         execution_status = 'awaiting_manual_decisions'
     else:
         execution_status = 'ready_to_write'
     status_path = write_review_status(path, rows, config, pending_choices, errors, surrogate_used,
-                                      acknowledgment_required, execution_status, phospho_records)
+                                      acknowledgment_required, execution_status, phospho_records,
+                                      metal_ack_required=metal_ack_required)
     console_message(logger, 'info', f'Decision status: {status_path.name}')
     if errors:
         for error in errors:
@@ -1079,7 +1275,8 @@ def assign_protonation(pdbfile, original_pdb, config, logger):
         raise ValueError('Protonation needs review:\n' + '\n'.join(errors) +
                          f'\nReport: {report}\nOverrides template: {template}')
     _require_manual_choices(
-        pending_choices, acknowledgment_required, report, template, status_path, logger)
+        pending_choices, acknowledgment_required, report, template, status_path, logger,
+        metal_ack_required=metal_ack_required)
     unresolved = [row for row in rows if row['assigned_state'] is None]
     if unresolved:
         raise ValueError(f'Unresolved protonation assignments; inspect {report}')
@@ -1088,10 +1285,12 @@ def assign_protonation(pdbfile, original_pdb, config, logger):
         write_assigned_pdb(path, lines, decisions, protein_coordinates)
     except OSError as exc:
         write_review_status(path, rows, config, pending_choices, [str(exc)], surrogate_used,
-                            acknowledgment_required, 'write_failed', phospho_records)
+                            acknowledgment_required, 'write_failed', phospho_records,
+                            metal_ack_required=metal_ack_required)
         raise
     write_review_status(path, rows, config, pending_choices, [], surrogate_used,
-                        acknowledgment_required, 'assigned_structure_written', phospho_records)
+                        acknowledgment_required, 'assigned_structure_written', phospho_records,
+                        metal_ack_required=metal_ack_required)
     console_message(logger, 'info', 'Fixed side-chain protonation written; '
                     'check subsequent LEaP/topology results for system preparation status.')
     if any(row['flags'] for row in rows):
